@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
@@ -41,6 +42,68 @@ public sealed partial class PlayerViewModel(
 
     [ObservableProperty]
     private double _resumePositionSeconds;
+
+    public ObservableCollection<TrackOption> AudioTracks { get; } = [];
+    public ObservableCollection<TrackOption> SubtitleTracks { get; } = [];
+    public ObservableCollection<ChapterOption> Chapters { get; } = [];
+
+    public bool HasMultipleAudioTracks => AudioTracks.Count > 1;
+    public bool HasSubtitleTracks => SubtitleTracks.Count > 1;
+    public bool HasChapters => Chapters.Count > 0;
+
+    [ObservableProperty]
+    private TrackOption? _selectedAudioTrack;
+
+    [ObservableProperty]
+    private TrackOption? _selectedSubtitleTrack;
+
+    [ObservableProperty]
+    private bool _isFullscreen;
+
+    public int Volume
+    {
+        get => engine.Volume;
+        set
+        {
+            if (engine.Volume == value) return;
+            engine.Volume = value;
+            OnPropertyChanged();
+        }
+    }
+
+    partial void OnSelectedAudioTrackChanged(TrackOption? value)
+    {
+        if (value is not null) engine.SetAudioTrack(value.Id);
+    }
+
+    partial void OnSelectedSubtitleTrackChanged(TrackOption? value)
+    {
+        if (value is not null) engine.SetSubtitleTrack(value.Id);
+    }
+
+    /// <summary>Re-reads live track/chapter lists from the engine (call when media is ready / on demand).</summary>
+    public void RefreshTracks()
+    {
+        AudioTracks.Clear();
+        foreach (var t in engine.GetAudioTracks()) AudioTracks.Add(t);
+        SubtitleTracks.Clear();
+        foreach (var t in engine.GetSubtitleTracks()) SubtitleTracks.Add(t);
+        Chapters.Clear();
+        foreach (var c in engine.GetChapters()) Chapters.Add(c);
+
+        OnPropertyChanged(nameof(HasMultipleAudioTracks));
+        OnPropertyChanged(nameof(HasSubtitleTracks));
+        OnPropertyChanged(nameof(HasChapters));
+    }
+
+    [RelayCommand]
+    private void NextChapter() => engine.NextChapter();
+
+    [RelayCommand]
+    private void PreviousChapter() => engine.PreviousChapter();
+
+    [RelayCommand]
+    private void ToggleFullscreen() => IsFullscreen = !IsFullscreen;
 
     /// <summary>Raised when end-of-media should advance to the next in-series episode (auto-advance only).</summary>
     public event EventHandler<EpisodeView>? NextEpisodeRequested;
