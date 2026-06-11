@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<IThumbnailSnapshotter>()));
 
         services.AddSingleton<SourcesViewModel>();
+        services.AddSingleton<LibraryViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;
