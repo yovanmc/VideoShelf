@@ -16,4 +16,22 @@ public class HostBuildsTests
 
         vm.Title.ShouldBe("VideoShelf");
     }
+
+    [Fact]
+    public void AddVideoShelf_resolves_player_viewmodel()
+    {
+        var provider = new ServiceCollection().AddVideoShelf().BuildServiceProvider();
+
+        var player = provider.GetRequiredService<VideoShelf.App.ViewModels.PlayerViewModel>();
+
+        player.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void AddVideoShelf_resolves_settings_repository()
+    {
+        var provider = new ServiceCollection().AddVideoShelf().BuildServiceProvider();
+
+        provider.GetRequiredService<VideoShelf.Core.Storage.SettingsRepository>().ShouldNotBeNull();
+    }
 }

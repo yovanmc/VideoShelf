@@ -30,8 +30,7 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<IThumbnailSnapshotter>()));
 
         services.AddSingleton<ResumePolicy>();
-        // IPlaybackEngine → NullPlaybackEngine until Task 16/17 replaces with LibVlcPlaybackEngine.
-        services.AddSingleton<IPlaybackEngine, NullPlaybackEngine>();
+        services.AddSingleton<IPlaybackEngine, LibVlcPlaybackEngine>();
         services.AddSingleton<PlayerViewModel>(sp =>
         {
             var paths = sp.GetRequiredService<AppPaths>();
