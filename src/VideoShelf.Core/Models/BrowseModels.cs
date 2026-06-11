@@ -13,3 +13,9 @@ public sealed record SeriesSummary(
 public sealed record EpisodeView(
     long VideoId, long SeriesId, string FilePath, int EpisodeNo, string Title,
     bool Watched, bool Missing);
+
+public enum SearchHitKind { Section, Series, Video }
+
+/// <summary>One search result. TargetId is the section/series/video id matching Kind; SectionId
+/// is the owning section (for jump-to-library navigation). For sections, SectionId == TargetId.</summary>
+public sealed record SearchHit(SearchHitKind Kind, long TargetId, long SectionId, string Title);

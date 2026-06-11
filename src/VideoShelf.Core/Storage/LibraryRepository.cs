@@ -228,4 +228,38 @@ public sealed class LibraryRepository(VideoShelfDb db)
         }
         return list;
     }
+
+    public IReadOnlyList<SearchHit> Search(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return [];
+
+        // Escape LIKE wildcards in user input; match anywhere (contains).
+        var escaped = query.Trim()
+            .Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+        var pattern = "%" + escaped + "%";
+
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT 0 AS kind, sc.id AS target, sc.id AS section_id, sc.display_name AS title
+            FROM sections sc WHERE sc.display_name LIKE $q ESCAPE '\'
+            UNION ALL
+            SELECT 1, se.id, se.section_id, se.base_title
+            FROM series se WHERE se.base_title LIKE $q ESCAPE '\'
+            UNION ALL
+            SELECT 2, v.id, se.section_id, v.raw_filename
+            FROM videos v JOIN series se ON se.id = v.series_id
+            WHERE v.raw_filename LIKE $q ESCAPE '\'
+            ORDER BY kind, title
+            LIMIT 200
+            """;
+        cmd.Parameters.AddWithValue("$q", pattern);
+        var list = new List<SearchHit>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new SearchHit(
+                (SearchHitKind)r.GetInt32(0), r.GetInt64(1), r.GetInt64(2), r.GetString(3)));
+        return list;
+    }
 }
