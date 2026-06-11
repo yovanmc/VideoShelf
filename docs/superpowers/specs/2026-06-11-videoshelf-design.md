@@ -13,8 +13,8 @@ videos, episodic series, one-offs) and carries **no reliable embedded metadata**
 signal is the folder structure and filenames. VideoShelf builds and owns an indexed library
 on top of those files, tracks watched/unwatched state, lets the user tag sections, and
 surfaces content through a tag-driven discovery panel. Playback is fully integrated and
-**plays any format** by bundling libVLC. The app is **strictly read-only** on the video
-files (play-only).
+**plays any format** by bundling libVLC. The app is **read-only on the video files by
+default**, with one explicit, reversible rename tool.
 
 This is, in shape, "AudioShelf for video" built on the VideoTriage stack: the same
 library/discovery/harness ideas as AudioShelf, but on .NET WPF with an embedded libVLC
@@ -22,8 +22,10 @@ player because robust play-everything playback is the core requirement.
 
 ## 2. Principles
 
-- **Read-only.** The app never renames, moves, or deletes video files. There is no
-  file-mutating tool in v1. Grouping corrections are stored in SQLite, never written to disk.
+- **Read-only by default.** The app never moves or deletes video files, and never mutates
+  them except through the explicit, opt-in rename tool (Section 10), which requires preview +
+  confirmation and writes an undo manifest. Grouping corrections are stored in SQLite, never
+  written to disk.
 - **App-owned metadata.** Files carry no reliable tags, so the SQLite DB is the source of
   truth for grouping, tags, watched-flags, and cleaned-up display titles. The video bytes on
   disk are the only thing the DB does not own.
@@ -151,7 +153,19 @@ Behavior:
 - **No subtitles, no audio-track switching, no playback-speed control** (explicitly out of
   scope for v1).
 
-## 10. Self-verification harness
+## 10. Opt-in rename tool
+
+A separate, explicitly-triggered screen (off by default; the app is fully usable without it):
+
+- Shows a **preview diff** of current → proposed clean filenames.
+- Requires explicit confirmation before any disk change.
+- Performs renames **defensively** (verify the target path is free, fail safe) and writes an
+  **undo manifest** enabling rollback — same defensive pattern as VideoTriage's swap/manifest
+  approach.
+- After a successful rename, the library DB is updated to the new `file_path`s; grouping
+  overrides and watched-state survive because they key off stable IDs, not paths.
+
+## 11. Self-verification harness
 
 Ported from VideoTriage's proven WPF approach:
 
@@ -165,7 +179,7 @@ Ported from VideoTriage's proven WPF approach:
 - **`tools/verify.ps1`** orchestrates fixture → launch → screenshot → checks, so UI can be
   self-verified before being shown to the user.
 
-## 11. Project layout
+## 12. Project layout
 
 `C:\Agent Projects\VideoShelf`, own git repo on the user's GitHub, mirroring VideoTriage:
 
@@ -185,7 +199,7 @@ VideoShelf/
 .NET 10, WPF, WPF-UI, LibVLCSharp, SQLite, xUnit + Shouldly. Commits keep the user's human
 identity as git author.
 
-## 12. Out of scope (YAGNI for v1)
+## 13. Out of scope (YAGNI for v1)
 
 - Subtitles, audio-track switching, playback-speed control.
 - Resume / exact-position bookmarking.
@@ -193,5 +207,5 @@ identity as git author.
 - Transcoding or format conversion.
 - Streaming / online sources / downloading.
 - Casting (Chromecast/DLNA).
-- Any file renaming/moving/deleting (strictly read-only in v1).
+- Moving or deleting files (the only file mutation is the opt-in rename tool, Section 10).
 - Tags on series/videos (tags are section-level only in v1).
