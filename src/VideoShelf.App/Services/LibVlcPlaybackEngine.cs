@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 using LibVLCSharp.Shared;
 
 namespace VideoShelf.App.Services;
@@ -16,20 +18,35 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
 {
     private readonly LibVLC _libVlc;
     private readonly MediaPlayer _player;
+    private readonly Dispatcher _dispatcher;
 
     /// <summary>The underlying libVLC player, for the VideoView to host. App-internal use only.</summary>
     public MediaPlayer MediaPlayer => _player;
 
     public LibVlcPlaybackEngine()
     {
+        _dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+
         LibVLCSharp.Shared.Core.Initialize();
         _libVlc = new LibVLC("--no-video-title-show", "--quiet");
         _player = new MediaPlayer(_libVlc);
 
-        _player.TimeChanged += (_, e) => PositionChanged?.Invoke(this, e.Time / 1000.0);
-        _player.LengthChanged += (_, e) => LengthChanged?.Invoke(this, e.Length / 1000.0);
-        _player.EndReached += (_, _) => Ended?.Invoke(this, EventArgs.Empty);
-        _player.EncounteredError += (_, _) => EncounteredError?.Invoke(this, EventArgs.Empty);
+        // libVLC raises these on its own background threads. Marshal to the UI thread with BeginInvoke
+        // (non-blocking) so consumers can touch UI-bound state AND re-enter the player (Stop/Load/Play on
+        // auto-next) without doing so from inside a libVLC callback thread — a known deadlock hazard.
+        _player.TimeChanged += (_, e) => Raise(() => PositionChanged?.Invoke(this, e.Time / 1000.0));
+        _player.LengthChanged += (_, e) => Raise(() => LengthChanged?.Invoke(this, e.Length / 1000.0));
+        _player.EndReached += (_, _) => Raise(() => Ended?.Invoke(this, EventArgs.Empty));
+        _player.EncounteredError += (_, _) => Raise(() => EncounteredError?.Invoke(this, EventArgs.Empty));
+    }
+
+    /// <summary>Runs an action on the UI dispatcher thread (async, non-blocking).</summary>
+    private void Raise(Action action)
+    {
+        if (_dispatcher.CheckAccess())
+            action();
+        else
+            _dispatcher.BeginInvoke(action);
     }
 
     public void Load(string filePath)

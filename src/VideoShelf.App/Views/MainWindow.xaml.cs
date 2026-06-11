@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
 using Wpf.Ui.Controls;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
@@ -16,6 +18,7 @@ public partial class MainWindow : FluentWindow
         _viewModel = viewModel;
         DataContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
         Loaded += async (_, _) =>
         {
             try { await _viewModel.InitializeAsync(); }
@@ -27,6 +30,31 @@ public partial class MainWindow : FluentWindow
     {
         if (e.PropertyName == nameof(MainViewModel.IsPictureInPicture))
             UpdatePictureInPicture(_viewModel.IsPictureInPicture);
+    }
+
+    private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PlayerViewModel.IsFullscreen))
+            UpdateFullscreen(_viewModel.Player.IsFullscreen);
+    }
+
+    /// <summary>Fullscreen collapses the title-bar chrome and maximizes the window. The inline player
+    /// already overlays both columns, so this fills the screen. Uses only WindowState (no WindowStyle/
+    /// transparency changes, which can throw on a FluentWindow); true borderless polish is a Phase 6 item.</summary>
+    private void UpdateFullscreen(bool on)
+    {
+        if (on)
+        {
+            AppTitleBar.Visibility = Visibility.Collapsed;
+            TitleBarRow.Height = new GridLength(0);
+            WindowState = WindowState.Maximized;
+        }
+        else
+        {
+            AppTitleBar.Visibility = Visibility.Visible;
+            TitleBarRow.Height = new GridLength(44);
+            WindowState = WindowState.Normal;
+        }
     }
 
     private void UpdatePictureInPicture(bool on)

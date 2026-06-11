@@ -109,15 +109,16 @@ public sealed partial class PlayerViewModel(
     }
 
     /// <summary>Produces a seek-preview frame PNG for the given position, or null on failure (fail-safe).</summary>
+    /// <remarks>The current engine snapshots the live frame regardless of <paramref name="seconds"/>
+    /// (a dedicated off-screen positioned decode is a Phase 6 refinement). Because the frame does not
+    /// correspond to the requested position, we deliberately do NOT cache it under a per-position key —
+    /// that would serve a stale, wrong-position image on a later hover. Each request regenerates afresh.</remarks>
     public async Task<string?> RequestSeekPreviewAsync(double seconds, CancellationToken cancellationToken)
     {
         try
         {
             Directory.CreateDirectory(SeekPreviewDirectory);
-            var bucket = (long)seconds; // 1s buckets keep scrubbing cache-friendly
-            var target = Path.Combine(SeekPreviewDirectory, $"preview_{bucket}.png");
-            if (File.Exists(target) && new FileInfo(target).Length > 0)
-                return target;
+            var target = Path.Combine(SeekPreviewDirectory, "preview.png");
 
             var ok = await engine.TryGeneratePreviewFrameAsync(seconds, target, cancellationToken)
                 .ConfigureAwait(false);
@@ -176,6 +177,13 @@ public sealed partial class PlayerViewModel(
     /// <summary>Loads an episode, starts playback, and prepares a resume offer if one applies.</summary>
     public void Open(EpisodeView episode)
     {
+        // Stop any outgoing media before switching (manual play of a different episode while one is
+        // running). No resume flush here: end-of-media auto-next has already marked the previous video
+        // watched and cleared its resume, and the periodic tick keeps a mid-play switch's resume current —
+        // flushing would re-write a resume position for a just-watched episode.
+        if (_current is not null)
+            engine.Stop();
+
         PlaybackError = null;
         if (episode.Missing || !System.IO.File.Exists(episode.FilePath))
         {

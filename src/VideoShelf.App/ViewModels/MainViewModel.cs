@@ -69,6 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _player.FlushResume();
         _player.Engine.Stop();
+        _player.IsFullscreen = false;
         IsPlayerVisible = false;
         IsPictureInPicture = false;
     }
