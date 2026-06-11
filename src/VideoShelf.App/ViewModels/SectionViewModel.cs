@@ -26,6 +26,8 @@ public sealed partial class SectionViewModel(
 
     partial void OnUnwatchedCountChanged(int value) => OnPropertyChanged(nameof(HasUnwatched));
 
+    public event System.EventHandler<EpisodeView>? PlayRequested;
+
     public async Task LoadSeriesAsync(BrowseSort sort, CancellationToken cancellationToken)
     {
         var summaries = await Task.Run(
@@ -36,6 +38,7 @@ public sealed partial class SectionViewModel(
         {
             var seriesVm = new SeriesViewModel(s, library, watch, thumbnails);
             seriesVm.UnwatchedChanged += (_, _) => RecomputeUnwatched();
+            seriesVm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             SeriesList.Add(seriesVm);
             await seriesVm.LoadEpisodesAsync(cancellationToken);
             await seriesVm.LoadThumbnailAsync(cancellationToken);
