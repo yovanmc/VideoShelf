@@ -42,6 +42,9 @@ public sealed partial class PlayerViewModel(
     [ObservableProperty]
     private double _resumePositionSeconds;
 
+    /// <summary>Raised when end-of-media should advance to the next in-series episode (auto-advance only).</summary>
+    public event EventHandler<EpisodeView>? NextEpisodeRequested;
+
     /// <summary>Loads an episode, starts playback, and prepares a resume offer if one applies.</summary>
     public void Open(EpisodeView episode)
     {
@@ -54,8 +57,10 @@ public sealed partial class PlayerViewModel(
 
         engine.PositionChanged -= OnPositionChanged;
         engine.LengthChanged -= OnLengthChanged;
+        engine.Ended -= OnEnded;
         engine.PositionChanged += OnPositionChanged;
         engine.LengthChanged += OnLengthChanged;
+        engine.Ended += OnEnded;
 
         engine.Load(episode.FilePath);
         engine.Play();
@@ -104,6 +109,23 @@ public sealed partial class PlayerViewModel(
         {
             engine.Play();
             IsPlaying = true;
+        }
+    }
+
+    private void OnEnded(object? sender, EventArgs e)
+    {
+        IsPlaying = false;
+        if (_current is not { } cur)
+            return;
+
+        // Finishing a video marks it watched, which also clears its resume position.
+        watch.SetWatched(cur.VideoId, true);
+
+        if (settings.GetAutoAdvanceEpisodes())
+        {
+            var next = library.GetNextEpisode(cur.SeriesId, cur.EpisodeNo);
+            if (next is not null)
+                NextEpisodeRequested?.Invoke(this, next);
         }
     }
 
