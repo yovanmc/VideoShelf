@@ -22,11 +22,18 @@ public sealed class WatchRepository(VideoShelfDb db)
 
         if (watched)
         {
-            using var ins = conn.CreateCommand();
-            ins.CommandText = "INSERT INTO watch_events(video_id, watched_at) VALUES($id, $at)";
-            ins.Parameters.AddWithValue("$id", videoId);
-            ins.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("o"));
-            ins.ExecuteNonQuery();
+            using (var ins = conn.CreateCommand())
+            {
+                ins.CommandText = "INSERT INTO watch_events(video_id, watched_at) VALUES($id, $at)";
+                ins.Parameters.AddWithValue("$id", videoId);
+                ins.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("o"));
+                ins.ExecuteNonQuery();
+            }
+
+            using var clr = conn.CreateCommand();
+            clr.CommandText = "UPDATE videos SET resume_position = NULL WHERE id = $id";
+            clr.Parameters.AddWithValue("$id", videoId);
+            clr.ExecuteNonQuery();
         }
 
         tx.Commit();
