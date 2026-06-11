@@ -22,6 +22,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ScanService>();
         services.AddSingleton<IScanCoordinator, ScanCoordinator>();
 
+        services.AddSingleton<IThumbnailSnapshotter, LibVlcThumbnailService>();
+        services.AddSingleton<IThumbnailService>(sp =>
+            new ThumbnailCache(
+                sp.GetRequiredService<AppPaths>().ThumbnailDirectory,
+                sp.GetRequiredService<IThumbnailSnapshotter>()));
+
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
