@@ -285,4 +285,36 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.Parameters.AddWithValue("$id", sourceId);
         cmd.ExecuteNonQuery();
     }
+
+    /// <summary>Returns the saved resume position in seconds, or null if the video has none.</summary>
+    public double? GetResumePosition(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT resume_position FROM videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        var result = cmd.ExecuteScalar();
+        return result is null or System.DBNull ? null : (double)result;
+    }
+
+    /// <summary>Saves the resume position (seconds) for a video. Overwrites any previous value.</summary>
+    public void SetResumePosition(long videoId, double seconds)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET resume_position = $p WHERE id = $id";
+        cmd.Parameters.AddWithValue("$p", seconds);
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Clears the resume position (sets it NULL) — used when a video is marked watched or finishes.</summary>
+    public void ClearResumePosition(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET resume_position = NULL WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
 }
