@@ -29,8 +29,41 @@ public sealed class VideoShelfDb : IDisposable
     public void Migrate()
     {
         using var conn = Open();
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = Schema;
+            cmd.ExecuteNonQuery();
+        }
+
+        // Idempotent, crash-safe additions for databases created by an earlier schema.
+        // ALTER TABLE ADD COLUMN has no IF NOT EXISTS in SQLite, so guard on table_info.
+        EnsureColumn(conn, "videos", "missing", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "videos", "added_at", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(conn, "videos", "resume_position", "REAL");
+        CreateAddedAtIndex(conn);
+    }
+
+    private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
+    {
+        bool exists;
+        using (var check = conn.CreateCommand())
+        {
+            check.CommandText = $"SELECT COUNT(*) FROM pragma_table_info($t) WHERE name = $c";
+            check.Parameters.AddWithValue("$t", table);
+            check.Parameters.AddWithValue("$c", column);
+            exists = (long)check.ExecuteScalar()! > 0;
+        }
+        if (exists) return;
+
+        using var alter = conn.CreateCommand();
+        alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition}";
+        alter.ExecuteNonQuery();
+    }
+
+    private static void CreateAddedAtIndex(SqliteConnection conn)
+    {
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = Schema;
+        cmd.CommandText = "CREATE INDEX IF NOT EXISTS ix_videos_added_at ON videos(added_at)";
         cmd.ExecuteNonQuery();
     }
 
@@ -66,7 +99,10 @@ public sealed class VideoShelfDb : IDisposable
             format TEXT NOT NULL,
             duration REAL,
             thumbnail_path TEXT,
-            watched INTEGER NOT NULL DEFAULT 0
+            watched INTEGER NOT NULL DEFAULT 0,
+            missing INTEGER NOT NULL DEFAULT 0,
+            added_at TEXT NOT NULL DEFAULT '',
+            resume_position REAL
         );
         CREATE TABLE IF NOT EXISTS section_tags (
             section_id INTEGER NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
