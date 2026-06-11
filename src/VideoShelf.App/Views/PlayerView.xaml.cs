@@ -17,18 +17,31 @@ public partial class PlayerView : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Bind the libVLC MediaPlayer to the VideoView once the visual tree is ready.
-        if (DataContext is MainViewModel main &&
-            main.Player.Engine is LibVlcPlaybackEngine vlc)
-        {
-            VideoSurface.MediaPlayer = vlc.MediaPlayer;
-        }
+        AttachSurface();
 
         // Refresh live tracks/chapters shortly after media starts.
         if (DataContext is MainViewModel m)
             m.Player.RefreshTracks();
 
         Focus();
+    }
+
+    /// <summary>Binds the shared libVLC MediaPlayer to the inline VideoView. Safe to call repeatedly;
+    /// used to re-host the surface after returning from the detached mini-player.</summary>
+    public void AttachSurface()
+    {
+        if (DataContext is MainViewModel main &&
+            main.Player.Engine is LibVlcPlaybackEngine vlc)
+        {
+            VideoSurface.MediaPlayer = vlc.MediaPlayer;
+        }
+    }
+
+    /// <summary>Releases the MediaPlayer from the inline VideoView so another VideoView (the mini-player)
+    /// can host it — a libVLC MediaPlayer may be hosted by only one VideoView at a time.</summary>
+    public void DetachSurface()
+    {
+        VideoSurface.MediaPlayer = null;
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)

@@ -194,7 +194,8 @@
             </DockPanel>
 
             <!-- Inline player pane: overlays both columns while playing and not in PiP. -->
-            <views:PlayerView Grid.Column="0" Grid.ColumnSpan="2"
+            <views:PlayerView x:Name="InlinePlayer"
+                              Grid.Column="0" Grid.ColumnSpan="2"
                               DataContext="{Binding}"
                               Visibility="{Binding IsInlinePlayerVisible, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
