@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
             return vm;
         });
 
+        services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();
         services.AddSingleton<MainViewModel>();

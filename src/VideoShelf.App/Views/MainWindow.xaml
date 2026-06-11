@@ -50,6 +50,9 @@
                         <ui:Button Content="Scan" Margin="8,0,0,0"
                                    Command="{Binding ScanAndReloadCommand}" />
                     </StackPanel>
+                    <CheckBox DockPanel.Dock="Top" Margin="0,0,0,8"
+                              Content="Auto-play next episode"
+                              IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
                     <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>

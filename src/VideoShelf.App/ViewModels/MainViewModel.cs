@@ -13,17 +13,20 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly LibraryViewModel _library;
     private readonly IScanCoordinator _scanCoordinator;
     private readonly PlayerViewModel _player;
+    private readonly SettingsViewModel _settings;
 
     public MainViewModel(
         SourcesViewModel sources,
         LibraryViewModel library,
         IScanCoordinator scanCoordinator,
-        PlayerViewModel player)
+        PlayerViewModel player,
+        SettingsViewModel settings)
     {
         _sources = sources;
         _library = library;
         _scanCoordinator = scanCoordinator;
         _player = player;
+        _settings = settings;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _player.NextEpisodeRequested += (_, ep) => PlayEpisode(ep);
@@ -34,6 +37,7 @@ public sealed partial class MainViewModel : ObservableObject
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
+    public SettingsViewModel Settings => _settings;
 
     [ObservableProperty]
     private bool _isScanning;

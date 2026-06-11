@@ -36,7 +36,8 @@ public class MainViewModelTests
         var libraryVm = new LibraryViewModel(lib, watch, new NullThumbs());
         var engine = new FakePlaybackEngine();
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
-        var vm = new MainViewModel(sources, libraryVm, coordinator, player);
+        var settingsVm = new SettingsViewModel(settings);
+        var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

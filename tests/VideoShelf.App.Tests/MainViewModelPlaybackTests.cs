@@ -33,7 +33,8 @@ public class MainViewModelPlaybackTests
         var library = new LibraryViewModel(lib, watch, thumbs);
         var sources = new SourcesViewModel(lib, new FakeFolderPicker());
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
-        return new MainViewModel(sources, library, new NullScan(), player);
+        var settingsVm = new SettingsViewModel(settings);
+        return new MainViewModel(sources, library, new NullScan(), player, settingsVm);
     }
 
     [Fact]
