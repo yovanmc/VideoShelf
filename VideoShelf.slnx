@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/VideoShelf.App/VideoShelf.App.csproj" />
     <Project Path="src/VideoShelf.Core/VideoShelf.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/VideoShelf.App.Tests/VideoShelf.App.Tests.csproj" />
     <Project Path="tests/VideoShelf.Core.Tests/VideoShelf.Core.Tests.csproj" />
   </Folder>
 </Solution>
