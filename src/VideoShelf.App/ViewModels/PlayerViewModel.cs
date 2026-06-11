@@ -1,5 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
@@ -68,6 +71,56 @@ public sealed partial class PlayerViewModel(
             if (engine.Volume == value) return;
             engine.Volume = value;
             OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Folder screenshots are written to. Set by DI/host; defaults to a temp-safe value for tests.</summary>
+    public string CaptureDirectory { get; set; } = System.IO.Path.GetTempPath();
+
+    /// <summary>Folder seek-preview frames are cached in.</summary>
+    public string SeekPreviewDirectory { get; set; } = System.IO.Path.GetTempPath();
+
+    [ObservableProperty]
+    private string? _lastScreenshotPath;
+
+    [RelayCommand]
+    private void Screenshot()
+    {
+        try
+        {
+            Directory.CreateDirectory(CaptureDirectory);
+            var name = $"capture_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png";
+            var target = Path.Combine(CaptureDirectory, name);
+            LastScreenshotPath = engine.TrySnapshot(target) ? target : null;
+        }
+        catch
+        {
+            LastScreenshotPath = null; // fail-safe: a screenshot must never crash playback
+        }
+    }
+
+    /// <summary>Produces a seek-preview frame PNG for the given position, or null on failure (fail-safe).</summary>
+    public async Task<string?> RequestSeekPreviewAsync(double seconds, CancellationToken cancellationToken)
+    {
+        try
+        {
+            Directory.CreateDirectory(SeekPreviewDirectory);
+            var bucket = (long)seconds; // 1s buckets keep scrubbing cache-friendly
+            var target = Path.Combine(SeekPreviewDirectory, $"preview_{bucket}.png");
+            if (File.Exists(target) && new FileInfo(target).Length > 0)
+                return target;
+
+            var ok = await engine.TryGeneratePreviewFrameAsync(seconds, target, cancellationToken)
+                .ConfigureAwait(false);
+            return ok && File.Exists(target) && new FileInfo(target).Length > 0 ? target : null;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch
+        {
+            return null; // fail-safe
         }
     }
 
