@@ -100,4 +100,28 @@ public sealed class LibraryRepository(VideoShelfDb db)
                 r.IsDBNull(7) ? null : r.GetString(7), r.GetInt64(8) != 0));
         return list;
     }
+
+    public IReadOnlyList<Section> GetSections(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, source_id, folder_name, display_name FROM sections WHERE source_id=$s ORDER BY display_name";
+        cmd.Parameters.AddWithValue("$s", sourceId);
+        var list = new List<Section>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) list.Add(new Section(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3)));
+        return list;
+    }
+
+    public IReadOnlyList<Series> GetSeriesForSection(long sectionId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, section_id, base_title, sort_key, is_standalone FROM series WHERE section_id=$s ORDER BY sort_key";
+        cmd.Parameters.AddWithValue("$s", sectionId);
+        var list = new List<Series>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) list.Add(new Series(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3), r.GetInt64(4) != 0));
+        return list;
+    }
 }
