@@ -36,3 +36,6 @@ desktop.ini
 *.db-shm
 *.db-wal
 /scratch/
+
+# Git worktrees (per WORKFLOW-execution.md runbook)
+.worktrees/
