@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
 
+        services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

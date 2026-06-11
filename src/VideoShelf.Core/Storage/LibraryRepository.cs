@@ -275,4 +275,14 @@ public sealed class LibraryRepository(VideoShelfDb db)
                 (SearchHitKind)r.GetInt32(0), r.GetInt64(1), r.GetInt64(2), r.GetString(3)));
         return list;
     }
+
+    public void RemoveSource(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        // ON DELETE CASCADE removes the source's sections/series/videos; foreign_keys=ON is set in Open().
+        cmd.CommandText = "DELETE FROM sources WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", sourceId);
+        cmd.ExecuteNonQuery();
+    }
 }
