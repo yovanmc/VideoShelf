@@ -19,3 +19,5 @@ public enum SearchHitKind { Section, Series, Video }
 /// <summary>One search result. TargetId is the section/series/video id matching Kind; SectionId
 /// is the owning section (for jump-to-library navigation). For sections, SectionId == TargetId.</summary>
 public sealed record SearchHit(SearchHitKind Kind, long TargetId, long SectionId, string Title);
+
+public enum BrowseSort { Name, DateAdded, RecentlyWatched }

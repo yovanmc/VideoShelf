@@ -178,10 +178,23 @@ public sealed class LibraryRepository(VideoShelfDb db)
     }
 
     public IReadOnlyList<SeriesSummary> GetSeriesSummaries(long sectionId)
+        => GetSeriesSummaries(sectionId, BrowseSort.Name);
+
+    public IReadOnlyList<SeriesSummary> GetSeriesSummaries(long sectionId, BrowseSort sort)
     {
+        var orderBy = sort switch
+        {
+            BrowseSort.DateAdded =>
+                "(SELECT MAX(added_at) FROM videos vv WHERE vv.series_id = se.id) DESC, se.sort_key",
+            BrowseSort.RecentlyWatched =>
+                "(SELECT MAX(we.watched_at) FROM watch_events we " +
+                "JOIN videos vv ON vv.id = we.video_id WHERE vv.series_id = se.id) DESC, se.sort_key",
+            _ => "se.sort_key",
+        };
+
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
+        cmd.CommandText = $"""
             SELECT se.id, se.section_id, se.base_title, se.is_standalone,
                    COUNT(v.id) AS episode_count,
                    COALESCE(SUM(CASE WHEN v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched,
@@ -191,7 +204,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
             LEFT JOIN videos v ON v.series_id = se.id
             WHERE se.section_id = $sec
             GROUP BY se.id, se.section_id, se.base_title, se.is_standalone
-            ORDER BY se.sort_key
+            ORDER BY {orderBy}
             """;
         cmd.Parameters.AddWithValue("$sec", sectionId);
         var list = new List<SeriesSummary>();
