@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -60,6 +61,19 @@ public sealed partial class LibraryViewModel(
         SearchResults.Clear();
         foreach (var h in hits)
             SearchResults.Add(h);
+    }
+
+    /// <summary>
+    /// Selects the section that owns <paramref name="hit"/> and clears the search box,
+    /// implementing spec §6 "selecting a search result jumps to that item".
+    /// </summary>
+    [RelayCommand]
+    public async Task NavigateToHit(SearchHit hit)
+    {
+        var target = Sections.FirstOrDefault(s => s.SectionId == hit.SectionId);
+        if (target is not null)
+            await SelectSectionAsync(target);
+        SearchText = "";
     }
 
     /// <summary>Test/affordance hook: awaits the most recently started async reload/search.</summary>

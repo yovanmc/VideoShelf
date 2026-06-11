@@ -112,11 +112,22 @@
                               Margin="0,0,0,8">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Margin="0,2" Opacity="0.85">
-                                <Run Text="{Binding Kind, Mode=OneWay}" />
-                                <Run Text=" · " />
-                                <Run Text="{Binding Title, Mode=OneWay}" />
-                            </TextBlock>
+                            <Button Margin="0,2" Padding="4,2"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Opacity="0.85"
+                                    Cursor="Hand"
+                                    Command="{Binding DataContext.Library.NavigateToHitCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}">
+                                <TextBlock>
+                                    <Run Text="{Binding Kind, Mode=OneWay}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding Title, Mode=OneWay}" />
+                                </TextBlock>
+                            </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

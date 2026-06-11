@@ -88,4 +88,28 @@ public class LibraryViewModelTests
         await vm.WaitForIdleAsync();
         vm.SearchResults.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task NavigateToHit_selects_matching_section_and_clears_search()
+    {
+        using var temp = new AppTempDb();
+        using var dir = new TempDir();
+        var vm = Build(temp, dir);
+        await vm.LoadSectionsAsync();
+
+        // Set up a search that returns a hit in "Travel Vlogs".
+        vm.SearchText = "iceland";
+        await vm.WaitForIdleAsync();
+        var hit = vm.SearchResults.First(h => h.Title == "Travel Vlogs" || h.Title.Contains("Iceland"));
+
+        // Act: navigate to the hit.
+        await vm.NavigateToHitCommand.ExecuteAsync(hit);
+
+        // The section whose SectionId matches the hit must be selected.
+        vm.SelectedSection.ShouldNotBeNull();
+        vm.SelectedSection!.SectionId.ShouldBe(hit.SectionId);
+
+        // Search text must be cleared, collapsing the results panel.
+        vm.SearchText.ShouldBe("");
+    }
 }
