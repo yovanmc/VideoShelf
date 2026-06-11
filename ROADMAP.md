@@ -1,37 +1,47 @@
 # VideoShelf — ROADMAP
 
-> Source of truth for what to build next. A fresh session reads this, finds the topmost milestone that is **not ✅ Merged**, and acts. Follows the `/roadmap` workflow (Opus plans/researches · Sonnet implements · ping at every phase handoff).
+> Source of truth for what to build next. A fresh session reads this, finds the topmost milestone that is **not ✅ Merged**, and acts. Follows the `/roadmap` workflow (Opus plans/researches · Sonnet implements · ping me at every phase handoff with the paste-ready prompt + which `/model` to switch to). This file — not the runbook's progress log — is the canonical state; keep state here, not in chat, and `/clear` between phases.
 
-**Legend:** ✅ Merged · 📝 Plan ready (execute next) · 🔬 Researching/Planning · [ ] Not started (plan first)
+**Legend:** ✅ Merged · 🔨 In progress (on a branch, not yet merged) · 📝 Plan ready (execute next) · 🔬 Researching/Planning · [ ] Not started (plan first)
 
 ## Definition
 
-Windows video library + player — "AudioShelf for video" on the VideoTriage stack (.NET 10 WPF + LibVLCSharp play-everything + SQLite). Multi-source → section → series/standalone → episode; section tags + discovery; watched/unwatched; lean player + PiP; **strictly read-only** (rename tool is the only mutation). Self-contained — all playback/thumbnails/metadata from bundled libVLC, **no external tools (ffmpeg/HandBrake) on PATH**, no network for content.
+Windows video library + player — "AudioShelf for video" on the VideoTriage stack (.NET 10 WPF + WPF-UI + LibVLCSharp play-everything + SQLite). Multi-source → section → series/standalone → episode; section tags + discovery; watched/unwatched + resume; lean player + PiP; **strictly read-only** (the opt-in rename tool is the only mutation). Self-contained — all playback/thumbnails/metadata from bundled libVLC, **no external tools (ffmpeg/HandBrake) on PATH**, no network for content.
 
 - Repo: https://github.com/yovanmc/VideoShelf (default branch `main`)
-- Design spec: [`docs/superpowers/specs/2026-06-11-videoshelf-design.md`](docs/superpowers/specs/2026-06-11-videoshelf-design.md)
+- Design spec: [`docs/superpowers/specs/2026-06-11-videoshelf-design.md`](docs/superpowers/specs/2026-06-11-videoshelf-design.md) (revised 2026-06-11 — feature-research pass, see decision log)
 - Runbook (env, worktrees, CI, conventions): [`docs/superpowers/WORKFLOW-execution.md`](docs/superpowers/WORKFLOW-execution.md)
 
 ## Conventions (see runbook for detail)
 
+- **Two-model split:** Opus does brainstorming/research/planning; Sonnet does implementation. Opus delegates file-reading/research to cheap Explore/general subagents that return a digest. At every phase handoff, the finishing session pings me (PushNotification) with the exact paste-ready next-phase prompt and which `/model` to switch to (the agent can't switch models itself).
+- **Autonomy:** run each phase end-to-end without asking permission for safe, reversible actions; only stop for destructive/ambiguous/blocked, or the handoff ping. CI + tests + screenshots are the quality gate.
 - `gh` is **not on PATH** → `& "C:\Program Files\GitHub CLI\gh.exe"`. Solution is `VideoShelf.slnx` (.NET 10 XML format). Test gate: `dotnet test VideoShelf.slnx -c Release --nologo -v q`.
-- Work in **worktrees** under `.worktrees/`; **`gh pr merge` from the main repo root**, not the worktree. **Direct pushes to `main` are blocked** — every change (incl. docs) ships via branch + PR.
-- Commits: human author `yovanmc` + `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. **No Codex trailer.** Merge `--merge` (no squash) from Phase 2 on.
+- Work in **worktrees** under `.worktrees/`; **`gh pr merge` from the main repo root**, not the worktree. **Direct pushes to `main` are blocked** — every change (incl. docs/this file) ships via branch + PR.
+- Commits: human author `yovanmc` + `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. **No Codex trailer.** Merge `--merge` (no squash) from Phase 2 on. The previous-phase ROADMAP/runbook status flip rides on the next phase's branch.
 
 ## Milestones
 
-| # | Phase | Status | Branch | PR | Notes |
-|---|-------|--------|--------|----|----|
-| 1 | Foundation (Core indexer) | ✅ Merged | `feat/foundation` | #1 | VideoExtensions, NaturalComparer, TitleParser, SectionGrouper, VideoShelfDb (WAL/FK, idempotent schema), FolderScanner, Library/Watch repos, ScanService. 32 Core tests. CI `build-and-test`. |
-| 2 | App shell + library browse | 📝 Plan ready | `feat/app-shell` | — | **Execute next.** Plan exists: [`app-shell`](docs/superpowers/plans/2026-06-11-videoshelf-app-shell.md). WPF shell, browse, thumbnails, search, sort, unwatched badges, missing-file marking. Adds App + App.Tests. |
-| 3 | Playback | [ ] Not started | `feat/playback` | — | Player + PiP, resume, auto-next (in-series), embedded subtitle/audio pickers, chapters, seek-preview, screenshot. Plan first. |
-| 4 | Discovery + tags | [ ] Not started | `feat/discovery` | — | Continue-watching + recency rails, For-you / pick-a-tag / more-from-section, section tagging. Plan first. |
-| 5 | Opt-in rename tool | [ ] Not started | `feat/rename-tool` | — | Preview diff → confirm → defensive rename + undo manifest; DB repaths off stable IDs. Plan first. |
-| 6 | Harness + release polish | [ ] Not started | `feat/harness-polish` | — | Fixture/launch/screenshot harness; MSIX packaging + CI `package` job (assert no media tools bundled). Plan first. |
+| # | Phase | Status | Plan | PR | Notes |
+|---|-------|--------|------|----|----|
+| 1 | Foundation (Core indexer) | ✅ Merged | [M1](docs/superpowers/plans/2026-06-11-videoshelf-foundation.md) | [#1](https://github.com/yovanmc/VideoShelf/pull/1) | VideoExtensions, NaturalComparer, TitleParser, SectionGrouper, VideoShelfDb (WAL/FK, idempotent schema), FolderScanner, Library/Watch repos, ScanService. 32 Core tests. CI `build-and-test`. |
+| 2 | App shell + library browse | ✅ Merged | [M2](docs/superpowers/plans/2026-06-11-videoshelf-app-shell.md) | [#4](https://github.com/yovanmc/VideoShelf/pull/4) | VideoShelf.App WPF shell + App.Tests; Core schema (`missing`/`added_at`/`resume_position`, idempotent guarded migration); browse read-model + search (#1) + sort (#3); folder picker, background scan coordinator, fail-safe libVLC thumbnail cache; browse VMs + shell views; unwatched badges (#6); missing-file dimming (#9); search jump-to. **71 tests.** Review caught + fixed a **Critical cross-thread `ObservableCollection`** bug (`ConfigureAwait(false)` on UI-bound load chains) — tests alone missed it. |
+| 3 | Playback (player + PiP) | 🔨 In progress (`feat/playback`) | [M3](docs/superpowers/plans/2026-06-11-videoshelf-playback.md) | — | **What's next = finish this.** Plan written; Tasks 0–17 implemented & committed on `feat/playback`: Core (resume r/w/clear, watched-clears-resume, `GetNextEpisode`, `SettingsRepository` auto-advance); `IPlaybackEngine` + `FakePlaybackEngine`; `ResumePolicy`; `PlayerViewModel` (transport, resume save/offer, end-of-media auto-watched + auto-next #10, track/chapter pickers incl. subtitles-off, keyboard map, screenshot #8, seek-preview #2 throttle, missing-file guard); launch-from-library; `MainViewModel` host + PiP routing; DI; thin `LibVlcPlaybackEngine` (+`LibVLCSharp.WPF 3.9.7.1`). **138 tests (60 Core + 78 App).** **Remaining = Batch E:** Task 18 `PlayerView.xaml` (`VideoView` + additive overlay), 19 `MiniPlayerWindow` (PiP), 20 auto-advance settings toggle UI, 21 final gate → then whole-branch review → PR → CI → `--merge`. Concrete engine + views are integration-only (screenshot-verified in Phase 6). |
+| 4 | Discovery + tags | [ ] Not started | — | — | Continue-watching rail (#5 data already persisted in Phase 3) + recently-added/recently-watched rails (#4); For-you / pick-a-tag / more-from-section; section tagging UI (`section_tags` table exists). **Plan first (Opus).** |
+| 5 | Opt-in rename tool | [ ] Not started | — | — | Preview diff → confirm → defensive crash-safe reversible rename + undo manifest; DB repaths off stable IDs (overrides/watched/resume survive). The only video-file mutation. **Plan first (Opus).** |
+| 6 | Harness + release polish | [ ] Not started | — | — | Fixture (tiny playable clips) + launch hooks (`--folder`/`--autostart`/`--done-signal`) + screenshot harness; **retroactive visual sweep of ALL prior UI** (shell/browse/player/PiP/discovery — deferred here, see gotchas); MSIX packaging + CI `package` job (assert no media tools bundled). **Plan first (Opus).** |
 
 ## Decision log & gotchas
 
-- **Read-only & destructive-op discipline:** never move/delete video files except via the opt-in rename tool (verify target free, fail safe, undo manifest). Missing files flagged in-app, never auto-removed. Grouping/overrides live in SQLite, never written to disk.
-- **Self-contained:** no external media tools on PATH; the harness-polish `package` job asserts this.
-- **Git:** stale `.git/index.lock` → delete & retry; remove worktree before `git branch -d`.
-- **History note:** Plan 1 + spec PRs (#1, #2) were squash-merged before the runbook; use `--merge` from Phase 2.
+- **Feature-expansion (spec revised 2026-06-11, [PR #2](https://github.com/yovanmc/VideoShelf/pull/2)):** a research pass added 10 features + embedded track pickers and **reversed three earlier cuts** — **resume/continue-watching** (#5), **auto-play next episode within a series** (#10, settings-toggle, standalones never), and **embedded subtitle + audio-track pickers** (live from libVLC; no sidecars/downloads). Plus search (#1), seek-preview thumbnails (#2), sort (#3), recency rails (#4), unwatched badges (#6), chapter nav (#7), frame capture (#8), missing-file detection (#9). Still OUT: playback-speed, external subtitle sidecars/downloading, whole-library continuous play, online metadata scraping.
+- **Execution workflow adopted ([PR #3](https://github.com/yovanmc/VideoShelf/pull/3)):** VideoTriage-style one-phase-per-run runbook; superseded as canonical state by this ROADMAP.
+- **libVLC versions (pinned, restored clean):** `LibVLCSharp 3.9.7.1`, `VideoLAN.LibVLC.Windows 3.0.23.1`, `LibVLCSharp.WPF 3.9.7.1`. Do not move to 4.x. (Plan pins were older; bumped to latest 3.x that restores.)
+- **Testability pattern (mirror for all libVLC/WPF work):** abstract native/UI behind an interface (`IThumbnailService`, `IPlaybackEngine`); put ALL logic in plain VMs/services unit-tested with a fake; keep the THIN concrete (`LibVlcThumbnailService`, `LibVlcPlaybackEngine`) and the Views/PiP **uncovered by unit tests** — they are integration, verified by the Phase 6 screenshot harness.
+- **Visual verification DEFERRED to Phase 6:** no launch hooks/fixture exist yet, so the shell (Phase 2), player, PiP (Phase 3) and discovery (Phase 4) ship without an eyes-on pass. Phase 6 MUST do a full retroactive screenshot sweep. The Phase-2 cross-thread bug (below) shows tests alone are insufficient for UI correctness here.
+- **Cross-thread `ObservableCollection` gotcha:** never `ConfigureAwait(false)` on a load chain that ends by mutating a UI-bound collection — the continuation lands on a thread-pool thread and WPF throws `NotSupportedException`. Keep heavy work inside `Task.Run` but resume on the captured UI context. A `SynchronizationContext` regression test guards this.
+- **Theming rule (caused regressions in a sibling project):** never override/re-base a WPF-UI themed control's Style/ControlTemplate for cosmetics — additive (Opacity/RenderTransform) only.
+- **PiP re-parenting (highest Phase-3 integration risk):** one libVLC `MediaPlayer` can host only one `VideoView`; on PiP toggle the inline surface must be cleared (`MediaPlayer = null`) before the mini-player claims it, else video blanks/freezes. Verify in the harness.
+- **Seek-preview (#2) scope:** Phase 3 implements the testable seam (cached, fail-safe) and snapshots the live frame; a dedicated off-screen preview decoder is deferred to Phase 6 polish.
+- **Git:** stale `.git/index.lock` → delete & retry; remove worktree before `git branch -d`; `gh pr merge` from the main repo root.
+- **Minor deferred:** `LibraryViewModel` sort/search `_pending` task race (harmless); unused `db` param in `ScanService` (cosmetic — reserved for future transaction scoping).
+- **History note:** Plan-1 + spec PRs (#1, #2) and the docs PRs (#3, #5) were squash-merged; feature phases use `--merge` from Phase 2 on.
