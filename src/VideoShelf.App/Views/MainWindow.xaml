@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  xmlns:vm="clr-namespace:VideoShelf.App.ViewModels"
+                 xmlns:views="clr-namespace:VideoShelf.App.Views"
                  xmlns:conv="clr-namespace:VideoShelf.App.Converters"
                  Title="VideoShelf"
                  Width="1180"
@@ -174,7 +175,11 @@
                                                             <CheckBox DockPanel.Dock="Right"
                                                                       IsChecked="{Binding Watched, Mode=OneWay}"
                                                                       Command="{Binding ToggleWatchedCommand}" />
-                                                            <TextBlock Text="{Binding Title}" />
+                                                            <ui:Button DockPanel.Dock="Left" Content="&#9654;"
+                                                                       Padding="8,2" Margin="0,0,8,0"
+                                                                       ToolTip="Play"
+                                                                       Command="{Binding PlayCommand}" />
+                                                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
                                                         </DockPanel>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -187,6 +192,11 @@
                     </ItemsControl>
                 </ScrollViewer>
             </DockPanel>
+
+            <!-- Inline player pane: overlays both columns while playing and not in PiP. -->
+            <views:PlayerView Grid.Column="0" Grid.ColumnSpan="2"
+                              DataContext="{Binding}"
+                              Visibility="{Binding IsInlinePlayerVisible, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
     </Grid>
 </ui:FluentWindow>

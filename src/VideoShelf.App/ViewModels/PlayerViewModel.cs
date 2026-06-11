@@ -34,6 +34,12 @@ public sealed partial class PlayerViewModel(
     [ObservableProperty]
     private string? _playbackError;
 
+    /// <summary>True when a playback/missing-file error is set — bound by the error banner's visibility
+    /// (the shared BoolToVisibility converter is bool-only, so it cannot key off the string directly).</summary>
+    public bool HasError => !string.IsNullOrEmpty(PlaybackError);
+
+    partial void OnPlaybackErrorChanged(string? value) => OnPropertyChanged(nameof(HasError));
+
     [ObservableProperty]
     private double _positionSeconds;
 

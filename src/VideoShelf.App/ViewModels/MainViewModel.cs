@@ -44,6 +44,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isPictureInPicture;
 
+    /// <summary>The inline player pane is shown only while playing AND not detached into the mini-player.</summary>
+    public bool IsInlinePlayerVisible => IsPlayerVisible && !IsPictureInPicture;
+
+    partial void OnIsPlayerVisibleChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
+    partial void OnIsPictureInPictureChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
+
     /// <summary>Routes a play request into the player and shows the player pane.</summary>
     public void PlayEpisode(EpisodeView episode)
     {
