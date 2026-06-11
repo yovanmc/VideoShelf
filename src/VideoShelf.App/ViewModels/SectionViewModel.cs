@@ -33,12 +33,22 @@ public sealed partial class SectionViewModel(
             .ConfigureAwait(false);
 
         SeriesList.Clear();
-        var unwatched = 0;
         foreach (var s in summaries)
         {
-            SeriesList.Add(new SeriesViewModel(s, library, watch, thumbnails));
-            unwatched += s.UnwatchedCount;
+            var seriesVm = new SeriesViewModel(s, library, watch, thumbnails);
+            seriesVm.UnwatchedChanged += (_, _) => RecomputeUnwatched();
+            SeriesList.Add(seriesVm);
+            await seriesVm.LoadEpisodesAsync(cancellationToken).ConfigureAwait(false);
+            await seriesVm.LoadThumbnailAsync(cancellationToken).ConfigureAwait(false);
         }
-        UnwatchedCount = unwatched;
+        RecomputeUnwatched();
+    }
+
+    public void RecomputeUnwatched()
+    {
+        var total = 0;
+        foreach (var s in SeriesList)
+            total += s.UnwatchedCount;
+        UnwatchedCount = total;
     }
 }

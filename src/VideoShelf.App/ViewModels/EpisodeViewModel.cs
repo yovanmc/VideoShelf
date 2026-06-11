@@ -16,10 +16,13 @@ public sealed partial class EpisodeViewModel(EpisodeView model, WatchRepository 
     [ObservableProperty]
     private bool _watched = model.Watched;
 
+    public event System.EventHandler? WatchedChanged;
+
     [RelayCommand]
     private void ToggleWatched()
     {
         Watched = !Watched;
         watch.SetWatched(model.VideoId, Watched);
+        WatchedChanged?.Invoke(this, System.EventArgs.Empty);
     }
 }

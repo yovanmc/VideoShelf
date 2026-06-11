@@ -29,7 +29,13 @@ public sealed partial class SeriesViewModel(
 
     public bool HasUnwatched => UnwatchedCount > 0;
 
-    partial void OnUnwatchedCountChanged(int value) => OnPropertyChanged(nameof(HasUnwatched));
+    public event System.EventHandler? UnwatchedChanged;
+
+    partial void OnUnwatchedCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(HasUnwatched));
+        UnwatchedChanged?.Invoke(this, System.EventArgs.Empty);
+    }
 
     /// <summary>Recomputes the unwatched badge from the DB (after a watched toggle).</summary>
     public void Refresh()
@@ -46,7 +52,11 @@ public sealed partial class SeriesViewModel(
             .ConfigureAwait(false);
         Episodes.Clear();
         foreach (var row in rows)
-            Episodes.Add(new EpisodeViewModel(row, watch));
+        {
+            var ep = new EpisodeViewModel(row, watch);
+            ep.WatchedChanged += (_, _) => Refresh();
+            Episodes.Add(ep);
+        }
     }
 
     public async Task LoadThumbnailAsync(CancellationToken cancellationToken)
