@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
+using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.Services;
@@ -17,6 +18,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<WatchRepository>();
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
+
+        services.AddSingleton<ScanService>();
+        services.AddSingleton<IScanCoordinator, ScanCoordinator>();
 
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<MainViewModel>();

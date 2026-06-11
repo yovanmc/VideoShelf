@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\VideoShelf.App\VideoShelf.App.csproj" />
+    <ProjectReference Include="..\VideoShelf.Core.Tests\VideoShelf.Core.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
