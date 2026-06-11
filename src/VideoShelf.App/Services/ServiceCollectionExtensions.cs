@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<LibraryBootstrap>().OpenLibrary());
         services.AddSingleton<LibraryRepository>();
         services.AddSingleton<WatchRepository>();
+        services.AddSingleton<SettingsRepository>();
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
 
@@ -27,6 +28,25 @@ public static class ServiceCollectionExtensions
             new ThumbnailCache(
                 sp.GetRequiredService<AppPaths>().ThumbnailDirectory,
                 sp.GetRequiredService<IThumbnailSnapshotter>()));
+
+        services.AddSingleton<ResumePolicy>();
+        // IPlaybackEngine → NullPlaybackEngine until Task 16/17 replaces with LibVlcPlaybackEngine.
+        services.AddSingleton<IPlaybackEngine, NullPlaybackEngine>();
+        services.AddSingleton<PlayerViewModel>(sp =>
+        {
+            var paths = sp.GetRequiredService<AppPaths>();
+            var vm = new PlayerViewModel(
+                sp.GetRequiredService<IPlaybackEngine>(),
+                sp.GetRequiredService<LibraryRepository>(),
+                sp.GetRequiredService<WatchRepository>(),
+                sp.GetRequiredService<SettingsRepository>(),
+                sp.GetRequiredService<ResumePolicy>())
+            {
+                CaptureDirectory = paths.CaptureDirectory,
+                SeekPreviewDirectory = paths.SeekPreviewDirectory,
+            };
+            return vm;
+        });
 
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();

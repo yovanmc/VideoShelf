@@ -164,6 +164,9 @@ public sealed partial class PlayerViewModel(
     /// <summary>Raised when end-of-media should advance to the next in-series episode (auto-advance only).</summary>
     public event EventHandler<EpisodeView>? NextEpisodeRequested;
 
+    /// <summary>Test hook: simulates the engine reaching the end and requesting the given next episode.</summary>
+    public void RaiseNextEpisodeForTest(EpisodeView next) => NextEpisodeRequested?.Invoke(this, next);
+
     /// <summary>Loads an episode, starts playback, and prepares a resume offer if one applies.</summary>
     public void Open(EpisodeView episode)
     {
