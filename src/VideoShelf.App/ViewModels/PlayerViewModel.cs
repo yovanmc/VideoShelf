@@ -32,6 +32,9 @@ public sealed partial class PlayerViewModel(
     private string _title = "";
 
     [ObservableProperty]
+    private string? _playbackError;
+
+    [ObservableProperty]
     private double _positionSeconds;
 
     [ObservableProperty]
@@ -164,6 +167,14 @@ public sealed partial class PlayerViewModel(
     /// <summary>Loads an episode, starts playback, and prepares a resume offer if one applies.</summary>
     public void Open(EpisodeView episode)
     {
+        PlaybackError = null;
+        if (episode.Missing || !System.IO.File.Exists(episode.FilePath))
+        {
+            PlaybackError = $"File not found:\n{episode.FilePath}";
+            Title = episode.Title;
+            return;
+        }
+
         _current = episode;
         _lastSavedAt = 0;
         _length = 0;
@@ -174,9 +185,11 @@ public sealed partial class PlayerViewModel(
         engine.PositionChanged -= OnPositionChanged;
         engine.LengthChanged -= OnLengthChanged;
         engine.Ended -= OnEnded;
+        engine.EncounteredError -= OnEngineError;
         engine.PositionChanged += OnPositionChanged;
         engine.LengthChanged += OnLengthChanged;
         engine.Ended += OnEnded;
+        engine.EncounteredError += OnEngineError;
 
         engine.Load(episode.FilePath);
         engine.Play();
@@ -243,6 +256,14 @@ public sealed partial class PlayerViewModel(
             if (next is not null)
                 NextEpisodeRequested?.Invoke(this, next);
         }
+    }
+
+    private void OnEngineError(object? sender, EventArgs e)
+    {
+        IsPlaying = false;
+        PlaybackError = _current is { } cur
+            ? $"This video could not be played:\n{cur.FilePath}"
+            : "This video could not be played.";
     }
 
     /// <summary>Persists the current position immediately (on pause/stop/close).</summary>

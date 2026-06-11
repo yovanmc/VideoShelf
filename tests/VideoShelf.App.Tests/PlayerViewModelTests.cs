@@ -15,7 +15,8 @@ public class PlayerViewModelTests
         var lib = new LibraryRepository(temp.Db);
         var sectionId = lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S");
         var seriesId = lib.UpsertSeries(sectionId, "Base", false);
-        var path = $@"C:\V\S\e{episodeNo}.mp4";
+        // GetTempFileName creates a real empty file so the missing-file guard passes.
+        var path = System.IO.Path.GetTempFileName();
         var videoId = lib.UpsertVideo(seriesId, path, episodeNo, ".mp4");
         if (resume is { } r) lib.SetResumePosition(videoId, r);
         var ep = new EpisodeView(videoId, seriesId, path, episodeNo, "Base", Watched: false, Missing: false);

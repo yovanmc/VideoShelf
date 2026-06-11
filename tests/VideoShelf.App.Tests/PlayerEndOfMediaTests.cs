@@ -16,7 +16,11 @@ public class PlayerEndOfMediaTests
         var sectionId = lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S");
         var seriesId = lib.UpsertSeries(sectionId, "Base", isStandalone: episodes == 1 ? false : false);
         for (var n = 1; n <= episodes; n++)
-            lib.UpsertVideo(seriesId, $@"C:\V\S\e{n}.mp4", n, ".mp4");
+        {
+            // GetTempFileName creates a real empty file so the missing-file guard passes.
+            var path = System.IO.Path.GetTempFileName();
+            lib.UpsertVideo(seriesId, path, n, ".mp4");
+        }
         return (lib, new WatchRepository(temp.Db), new SettingsRepository(temp.Db), seriesId);
     }
 
