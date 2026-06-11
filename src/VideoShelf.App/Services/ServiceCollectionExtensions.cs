@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<LibraryBootstrap>().OpenLibrary());
         services.AddSingleton<LibraryRepository>();
         services.AddSingleton<WatchRepository>();
+        services.AddSingleton<SettingsRepository>();
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
 
@@ -28,6 +29,25 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<AppPaths>().ThumbnailDirectory,
                 sp.GetRequiredService<IThumbnailSnapshotter>()));
 
+        services.AddSingleton<ResumePolicy>();
+        services.AddSingleton<IPlaybackEngine, LibVlcPlaybackEngine>();
+        services.AddSingleton<PlayerViewModel>(sp =>
+        {
+            var paths = sp.GetRequiredService<AppPaths>();
+            var vm = new PlayerViewModel(
+                sp.GetRequiredService<IPlaybackEngine>(),
+                sp.GetRequiredService<LibraryRepository>(),
+                sp.GetRequiredService<WatchRepository>(),
+                sp.GetRequiredService<SettingsRepository>(),
+                sp.GetRequiredService<ResumePolicy>())
+            {
+                CaptureDirectory = paths.CaptureDirectory,
+                SeekPreviewDirectory = paths.SeekPreviewDirectory,
+            };
+            return vm;
+        });
+
+        services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();
         services.AddSingleton<MainViewModel>();

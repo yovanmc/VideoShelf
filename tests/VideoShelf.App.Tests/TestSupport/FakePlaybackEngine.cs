@@ -1,0 +1,72 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using VideoShelf.App.Services;
+
+namespace VideoShelf.App.Tests.TestSupport;
+
+/// <summary>An in-memory IPlaybackEngine for deterministic view-model tests.
+/// Tests drive it via the Raise* helpers and read the recorded state.</summary>
+public sealed class FakePlaybackEngine : IPlaybackEngine
+{
+    public string? LoadedPath { get; private set; }
+    public bool IsPlaying { get; private set; }
+    public bool Disposed { get; private set; }
+    public int SnapshotCount { get; private set; }
+    public bool SnapshotShouldFail { get; set; }
+    public List<double> Seeks { get; } = new();
+    public int NextChapterCalls { get; private set; }
+    public int PreviousChapterCalls { get; private set; }
+
+    public double Position { get; private set; }
+    public double Length { get; set; }
+    public int Volume { get; set; } = 100;
+
+    public List<TrackOption> AudioTracks { get; } = new();
+    public List<TrackOption> SubtitleTracks { get; } = new();
+    public List<ChapterOption> Chapters { get; } = new();
+
+    private int _currentAudio = -1;
+    private int _currentSubtitle = TrackOption.SubtitlesOffId;
+
+    public void Load(string filePath) { LoadedPath = filePath; }
+    public void Play() => IsPlaying = true;
+    public void Pause() => IsPlaying = false;
+    public void Stop() => IsPlaying = false;
+    public void SeekTo(double seconds) { Position = seconds; Seeks.Add(seconds); }
+
+    public IReadOnlyList<TrackOption> GetAudioTracks() => AudioTracks;
+    public int GetCurrentAudioTrack() => _currentAudio;
+    public void SetAudioTrack(int id) => _currentAudio = id;
+
+    public IReadOnlyList<TrackOption> GetSubtitleTracks() => SubtitleTracks;
+    public int GetCurrentSubtitleTrack() => _currentSubtitle;
+    public void SetSubtitleTrack(int id) => _currentSubtitle = id;
+
+    public IReadOnlyList<ChapterOption> GetChapters() => Chapters;
+    public void NextChapter() => NextChapterCalls++;
+    public void PreviousChapter() => PreviousChapterCalls++;
+
+    public bool TrySnapshot(string outputPngPath)
+    {
+        SnapshotCount++;
+        return !SnapshotShouldFail;
+    }
+
+    public Task<bool> TryGeneratePreviewFrameAsync(double seconds, string outputPngPath, CancellationToken cancellationToken)
+        => Task.FromResult(!SnapshotShouldFail);
+
+    public event EventHandler<double>? PositionChanged;
+    public event EventHandler<double>? LengthChanged;
+    public event EventHandler? Ended;
+    public event EventHandler? EncounteredError;
+
+    // ----- test drivers -----
+    public void RaisePosition(double seconds) { Position = seconds; PositionChanged?.Invoke(this, seconds); }
+    public void RaiseLength(double seconds) { Length = seconds; LengthChanged?.Invoke(this, seconds); }
+    public void RaiseEnded() { IsPlaying = false; Ended?.Invoke(this, EventArgs.Empty); }
+    public void RaiseError() => EncounteredError?.Invoke(this, EventArgs.Empty);
+
+    public void Dispose() => Disposed = true;
+}

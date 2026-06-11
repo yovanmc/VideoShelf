@@ -20,6 +20,8 @@ public sealed partial class LibraryViewModel(
     public ObservableCollection<SectionViewModel> Sections { get; } = [];
     public ObservableCollection<SearchHit> SearchResults { get; } = [];
 
+    public event System.EventHandler<VideoShelf.Core.Models.EpisodeView>? PlayRequested;
+
     [ObservableProperty]
     private SectionViewModel? _selectedSection;
 
@@ -34,7 +36,11 @@ public sealed partial class LibraryViewModel(
         var summaries = await Task.Run(library.GetSectionSummaries);
         Sections.Clear();
         foreach (var s in summaries)
-            Sections.Add(new SectionViewModel(s, library, watch, thumbnails));
+        {
+            var sectionVm = new SectionViewModel(s, library, watch, thumbnails);
+            sectionVm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
+            Sections.Add(sectionVm);
+        }
     }
 
     public async Task SelectSectionAsync(SectionViewModel? section)

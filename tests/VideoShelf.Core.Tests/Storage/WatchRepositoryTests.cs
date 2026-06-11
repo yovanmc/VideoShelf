@@ -40,4 +40,32 @@ public class WatchRepositoryTests
         watch.IsWatched(videoId).ShouldBeFalse();
         watch.RecentlyWatchedVideoIds(10).ShouldContain(videoId); // event history retained
     }
+
+    [Fact]
+    public void MarkWatched_clears_resume_position()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var lib = new LibraryRepository(temp.Db);
+        var watch = new WatchRepository(temp.Db);
+        lib.SetResumePosition(videoId, 55.0);
+
+        watch.SetWatched(videoId, true);
+
+        lib.GetResumePosition(videoId).ShouldBeNull();
+    }
+
+    [Fact]
+    public void MarkUnwatched_does_not_touch_resume_position()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var lib = new LibraryRepository(temp.Db);
+        var watch = new WatchRepository(temp.Db);
+        lib.SetResumePosition(videoId, 30.0);
+
+        watch.SetWatched(videoId, false);
+
+        lib.GetResumePosition(videoId).ShouldBe(30.0);
+    }
 }

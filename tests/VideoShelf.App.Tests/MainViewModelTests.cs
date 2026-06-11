@@ -28,12 +28,16 @@ public class MainViewModelTests
 
         var lib = new LibraryRepository(temp.Db);
         var watch = new WatchRepository(temp.Db);
+        var settings = new SettingsRepository(temp.Db);
         var scanService = new ScanService(temp.Db, lib);
         var coordinator = new ScanCoordinator(lib, scanService);
 
         var sources = new SourcesViewModel(lib, new FakeFolderPicker(dir.Path));
         var libraryVm = new LibraryViewModel(lib, watch, new NullThumbs());
-        var vm = new MainViewModel(sources, libraryVm, coordinator);
+        var engine = new FakePlaybackEngine();
+        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
+        var settingsVm = new SettingsViewModel(settings);
+        var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

@@ -25,4 +25,10 @@ public sealed partial class EpisodeViewModel(EpisodeView model, WatchRepository 
         watch.SetWatched(model.VideoId, Watched);
         WatchedChanged?.Invoke(this, System.EventArgs.Empty);
     }
+
+    /// <summary>Raised when the user asks to play this episode; the shell routes it to the player.</summary>
+    public event System.EventHandler<EpisodeView>? PlayRequested;
+
+    [RelayCommand]
+    private void Play() => PlayRequested?.Invoke(this, model);
 }

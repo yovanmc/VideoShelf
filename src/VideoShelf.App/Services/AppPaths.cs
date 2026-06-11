@@ -19,4 +19,6 @@ public sealed class AppPaths
 
     public string DatabasePath => Path.Combine(Root, "library.db");
     public string ThumbnailDirectory => Path.Combine(Root, "thumbs");
+    public string CaptureDirectory => Path.Combine(Root, "captures");
+    public string SeekPreviewDirectory => Path.Combine(Root, "seek-preview");
 }

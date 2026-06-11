@@ -30,6 +30,7 @@ public sealed partial class SeriesViewModel(
     public bool HasUnwatched => UnwatchedCount > 0;
 
     public event System.EventHandler? UnwatchedChanged;
+    public event System.EventHandler<EpisodeView>? PlayRequested;
 
     partial void OnUnwatchedCountChanged(int value)
     {
@@ -54,6 +55,7 @@ public sealed partial class SeriesViewModel(
         {
             var ep = new EpisodeViewModel(row, watch);
             ep.WatchedChanged += (_, _) => Refresh();
+            ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);
         }
     }
