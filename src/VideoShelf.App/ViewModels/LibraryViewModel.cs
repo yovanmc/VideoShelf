@@ -30,7 +30,7 @@ public sealed partial class LibraryViewModel(
 
     public async Task LoadSectionsAsync()
     {
-        var summaries = await Task.Run(library.GetSectionSummaries).ConfigureAwait(false);
+        var summaries = await Task.Run(library.GetSectionSummaries);
         Sections.Clear();
         foreach (var s in summaries)
             Sections.Add(new SectionViewModel(s, library, watch, thumbnails));
@@ -40,7 +40,7 @@ public sealed partial class LibraryViewModel(
     {
         SelectedSection = section;
         if (section is not null)
-            await section.LoadSeriesAsync(SortMode, CancellationToken.None).ConfigureAwait(false);
+            await section.LoadSeriesAsync(SortMode, CancellationToken.None);
     }
 
     partial void OnSortModeChanged(BrowseSort value)
@@ -56,7 +56,7 @@ public sealed partial class LibraryViewModel(
 
     private async Task RunSearchAsync(string query)
     {
-        var hits = await Task.Run(() => library.Search(query)).ConfigureAwait(false);
+        var hits = await Task.Run(() => library.Search(query));
         SearchResults.Clear();
         foreach (var h in hits)
             SearchResults.Add(h);

@@ -48,8 +48,7 @@ public sealed partial class SeriesViewModel(
 
     public async Task LoadEpisodesAsync(CancellationToken cancellationToken)
     {
-        var rows = await Task.Run(() => library.GetEpisodes(summary.SeriesId), cancellationToken)
-            .ConfigureAwait(false);
+        var rows = await Task.Run(() => library.GetEpisodes(summary.SeriesId), cancellationToken);
         Episodes.Clear();
         foreach (var row in rows)
         {
@@ -63,7 +62,6 @@ public sealed partial class SeriesViewModel(
     {
         if (summary.ThumbnailSeedPath is null)
             return;
-        ThumbnailPath = await thumbnails.GetThumbnailPathAsync(summary.ThumbnailSeedPath, cancellationToken)
-            .ConfigureAwait(false);
+        ThumbnailPath = await thumbnails.GetThumbnailPathAsync(summary.ThumbnailSeedPath, cancellationToken);
     }
 }

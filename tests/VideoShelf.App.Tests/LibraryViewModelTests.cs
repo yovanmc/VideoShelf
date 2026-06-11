@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
 using VideoShelf.App.Services;
@@ -8,7 +9,6 @@ using VideoShelf.Core.Models;
 using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
 using VideoShelf.Core.Tests.TestSupport;
-using System.Threading;
 
 namespace VideoShelf.App.Tests;
 

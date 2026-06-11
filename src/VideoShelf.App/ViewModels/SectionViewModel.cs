@@ -29,8 +29,7 @@ public sealed partial class SectionViewModel(
     public async Task LoadSeriesAsync(BrowseSort sort, CancellationToken cancellationToken)
     {
         var summaries = await Task.Run(
-            () => library.GetSeriesSummaries(summary.SectionId, sort), cancellationToken)
-            .ConfigureAwait(false);
+            () => library.GetSeriesSummaries(summary.SectionId, sort), cancellationToken);
 
         SeriesList.Clear();
         foreach (var s in summaries)
@@ -38,8 +37,8 @@ public sealed partial class SectionViewModel(
             var seriesVm = new SeriesViewModel(s, library, watch, thumbnails);
             seriesVm.UnwatchedChanged += (_, _) => RecomputeUnwatched();
             SeriesList.Add(seriesVm);
-            await seriesVm.LoadEpisodesAsync(cancellationToken).ConfigureAwait(false);
-            await seriesVm.LoadThumbnailAsync(cancellationToken).ConfigureAwait(false);
+            await seriesVm.LoadEpisodesAsync(cancellationToken);
+            await seriesVm.LoadThumbnailAsync(cancellationToken);
         }
         RecomputeUnwatched();
     }
