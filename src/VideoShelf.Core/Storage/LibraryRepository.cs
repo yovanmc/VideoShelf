@@ -128,4 +128,30 @@ public sealed class LibraryRepository(VideoShelfDb db)
         while (r.Read()) list.Add(new Series(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3), r.GetInt64(4) != 0));
         return list;
     }
+
+    /// <summary>Marks every video under the given source as missing (a scan will clear the ones it finds).</summary>
+    public void MarkAllMissingForSource(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            UPDATE videos SET missing = 1
+            WHERE series_id IN (
+                SELECT se.id FROM series se
+                JOIN sections sc ON sc.id = se.section_id
+                WHERE sc.source_id = $src)
+            """;
+        cmd.Parameters.AddWithValue("$src", sourceId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Clears the missing flag for a single video by file path (called when a scan finds it).</summary>
+    public void ClearMissing(string filePath)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET missing = 0 WHERE file_path = $p";
+        cmd.Parameters.AddWithValue("$p", filePath);
+        cmd.ExecuteNonQuery();
+    }
 }

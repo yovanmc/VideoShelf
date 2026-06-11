@@ -14,10 +14,10 @@ public sealed class TempDir : IDisposable
         Directory.CreateDirectory(Path);
     }
 
-    /// <summary>Create an empty file at a relative path, creating parent dirs. Returns full path.</summary>
+    /// <summary>Create an empty file at a relative path, creating parent dirs. Returns full normalized path.</summary>
     public string Touch(string relativePath)
     {
-        var full = System.IO.Path.Combine(Path, relativePath);
+        var full = System.IO.Path.GetFullPath(System.IO.Path.Combine(Path, relativePath));
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(full)!);
         File.WriteAllBytes(full, Array.Empty<byte>());
         return full;
