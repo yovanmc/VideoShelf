@@ -154,4 +154,78 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.Parameters.AddWithValue("$p", filePath);
         cmd.ExecuteNonQuery();
     }
+
+    public IReadOnlyList<SectionSummary> GetSectionSummaries()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT sc.id, sc.source_id, sc.display_name,
+                   COUNT(DISTINCT se.id) AS series_count,
+                   COALESCE(SUM(CASE WHEN v.id IS NOT NULL AND v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched
+            FROM sections sc
+            LEFT JOIN series se ON se.section_id = sc.id
+            LEFT JOIN videos v ON v.series_id = se.id
+            GROUP BY sc.id, sc.source_id, sc.display_name
+            ORDER BY sc.display_name
+            """;
+        var list = new List<SectionSummary>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new SectionSummary(
+                r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetInt32(3), r.GetInt32(4)));
+        return list;
+    }
+
+    public IReadOnlyList<SeriesSummary> GetSeriesSummaries(long sectionId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT se.id, se.section_id, se.base_title, se.is_standalone,
+                   COUNT(v.id) AS episode_count,
+                   COALESCE(SUM(CASE WHEN v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched,
+                   (SELECT file_path FROM videos vv WHERE vv.series_id = se.id
+                    ORDER BY vv.episode_no LIMIT 1) AS thumb_seed
+            FROM series se
+            LEFT JOIN videos v ON v.series_id = se.id
+            WHERE se.section_id = $sec
+            GROUP BY se.id, se.section_id, se.base_title, se.is_standalone
+            ORDER BY se.sort_key
+            """;
+        cmd.Parameters.AddWithValue("$sec", sectionId);
+        var list = new List<SeriesSummary>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new SeriesSummary(
+                r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetInt64(3) != 0,
+                r.GetInt32(4), r.GetInt32(5), r.IsDBNull(6) ? null : r.GetString(6)));
+        return list;
+    }
+
+    public IReadOnlyList<EpisodeView> GetEpisodes(long seriesId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            WHERE v.series_id = $s
+            ORDER BY v.episode_no
+            """;
+        cmd.Parameters.AddWithValue("$s", seriesId);
+        var list = new List<EpisodeView>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+        {
+            var episodeNo = r.GetInt32(3);
+            var baseTitle = r.GetString(4);
+            var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
+            list.Add(new EpisodeView(
+                r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
+                r.GetInt64(5) != 0, r.GetInt64(6) != 0));
+        }
+        return list;
+    }
 }
