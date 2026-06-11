@@ -57,17 +57,19 @@ public sealed class LibraryRepository(VideoShelfDb db)
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            INSERT INTO videos(series_id, file_path, episode_no, raw_filename, format)
-            VALUES($s, $p, $e, $r, $f)
+            INSERT INTO videos(series_id, file_path, episode_no, raw_filename, format, added_at, missing)
+            VALUES($s, $p, $e, $r, $f, $at, 0)
             ON CONFLICT(file_path) DO UPDATE SET series_id=excluded.series_id,
-                episode_no=excluded.episode_no, raw_filename=excluded.raw_filename, format=excluded.format
+                episode_no=excluded.episode_no, raw_filename=excluded.raw_filename,
+                format=excluded.format
             RETURNING id;
             """;
         cmd.Parameters.AddWithValue("$s", seriesId);
         cmd.Parameters.AddWithValue("$p", filePath);
         cmd.Parameters.AddWithValue("$e", episodeNo);
-        cmd.Parameters.AddWithValue("$r", Path.GetFileName(filePath));
+        cmd.Parameters.AddWithValue("$r", System.IO.Path.GetFileName(filePath));
         cmd.Parameters.AddWithValue("$f", format);
+        cmd.Parameters.AddWithValue("$at", System.DateTimeOffset.UtcNow.ToString("o"));
         return (long)cmd.ExecuteScalar()!;
     }
 
@@ -87,7 +89,8 @@ public sealed class LibraryRepository(VideoShelfDb db)
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT id, series_id, file_path, episode_no, raw_filename, format, duration, thumbnail_path, watched
+            SELECT id, series_id, file_path, episode_no, raw_filename, format, duration,
+                   thumbnail_path, watched, added_at, missing
             FROM videos WHERE series_id=$s ORDER BY episode_no
             """;
         cmd.Parameters.AddWithValue("$s", seriesId);
@@ -97,7 +100,8 @@ public sealed class LibraryRepository(VideoShelfDb db)
             list.Add(new Video(
                 r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetInt32(3), r.GetString(4),
                 r.GetString(5), r.IsDBNull(6) ? null : r.GetDouble(6),
-                r.IsDBNull(7) ? null : r.GetString(7), r.GetInt64(8) != 0));
+                r.IsDBNull(7) ? null : r.GetString(7), r.GetInt64(8) != 0,
+                r.IsDBNull(9) ? "" : r.GetString(9), r.GetInt64(10) != 0));
         return list;
     }
 
