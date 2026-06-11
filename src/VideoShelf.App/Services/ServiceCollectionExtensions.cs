@@ -16,6 +16,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<LibraryRepository>();
         services.AddSingleton<WatchRepository>();
 
+        services.AddSingleton<IFolderPicker, FolderPicker>();
+
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;
