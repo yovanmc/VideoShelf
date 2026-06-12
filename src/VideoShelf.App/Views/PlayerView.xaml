@@ -15,7 +15,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid x:Name="RootGrid" Background="Black" MouseMove="OnSurfaceMouseMove">
+    <Grid x:Name="RootGrid" MouseMove="OnSurfaceMouseMove">
         <Border x:Name="PlayerShell" Background="Black">
             <Border.Style>
                 <Style TargetType="Border">
@@ -142,6 +142,7 @@
 
         <Grid.Style>
             <Style TargetType="Grid">
+                <Setter Property="Background" Value="Black" />
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
                         <Setter Property="Background" Value="{x:Null}" />
