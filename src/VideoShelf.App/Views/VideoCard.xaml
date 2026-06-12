@@ -17,7 +17,8 @@
                     Height="112" ClipToBounds="True">
                 <Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
             </Border>
-            <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction}"
+            <!-- RangeBase.Value binds TwoWay by default; ProgressFraction is read-only, so pin OneWay. -->
+            <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction, Mode=OneWay}"
                          Height="3" Margin="0,2,0,4" />
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
