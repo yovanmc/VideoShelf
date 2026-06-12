@@ -23,6 +23,12 @@ public sealed partial class SectionDetailViewModel(
     public long SectionId { get; private set; }
 
     [ObservableProperty]
+    private bool _isEditing;
+
+    [RelayCommand]
+    private void ToggleEdit() => IsEditing = !IsEditing;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
     private string? _creatorArtPath;
 
@@ -47,6 +53,7 @@ public sealed partial class SectionDetailViewModel(
     public async Task LoadAsync(long sectionId)
     {
         SectionId = sectionId;
+        IsEditing = false;
 
         // GetSection(long) returns a lean Section without VideoCount/ThumbnailSeedPath;
         // use GetSectionSummaries().First(...) to get the full SectionSummary.

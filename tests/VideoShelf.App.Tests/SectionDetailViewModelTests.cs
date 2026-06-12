@@ -43,6 +43,19 @@ public sealed class SectionDetailViewModelTests
         f.Vm.DisplayName.ShouldBe("Creator A");
         f.Vm.SeriesList.ShouldNotBeEmpty();
         f.Vm.Tags.ShouldBe(new[] { "comedy" });
+        f.Vm.IsEditing.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ToggleEdit_flips_IsEditing()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        await f.Vm.LoadAsync(f.SectionId);
+        f.Vm.IsEditing.ShouldBeFalse();
+        f.Vm.ToggleEditCommand.Execute(null);
+        f.Vm.IsEditing.ShouldBeTrue();
+        f.Vm.ToggleEditCommand.Execute(null);
+        f.Vm.IsEditing.ShouldBeFalse();
     }
 
     [Fact]

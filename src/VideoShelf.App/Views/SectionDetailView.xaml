@@ -24,6 +24,20 @@
                         </LinearGradientBrush>
                     </Border.Background>
                 </Border>
+                <!-- Edit/Done toggle button (top-right of hero) -->
+                <ui:Button Command="{Binding ToggleEditCommand}" Appearance="Transparent"
+                           Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
+                    <ui:Button.Style>
+                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                            <Setter Property="Content" Value="Edit" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                    <Setter Property="Content" Value="Done" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:Button.Style>
+                </ui:Button>
                 <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,16">
                     <TextBlock Text="{Binding DisplayName}" FontSize="28" FontWeight="Bold" Foreground="White"/>
                     <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
@@ -39,34 +53,41 @@
                                             <TextBlock Text="{Binding}" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <Button Content="✕" Padding="2,0" Background="Transparent" BorderThickness="0" Foreground="White"
                                                     Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"/>
+                                                    CommandParameter="{Binding}"
+                                                    Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"/>
-                        <ui:Button Content="Use default" Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
-                                   Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"/>
+                        <!-- Art-action buttons: only visible in edit mode -->
+                        <StackPanel Orientation="Horizontal"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                            <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"/>
+                            <ui:Button Content="Use default" Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
+                                       Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
             </Grid>
 
-            <!-- TAG INPUT + suggestions -->
-            <StackPanel Orientation="Horizontal" Margin="24,12,24,0">
-                <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add tag…" Width="220"/>
-                <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"/>
+            <!-- TAG EDITOR: only visible in edit mode -->
+            <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal" Margin="24,12,24,0">
+                    <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add tag…" Width="220"/>
+                    <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"/>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Suggestions}" Margin="24,8,24,0">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding}" Margin="0,0,6,6"
+                                    Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
-            <ItemsControl ItemsSource="{Binding Suggestions}" Margin="24,8,24,0">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Content="{Binding}" Margin="0,0,6,6"
-                                Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                CommandParameter="{Binding}"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
 
             <!-- SERIES GRID (accordion tiles) -->
             <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="24,16,24,8"/>
@@ -124,7 +145,8 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                     <ui:Button Content="Rename files…" Command="{Binding RequestRenameCommand}"
-                                               Margin="0,6,0,0" HorizontalAlignment="Left"/>
+                                               Margin="0,6,0,0" HorizontalAlignment="Left"
+                                               Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
