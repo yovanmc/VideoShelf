@@ -11,6 +11,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         _settings = settings;
         _autoAdvanceEpisodes = settings.GetAutoAdvanceEpisodes();
+        RefreshLastScan();
     }
 
     [ObservableProperty]
@@ -18,4 +19,20 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnAutoAdvanceEpisodesChanged(bool value)
         => _settings.SetAutoAdvanceEpisodes(value);
+
+    [ObservableProperty]
+    private string _lastScanText = "Never scanned";
+
+    private void RefreshLastScan()
+    {
+        var t = _settings.GetLastScanUtc();
+        LastScanText = t is null ? "Never scanned" : $"Last scanned {t.Value.ToLocalTime():g}";
+    }
+
+    /// <summary>Records a completed scan and refreshes the displayed time.</summary>
+    public void MarkScanned()
+    {
+        _settings.SetLastScanUtc(DateTime.UtcNow);
+        RefreshLastScan();
+    }
 }
