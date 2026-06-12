@@ -143,8 +143,12 @@ public sealed class HarnessRunner
             var sections = _library.GetSections(source.Id);
             if (sections.Count == 0) continue;
 
-            // Tag the first section with "demo"
-            _tags.AddTag(sections[0].Id, "demo");
+            // Tag EVERY section with "demo" so that, once a video in one section is marked
+            // watched (below), the OTHER unwatched sections share that tag's affinity and
+            // surface in the For-you / Recommended-creators / Recommended-videos rails.
+            // (Tagging only one section left those rails empty — GetForYou needs a watched,
+            // tagged section to build affinity AND a distinct unwatched section sharing it.)
+            foreach (var section in sections) _tags.AddTag(section.Id, "demo");
 
             // Seed watched+resume on the richest series available (the most episodes),
             // not blindly sections[0]'s first series — that section may hold only
