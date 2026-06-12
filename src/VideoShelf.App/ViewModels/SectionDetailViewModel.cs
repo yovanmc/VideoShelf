@@ -50,7 +50,16 @@ public sealed partial class SectionDetailViewModel(
     }
 
     [RelayCommand]
-    private void AddTag()
+    private void AddTag() => DoAddTag();
+
+    [RelayCommand]
+    private void AddSuggestion(string tag)
+    {
+        TagInput = tag;
+        DoAddTag();
+    }
+
+    private void DoAddTag()
     {
         var norm = TagRepository.Normalize(TagInput);
         if (norm.Length == 0) return;

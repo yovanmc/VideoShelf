@@ -6,6 +6,15 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.Converters;
 
+/// <summary>Returns Visible when the bound enum value's ToString() matches the converter parameter string; else Collapsed.</summary>
+public sealed class EnumToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => value?.ToString() == p?.ToString() ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c)
+        => throw new NotSupportedException();
+}
+
 public sealed class BoolToVisibility : IValueConverter
 {
     public object Convert(object? value, Type t, object? p, CultureInfo c)

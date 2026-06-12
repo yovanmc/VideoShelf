@@ -68,6 +68,16 @@ public sealed class SectionDetailViewModelTests
     }
 
     [Fact]
+    public async Task AddSuggestion_adds_and_clears_input()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        await f.Vm.LoadAsync(f.SectionId);
+        f.Vm.AddSuggestionCommand.Execute("drama");
+        f.Vm.Tags.ShouldContain("drama");
+        f.Vm.TagInput.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task TagInput_change_updates_suggestions_excluding_already_applied()
     {
         var f = NewFx(); using var _d = f.Db;

@@ -22,6 +22,7 @@
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:MissingToOpacity x:Key="MissingToOpacity" />
             <conv:SortModeToIndex x:Key="SortModeToIndex" />
+            <conv:EnumToVisibility x:Key="EnumToVis" />
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
@@ -34,173 +35,210 @@
         <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="VideoShelf" />
 
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="288" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <!-- LEFT: sources + sections sidebar -->
-            <Border Grid.Column="0" Padding="16"
-                    BorderBrush="{StaticResource DividerBrush}"
-                    BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="SOURCES" Style="{StaticResource SectionHeader}" />
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
-                        <ui:Button Content="Add source" Command="{Binding Sources.AddSourceCommand}" />
-                        <ui:Button Content="Scan" Margin="8,0,0,0"
-                                   Command="{Binding ScanAndReloadCommand}" />
-                    </StackPanel>
-                    <CheckBox DockPanel.Dock="Top" Margin="0,0,0,8"
-                              Content="Auto-play next episode"
-                              IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
-                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel Margin="0,2">
-                                    <ui:Button DockPanel.Dock="Right" Content="Remove"
-                                               Command="{Binding DataContext.Sources.RemoveSourceCommand,
-                                                         RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                               CommandParameter="{Binding}" />
-                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
-                                               Opacity="0.85" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+            <!-- Top nav bar: Home / Browse buttons -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,8,16,4">
+                <ui:Button Content="Home" Command="{Binding ShowHomeCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Browse" Command="{Binding ShowBrowseCommand}" />
+            </StackPanel>
 
-                    <TextBlock DockPanel.Dock="Top" Margin="{StaticResource SectionGap}"
-                               Text="SECTIONS" Style="{StaticResource SectionHeader}" />
-                    <ListBox ItemsSource="{Binding Library.Sections}"
-                             SelectedItem="{Binding Library.SelectedSection, Mode=TwoWay}"
-                             VirtualizingStackPanel.IsVirtualizing="True"
-                             VirtualizingStackPanel.VirtualizationMode="Recycling"
-                             BorderThickness="0" Background="Transparent">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel>
-                                    <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
-                                            CornerRadius="{StaticResource ControlRadius}"
-                                            Padding="6,1" VerticalAlignment="Center"
-                                            Visibility="{Binding HasUnwatched,
-                                                Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="{Binding UnwatchedCount}" FontSize="11"
-                                                   Foreground="#101010" />
-                                    </Border>
-                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
+            <!-- Main content row -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="288" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-            <!-- RIGHT: search + sort + series/episodes -->
-            <DockPanel Grid.Column="1" Margin="16">
-                <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <ui:TextBox Grid.Column="0" PlaceholderText="Search…"
-                                Text="{Binding Library.SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                    <ComboBox Grid.Column="1" Width="170" Margin="8,0,0,0"
-                              SelectedIndex="{Binding Library.SortMode, Converter={StaticResource SortModeToIndex}}">
-                        <ComboBoxItem Content="Name" />
-                        <ComboBoxItem Content="Date added" />
-                        <ComboBoxItem Content="Recently watched" />
-                    </ComboBox>
+                <!-- LEFT: sources + sections sidebar (always visible; used by Browse and Section Detail) -->
+                <Border Grid.Column="0" Padding="16"
+                        BorderBrush="{StaticResource DividerBrush}"
+                        BorderThickness="0,0,1,0">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="SOURCES" Style="{StaticResource SectionHeader}" />
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
+                            <ui:Button Content="Add source" Command="{Binding Sources.AddSourceCommand}" />
+                            <ui:Button Content="Scan" Margin="8,0,0,0"
+                                       Command="{Binding ScanAndReloadCommand}" />
+                        </StackPanel>
+                        <CheckBox DockPanel.Dock="Top" Margin="0,0,0,8"
+                                  Content="Auto-play next episode"
+                                  IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
+                        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,2">
+                                        <ui:Button DockPanel.Dock="Right" Content="Remove"
+                                                   Command="{Binding DataContext.Sources.RemoveSourceCommand,
+                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   CommandParameter="{Binding}" />
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                                   Opacity="0.85" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock DockPanel.Dock="Top" Margin="{StaticResource SectionGap}"
+                                   Text="SECTIONS" Style="{StaticResource SectionHeader}" />
+                        <ListBox ItemsSource="{Binding Library.Sections}"
+                                 SelectedItem="{Binding Library.SelectedSection, Mode=TwoWay}"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                 BorderThickness="0" Background="Transparent">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
+                                                CornerRadius="{StaticResource ControlRadius}"
+                                                Padding="6,1" VerticalAlignment="Center"
+                                                Visibility="{Binding HasUnwatched,
+                                                    Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="{Binding UnwatchedCount}" FontSize="11"
+                                                       Foreground="#101010" />
+                                        </Border>
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- RIGHT: nav-gated content hosts -->
+                <Grid Grid.Column="1">
+
+                    <!-- Home view — DiscoveryView -->
+                    <views:DiscoveryView DataContext="{Binding Discovery}"
+                                         Visibility="{Binding CurrentView,
+                                             RelativeSource={RelativeSource AncestorType=Window},
+                                             Converter={StaticResource EnumToVis},
+                                             ConverterParameter=Home}" />
+
+                    <!-- Browse view — existing browse content (MOVED here, not deleted) -->
+                    <DockPanel Margin="16"
+                               Visibility="{Binding CurrentView,
+                                   RelativeSource={RelativeSource AncestorType=Window},
+                                   Converter={StaticResource EnumToVis},
+                                   ConverterParameter=Browse}">
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0" PlaceholderText="Search…"
+                                        Text="{Binding Library.SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                            <ComboBox Grid.Column="1" Width="170" Margin="8,0,0,0"
+                                      SelectedIndex="{Binding Library.SortMode, Converter={StaticResource SortModeToIndex}}">
+                                <ComboBoxItem Content="Name" />
+                                <ComboBoxItem Content="Date added" />
+                                <ComboBoxItem Content="Recently watched" />
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Search results overlay the browse list when present -->
+                        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Library.SearchResults}"
+                                      Margin="0,0,0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,2" Padding="4,2"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Opacity="0.85"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.Library.NavigateToHitCommand,
+                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <TextBlock>
+                                            <Run Text="{Binding Kind, Mode=OneWay}" />
+                                            <Run Text=" · " />
+                                            <Run Text="{Binding Title, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Series cards for the selected section -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Library.SelectedSection.SeriesList}"
+                                          VirtualizingStackPanel.IsVirtualizing="True"
+                                          VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,10" Padding="10"
+                                                Background="{StaticResource SubtleFillBrush}"
+                                                CornerRadius="{StaticResource CardRadius}">
+                                            <DockPanel>
+                                                <Border DockPanel.Dock="Left" Width="120" Height="68"
+                                                        Background="{StaticResource ThumbPlaceholderBrush}"
+                                                        CornerRadius="{StaticResource ControlRadius}"
+                                                        Margin="0,0,12,0">
+                                                    <Image Style="{StaticResource ThumbnailImage}"
+                                                           Source="{Binding ThumbnailPath, IsAsync=True,
+                                                                    NotifyOnTargetUpdated=True}" />
+                                                </Border>
+                                                <StackPanel>
+                                                    <DockPanel>
+                                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
+                                                                CornerRadius="{StaticResource ControlRadius}"
+                                                                Padding="6,1"
+                                                                Visibility="{Binding HasUnwatched,
+                                                                    Converter={StaticResource BoolToVisibility}}">
+                                                            <TextBlock FontSize="11" Foreground="#101010">
+                                                                <Run Text="{Binding UnwatchedCount, Mode=OneWay}" />
+                                                                <Run Text=" unwatched" />
+                                                            </TextBlock>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" />
+                                                    </DockPanel>
+                                                    <ItemsControl ItemsSource="{Binding Episodes}" Margin="0,6,0,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <DockPanel Margin="0,2"
+                                                                           Opacity="{Binding IsMissing,
+                                                                               Converter={StaticResource MissingToOpacity}}">
+                                                                    <CheckBox DockPanel.Dock="Right"
+                                                                              IsChecked="{Binding Watched, Mode=OneWay}"
+                                                                              Command="{Binding ToggleWatchedCommand}" />
+                                                                    <ui:Button DockPanel.Dock="Left" Content="&#9654;"
+                                                                               Padding="8,2" Margin="0,0,8,0"
+                                                                               ToolTip="Play"
+                                                                               Command="{Binding PlayCommand}" />
+                                                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                                                </DockPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+
+                    <!-- Section detail view -->
+                    <views:SectionDetailView DataContext="{Binding SectionDetail}"
+                                             Visibility="{Binding CurrentView,
+                                                 RelativeSource={RelativeSource AncestorType=Window},
+                                                 Converter={StaticResource EnumToVis},
+                                                 ConverterParameter=SectionDetail}" />
+
                 </Grid>
 
-                <!-- Search results overlay the browse list when present -->
-                <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Library.SearchResults}"
-                              Margin="0,0,0,8">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Margin="0,2" Padding="4,2"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Left"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Opacity="0.85"
-                                    Cursor="Hand"
-                                    Command="{Binding DataContext.Library.NavigateToHitCommand,
-                                              RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}">
-                                <TextBlock>
-                                    <Run Text="{Binding Kind, Mode=OneWay}" />
-                                    <Run Text=" · " />
-                                    <Run Text="{Binding Title, Mode=OneWay}" />
-                                </TextBlock>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <!-- Series cards for the selected section -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Library.SelectedSection.SeriesList}"
-                                  VirtualizingStackPanel.IsVirtualizing="True"
-                                  VirtualizingStackPanel.VirtualizationMode="Recycling">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,0,0,10" Padding="10"
-                                        Background="{StaticResource SubtleFillBrush}"
-                                        CornerRadius="{StaticResource CardRadius}">
-                                    <DockPanel>
-                                        <Border DockPanel.Dock="Left" Width="120" Height="68"
-                                                Background="{StaticResource ThumbPlaceholderBrush}"
-                                                CornerRadius="{StaticResource ControlRadius}"
-                                                Margin="0,0,12,0">
-                                            <Image Style="{StaticResource ThumbnailImage}"
-                                                   Source="{Binding ThumbnailPath, IsAsync=True,
-                                                            NotifyOnTargetUpdated=True}" />
-                                        </Border>
-                                        <StackPanel>
-                                            <DockPanel>
-                                                <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
-                                                        CornerRadius="{StaticResource ControlRadius}"
-                                                        Padding="6,1"
-                                                        Visibility="{Binding HasUnwatched,
-                                                            Converter={StaticResource BoolToVisibility}}">
-                                                    <TextBlock FontSize="11" Foreground="#101010">
-                                                        <Run Text="{Binding UnwatchedCount, Mode=OneWay}" />
-                                                        <Run Text=" unwatched" />
-                                                    </TextBlock>
-                                                </Border>
-                                                <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" />
-                                            </DockPanel>
-                                            <ItemsControl ItemsSource="{Binding Episodes}" Margin="0,6,0,0">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <DockPanel Margin="0,2"
-                                                                   Opacity="{Binding IsMissing,
-                                                                       Converter={StaticResource MissingToOpacity}}">
-                                                            <CheckBox DockPanel.Dock="Right"
-                                                                      IsChecked="{Binding Watched, Mode=OneWay}"
-                                                                      Command="{Binding ToggleWatchedCommand}" />
-                                                            <ui:Button DockPanel.Dock="Left" Content="&#9654;"
-                                                                       Padding="8,2" Margin="0,0,8,0"
-                                                                       ToolTip="Play"
-                                                                       Command="{Binding PlayCommand}" />
-                                                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
-                                                        </DockPanel>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
-
-            <!-- Inline player pane: overlays both columns while playing and not in PiP. -->
-            <views:PlayerView x:Name="InlinePlayer"
-                              Grid.Column="0" Grid.ColumnSpan="2"
-                              DataContext="{Binding}"
-                              Visibility="{Binding IsInlinePlayerVisible, Converter={StaticResource BoolToVisibility}}" />
+                <!-- Inline player pane: overlays both columns while playing and not in PiP. -->
+                <views:PlayerView x:Name="InlinePlayer"
+                                  Grid.Column="0" Grid.ColumnSpan="2"
+                                  DataContext="{Binding}"
+                                  Visibility="{Binding IsInlinePlayerVisible, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </Grid>
     </Grid>
 </ui:FluentWindow>
