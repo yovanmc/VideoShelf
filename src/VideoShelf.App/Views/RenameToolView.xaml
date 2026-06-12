@@ -1,0 +1,65 @@
+<UserControl x:Class="VideoShelf.App.Views.RenameToolView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <DockPanel Margin="24">
+        <!-- Header -->
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <TextBlock FontSize="22" FontWeight="SemiBold">
+                <Run Text="Rename: " /><Run Text="{Binding SeriesTitle}" />
+            </TextBlock>
+            <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,4,0,0"
+                       Text="Preview the new file names, edit any you like, then Apply. This renames files on disk and is reversible with Undo." />
+        </StackPanel>
+
+        <!-- Action bar -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <ui:Button Content="Apply rename" Appearance="Primary" Command="{Binding ApplyCommand}" />
+            <ui:Button Content="Undo last rename" Margin="8,0,0,0" Command="{Binding UndoCommand}" />
+            <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}" />
+            <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Opacity="0.85" />
+            <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="12,0,0,0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
+        <!-- Rows -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Rows}"
+                          VirtualizingStackPanel.IsVirtualizing="True"
+                          VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,6" Padding="10"
+                                Background="{StaticResource SubtleFillBrush}"
+                                CornerRadius="{StaticResource CardRadius}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding OldName}" VerticalAlignment="Center"
+                                           Opacity="0.8" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="1" Text="→" Margin="10,0" VerticalAlignment="Center" Opacity="0.6" />
+                                <ui:TextBox Grid.Column="2" Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Column="3" Text="{Binding StatusText}" VerticalAlignment="Center"
+                                           Margin="10,0,0,0" Opacity="0.85" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
