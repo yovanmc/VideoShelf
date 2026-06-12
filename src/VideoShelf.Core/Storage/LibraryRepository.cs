@@ -357,4 +357,31 @@ public sealed class LibraryRepository(VideoShelfDb db)
             r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
             r.GetInt64(5) != 0, r.GetInt64(6) != 0);
     }
+
+    /// <summary>Repaths a video after an on-disk rename. Updates the stable row's file_path + raw_filename and
+    /// any path-keyed grouping_overrides, in one transaction. Watched/resume/tags key off ids and are untouched.</summary>
+    public void UpdateVideoPath(long videoId, string oldPath, string newPath)
+    {
+        using var conn = db.Open();
+        using var tx = conn.BeginTransaction();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE videos SET file_path = $new, raw_filename = $raw WHERE id = $id";
+            cmd.Parameters.AddWithValue("$new", newPath);
+            cmd.Parameters.AddWithValue("$raw", Path.GetFileName(newPath));
+            cmd.Parameters.AddWithValue("$id", videoId);
+            cmd.ExecuteNonQuery();
+        }
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE grouping_overrides SET file_path = $new WHERE file_path = $old";
+            cmd.Parameters.AddWithValue("$new", newPath);
+            cmd.Parameters.AddWithValue("$old", oldPath);
+            cmd.ExecuteNonQuery();
+        }
+        tx.Commit();
+    }
 }
