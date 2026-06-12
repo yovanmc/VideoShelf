@@ -15,75 +15,139 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
-        <!-- The libVLC render surface. Overlay controls are hosted INSIDE the VideoView so they
-             float above the airspace HWND via LibVLCSharp's foreground window mechanism. -->
-        <vlc:VideoView x:Name="VideoSurface">
-            <Grid>
-                <!-- Error / missing-file banner (additive) -->
-                <Border VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Padding="20" CornerRadius="8" Background="#CC202020"
-                        Visibility="{Binding Player.HasError, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Text="{Binding Player.PlaybackError}" Foreground="White"
-                               TextAlignment="Center" TextWrapping="Wrap" MaxWidth="480" />
-                </Border>
+    <Grid x:Name="RootGrid" Background="Black" MouseMove="OnSurfaceMouseMove">
+        <Border x:Name="PlayerShell" Background="Black">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="VerticalAlignment" Value="Stretch" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
+                            <Setter Property="HorizontalAlignment" Value="Left" />
+                            <Setter Property="VerticalAlignment" Value="Top" />
+                            <Setter Property="Width" Value="360" />
+                            <Setter Property="Height" Value="203" />
+                            <Setter Property="CornerRadius" Value="8" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="PipTranslate" X="0" Y="0" />
+            </Border.RenderTransform>
 
-                <!-- Resume-offer banner (additive) -->
-                <Border VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0"
-                        Padding="14,8" CornerRadius="6" Background="#CC202020"
-                        Visibility="{Binding Player.CanResume, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Resume where you left off?" Foreground="White"
-                                   VerticalAlignment="Center" Margin="0,0,12,0" />
-                        <ui:Button Content="Resume" Command="{Binding Player.ResumeCommand}" />
-                    </StackPanel>
-                </Border>
+            <vlc:VideoView x:Name="VideoSurface">
+                <Grid x:Name="OverlayRoot">
 
-                <!-- Overlay control bar (additive) -->
-                <Border VerticalAlignment="Bottom" Background="#B0101010" Padding="12,8">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Foreground="White" VerticalAlignment="Center"
-                                       Text="{Binding Player.PositionSeconds, StringFormat={}{0:0}s}" Margin="0,0,8,0" />
-                            <Slider Grid.Column="1" x:Name="SeekBar" VerticalAlignment="Center"
-                                    Minimum="0" Maximum="{Binding Player.LengthSeconds}"
-                                    Value="{Binding Player.PositionSeconds, Mode=OneWay}" />
-                            <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
-                                       Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}" Margin="8,0,0,0" />
-                        </Grid>
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <ui:Button Content="Play/Pause" Command="{Binding Player.TogglePlayPauseCommand}" />
-                            <ui:Button Content="&#9664; Chapter" Margin="8,0,0,0"
-                                       Command="{Binding Player.PreviousChapterCommand}"
-                                       Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}" />
-                            <ui:Button Content="Chapter &#9654;" Margin="4,0,0,0"
-                                       Command="{Binding Player.NextChapterCommand}"
-                                       Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}" />
-                            <ComboBox Margin="8,0,0,0" Width="140"
-                                      ItemsSource="{Binding Player.AudioTracks}"
-                                      SelectedItem="{Binding Player.SelectedAudioTrack}"
-                                      DisplayMemberPath="Label"
-                                      Visibility="{Binding Player.HasMultipleAudioTracks, Converter={StaticResource BoolToVisibility}}" />
-                            <ComboBox Margin="8,0,0,0" Width="140"
-                                      ItemsSource="{Binding Player.SubtitleTracks}"
-                                      SelectedItem="{Binding Player.SelectedSubtitleTrack}"
-                                      DisplayMemberPath="Label"
-                                      Visibility="{Binding Player.HasSubtitleTracks, Converter={StaticResource BoolToVisibility}}" />
-                            <Slider Margin="12,0,0,0" Width="100" VerticalAlignment="Center"
-                                    Minimum="0" Maximum="100" Value="{Binding Player.Volume}" />
-                            <ui:Button Content="Screenshot" Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}" />
-                            <ui:Button Content="Fullscreen" Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}" />
-                            <ui:Button Content="Mini-player" Margin="8,0,0,0" Command="{Binding TogglePictureInPictureCommand}" />
-                            <ui:Button Content="Close" Margin="8,0,0,0" Command="{Binding ClosePlayerCommand}" />
+                    <!-- Error / missing-file banner (additive) -->
+                    <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Padding="20" CornerRadius="8" Background="#CC202020"
+                            Visibility="{Binding Player.HasError, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding Player.PlaybackError}" Foreground="White"
+                                   TextAlignment="Center" TextWrapping="Wrap" MaxWidth="480" />
+                    </Border>
+
+                    <!-- Resume-offer banner (additive) -->
+                    <Border VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0"
+                            Padding="14,8" CornerRadius="6" Background="#CC202020"
+                            Visibility="{Binding Player.CanResume, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Resume where you left off?" Foreground="White"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <ui:Button Content="Resume" Command="{Binding Player.ResumeCommand}" />
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Grid>
-        </vlc:VideoView>
+                    </Border>
+
+                    <!-- ===== Auto-hiding controls layer ===== -->
+                    <Grid x:Name="ControlsLayer"
+                          Visibility="{Binding Player.AreControlsVisible, Converter={StaticResource BoolToVisibility}}">
+
+                        <!-- Top scrim + title/close (drag strip in PiP) -->
+                        <Border x:Name="TopBar" VerticalAlignment="Top" Padding="12,8"
+                                Background="#80101010" MouseLeftButtonDown="OnTopBarMouseDown">
+                            <Grid>
+                                <TextBlock Text="{Binding Player.Title}" Foreground="White"
+                                           VerticalAlignment="Center" FontSize="14"
+                                           TextTrimming="CharacterEllipsis" Margin="0,0,160,0" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <ui:Button x:Name="BackToWindowButton" Content="Back to window"
+                                               Command="{Binding TogglePictureInPictureCommand}"
+                                               Visibility="Collapsed" Margin="0,0,8,0" />
+                                    <ui:Button Content="Close" Command="{Binding ClosePlayerCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Seek-preview thumbnail popup (shown while scrubbing) -->
+                        <Border x:Name="SeekPreview" Width="160" Height="90"
+                                VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                Margin="0,0,0,86" CornerRadius="6" Background="#E0101010"
+                                BorderBrush="#60FFFFFF" BorderThickness="1"
+                                Visibility="{Binding Player.IsScrubbing, Converter={StaticResource BoolToVisibility}}">
+                            <Image Source="{Binding Player.SeekPreviewPath}" Stretch="UniformToFill" />
+                        </Border>
+
+                        <!-- Bottom transport -->
+                        <Border VerticalAlignment="Bottom" Background="#B0101010" Padding="12,8">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Foreground="White" VerticalAlignment="Center"
+                                               Text="{Binding Player.PositionSeconds, StringFormat={}{0:0}s}" Margin="0,0,8,0" />
+                                    <Grid Grid.Column="1">
+                                        <Canvas x:Name="ChapterTicks" Height="6" VerticalAlignment="Bottom"
+                                                Margin="0,0,0,2" IsHitTestVisible="False" />
+                                        <Slider x:Name="SeekBar" VerticalAlignment="Center"
+                                                Minimum="0" Maximum="{Binding Player.LengthSeconds}"
+                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}" />
+                                    </Grid>
+                                    <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
+                                               Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}" Margin="8,0,0,0" />
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <ui:Button Content="Play/Pause" Command="{Binding Player.TogglePlayPauseCommand}" />
+                                    <ui:Button Content="&#9664; Chapter" Margin="8,0,0,0"
+                                               Command="{Binding Player.PreviousChapterCommand}"
+                                               Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}" />
+                                    <ui:Button Content="Chapter &#9654;" Margin="4,0,0,0"
+                                               Command="{Binding Player.NextChapterCommand}"
+                                               Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}" />
+                                    <ComboBox Margin="8,0,0,0" Width="140"
+                                              ItemsSource="{Binding Player.AudioTracks}"
+                                              SelectedItem="{Binding Player.SelectedAudioTrack}"
+                                              DisplayMemberPath="Label"
+                                              Visibility="{Binding Player.HasMultipleAudioTracks, Converter={StaticResource BoolToVisibility}}" />
+                                    <ComboBox Margin="8,0,0,0" Width="140"
+                                              ItemsSource="{Binding Player.SubtitleTracks}"
+                                              SelectedItem="{Binding Player.SelectedSubtitleTrack}"
+                                              DisplayMemberPath="Label"
+                                              Visibility="{Binding Player.HasSubtitleTracks, Converter={StaticResource BoolToVisibility}}" />
+                                    <Slider Margin="12,0,0,0" Width="100" VerticalAlignment="Center"
+                                            Minimum="0" Maximum="100" Value="{Binding Player.Volume}" />
+                                    <ui:Button Content="Screenshot" Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}" />
+                                    <ui:Button Content="Fullscreen" Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}" />
+                                    <ui:Button Content="Mini-player" Margin="8,0,0,0" Command="{Binding TogglePictureInPictureCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </vlc:VideoView>
+        </Border>
+
+        <Grid.Style>
+            <Style TargetType="Grid">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
+                        <Setter Property="Background" Value="{x:Null}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Style>
     </Grid>
 </UserControl>
