@@ -12,6 +12,8 @@ public sealed partial class RecencyCardViewModel(RecencyItem item) : ObservableO
     public string EpisodeLabel => item.IsStandalone ? item.SeriesTitle : $"Episode {item.EpisodeNo}";
     public bool Watched => item.Watched;
     public string? ThumbnailSeedPath => item.ThumbnailSeedPath;
+    public string? ChapterLabel => null;
+    public bool HasChapter => false;
 
     [ObservableProperty] private string? thumbnailPath;
 

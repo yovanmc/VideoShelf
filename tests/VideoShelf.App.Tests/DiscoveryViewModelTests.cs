@@ -156,4 +156,48 @@ public sealed class DiscoveryViewModelTests
         f.Vm.WatchedSummary.ShouldContain("watched");
         f.Vm.TopCreators.ShouldNotBeEmpty();
     }
+
+    [Fact]
+    public async Task Continue_card_shows_chapter_for_resume_position()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "S");
+        var ser = f.Lib.UpsertSeries(sec, "Show", false);
+        var vid = f.Lib.UpsertVideo(ser, @"C:\m\Show\e01.mkv", 1, "mkv");
+        f.Lib.SetResumePosition(vid, 65);
+        f.Lib.SetDuration(vid, 120);
+        f.Lib.ReplaceChapters(vid, new ChapterRecord[]
+        {
+            new(0, "Intro", 0),
+            new(1, "Part 2", 60),
+        });
+
+        await f.Vm.LoadAsync();
+
+        f.Vm.ContinueWatching.Count.ShouldBe(1);
+        var card = f.Vm.ContinueWatching[0];
+        card.ChapterLabel.ShouldBe("Part 2");
+        card.HasChapter.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Continue_card_has_no_chapter_when_video_has_no_chapters()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "S");
+        var ser = f.Lib.UpsertSeries(sec, "Show", false);
+        var vid = f.Lib.UpsertVideo(ser, @"C:\m\Show\e01.mkv", 1, "mkv");
+        f.Lib.SetResumePosition(vid, 30);
+        f.Lib.SetDuration(vid, 120);
+        // no chapters seeded
+
+        await f.Vm.LoadAsync();
+
+        f.Vm.ContinueWatching.Count.ShouldBe(1);
+        var card = f.Vm.ContinueWatching[0];
+        card.ChapterLabel.ShouldBeNull();
+        card.HasChapter.ShouldBeFalse();
+    }
 }

@@ -47,20 +47,37 @@ public sealed partial class DiscoveryViewModel(
     public async Task LoadAsync()
     {
         var now = DateTimeOffset.UtcNow;
-        var data = await Task.Run(() => (
-            cont: discovery.GetContinueWatching(RailLimit),
-            forYou: discovery.GetForYou(RailLimit, now),
-            recVideos: discovery.GetRecommendedVideos(RailLimit, now),
-            added: discovery.GetRecentlyAdded(RailLimit),
-            watched: discovery.GetRecentlyWatched(RailLimit),
-            tagCounts: tags.GetTagCounts(),
-            summaries: library.GetSectionSummaries(),
-            libStats: stats.GetLibraryStats(),
-            topCreators: stats.GetTopCreatorsByWatched(5)));
+        var data = await Task.Run(() =>
+        {
+            var cont = discovery.GetContinueWatching(RailLimit);
+            var contLabels = cont.Select(item =>
+            {
+                var chapters = library.GetChapters(item.VideoId);
+                string? chapterLabel = null;
+                if (chapters.Count > 0)
+                {
+                    ChapterRecord? cur = null;
+                    foreach (var c in chapters) { if (c.StartSeconds <= item.ResumePosition) cur = c; else break; }
+                    if (cur is not null) chapterLabel = string.IsNullOrEmpty(cur.Name) ? $"Chapter {cur.Index + 1}" : cur.Name;
+                }
+                return chapterLabel;
+            }).ToList();
+            return (
+                cont,
+                contLabels,
+                forYou: discovery.GetForYou(RailLimit, now),
+                recVideos: discovery.GetRecommendedVideos(RailLimit, now),
+                added: discovery.GetRecentlyAdded(RailLimit),
+                watched: discovery.GetRecentlyWatched(RailLimit),
+                tagCounts: tags.GetTagCounts(),
+                summaries: library.GetSectionSummaries(),
+                libStats: stats.GetLibraryStats(),
+                topCreators: stats.GetTopCreatorsByWatched(5));
+        });
 
         _summaryById = data.summaries.ToDictionary(s => s.SectionId);
 
-        Fill(ContinueWatching, data.cont, MakeContinueCard);
+        Fill(ContinueWatching, data.cont, data.contLabels, MakeContinueCard);
         FillCreators(RecommendedCreators, data.forYou);
         Fill(RecommendedVideos, data.recVideos, MakeRecencyCard);
         Fill(RecentlyAdded, data.added, MakeRecencyCard);
@@ -111,9 +128,9 @@ public sealed partial class DiscoveryViewModel(
         return card;
     }
 
-    private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i)
+    private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i, string? chapterLabel)
     {
-        var card = new ContinueWatchingCardViewModel(i);
+        var card = new ContinueWatchingCardViewModel(i) { ChapterLabel = chapterLabel };
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
         return card;
     }
@@ -136,6 +153,13 @@ public sealed partial class DiscoveryViewModel(
     {
         target.Clear();
         foreach (var i in items) target.Add(make(i));
+    }
+
+    private static void Fill<TItem, TExtra, TCard>(
+        ObservableCollection<TCard> target, IReadOnlyList<TItem> items, IReadOnlyList<TExtra> extras, Func<TItem, TExtra, TCard> make)
+    {
+        target.Clear();
+        for (var idx = 0; idx < items.Count; idx++) target.Add(make(items[idx], extras[idx]));
     }
 
     private void RaiseAllHasFlags()
