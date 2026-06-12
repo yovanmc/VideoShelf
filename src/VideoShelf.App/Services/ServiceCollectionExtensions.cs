@@ -81,6 +81,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<RenameToolViewModel>();
 
         services.AddSingleton<CreatorCardFactory>();
+        services.AddSingleton<SearchViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;
