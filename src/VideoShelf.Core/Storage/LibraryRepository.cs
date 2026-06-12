@@ -302,8 +302,9 @@ public sealed class LibraryRepository(VideoShelfDb db)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE videos SET resume_position = $p WHERE id = $id";
+        cmd.CommandText = "UPDATE videos SET resume_position = $p, resume_updated_at = $t WHERE id = $id";
         cmd.Parameters.AddWithValue("$p", seconds);
+        cmd.Parameters.AddWithValue("$t", System.DateTimeOffset.UtcNow.ToString("O"));
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }
@@ -313,7 +314,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE videos SET resume_position = NULL WHERE id = $id";
+        cmd.CommandText = "UPDATE videos SET resume_position = NULL, resume_updated_at = NULL WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }

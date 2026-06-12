@@ -40,6 +40,8 @@ public sealed class VideoShelfDb : IDisposable
         EnsureColumn(conn, "videos", "missing", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "videos", "added_at", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(conn, "videos", "resume_position", "REAL");
+        // resume_updated_at: ISO8601 timestamp of the last resume write (Milestone 4 discovery ordering)
+        EnsureColumn(conn, "videos", "resume_updated_at", "TEXT");
         CreateAddedAtIndex(conn);
     }
 
