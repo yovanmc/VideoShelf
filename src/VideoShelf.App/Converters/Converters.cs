@@ -52,3 +52,17 @@ public sealed class SortModeToIndex : IValueConverter
     public object ConvertBack(object? value, Type t, object? p, CultureInfo c)
         => value is int i ? (BrowseSort)i : BrowseSort.Name;
 }
+
+/// <summary>Maps a 0..1 fraction to a pixel width = fraction * ConverterParameter (a track width in DIPs).
+/// Used to render a continue-watching progress fill inside a fixed-width card.</summary>
+public sealed class FractionToWidth : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+    {
+        var f = value is double d ? d : 0;
+        var w = 0.0;
+        if (p is string s) double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out w);
+        return Math.Max(0, Math.Min(1, f)) * w;
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
