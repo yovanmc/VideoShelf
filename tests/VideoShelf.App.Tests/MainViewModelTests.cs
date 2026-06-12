@@ -22,6 +22,31 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public async Task ScanAndReload_refreshes_Discovery_rails()
+    {
+        // Use the factory which wires up a real DiscoveryRepository against the temp DB.
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _d = ctx.Db;
+
+        // Baseline: initialize with no resume data — ContinueWatching should be empty.
+        await vm.InitializeAsync();
+        vm.Discovery.ContinueWatching.ShouldBeEmpty();
+
+        // Seed a resume position directly into the DB AFTER InitializeAsync so it isn't
+        // picked up yet.  The factory's UpsertVideo returns the video id indirectly via
+        // the section, so we look it up through the lib.
+        var lib = new LibraryRepository(ctx.Db.Db);
+        var series = lib.GetSeriesForSection(ctx.SectionId);
+        var videos = lib.GetVideosForSeries(series[0].Id);
+        lib.SetResumePosition(videos[0].Id, 120.0);
+
+        // ScanAndReload must now re-query Discovery and surface the resumable video.
+        await vm.ScanAndReloadCommand.ExecuteAsync(null);
+        vm.Discovery.HasContinueWatching.ShouldBeTrue();
+        vm.Discovery.ContinueWatching.ShouldNotBeEmpty();
+    }
+
+    [Fact]
     public async Task Scan_then_initialize_populates_sources_and_library()
     {
         using var temp = new AppTempDb();

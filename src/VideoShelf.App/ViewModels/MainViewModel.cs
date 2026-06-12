@@ -120,6 +120,7 @@ public sealed partial class MainViewModel : ObservableObject
             await _scanCoordinator.ScanAllAsync(CancellationToken.None);
             Sources.Load();
             await Library.LoadSectionsAsync();
+            await Discovery.LoadAsync();
         }
         finally
         {

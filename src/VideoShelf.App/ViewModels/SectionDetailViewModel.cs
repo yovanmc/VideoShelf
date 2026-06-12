@@ -22,6 +22,8 @@ public sealed partial class SectionDetailViewModel(
     [ObservableProperty] private string _displayName = "";
     [ObservableProperty] private string _tagInput = "";
 
+    private IReadOnlyList<string> _allTags = [];
+
     public ObservableCollection<SeriesViewModel> SeriesList { get; } = [];
     public ObservableCollection<string> Tags { get; } = [];
     public ObservableCollection<string> Suggestions { get; } = [];
@@ -35,7 +37,12 @@ public sealed partial class SectionDetailViewModel(
         var section = library.GetSection(sectionId);
         DisplayName = section?.DisplayName ?? "";
 
-        var summaries = await Task.Run(() => library.GetSeriesSummaries(sectionId));
+        var (summaries, sectionTags, allTags) = await Task.Run(() => (
+            library.GetSeriesSummaries(sectionId),
+            tags.GetTags(sectionId),
+            tags.GetAllTags()));
+        _allTags = allTags;
+
         SeriesList.Clear();
         foreach (var s in summaries)
         {
@@ -45,7 +52,7 @@ public sealed partial class SectionDetailViewModel(
         }
 
         Tags.Clear();
-        foreach (var t in await Task.Run(() => tags.GetTags(sectionId))) Tags.Add(t);
+        foreach (var t in sectionTags) Tags.Add(t);
         RefreshSuggestions();
     }
 
@@ -65,6 +72,9 @@ public sealed partial class SectionDetailViewModel(
         if (norm.Length == 0) return;
         tags.AddTag(SectionId, norm);
         if (!Tags.Contains(norm)) Tags.Add(norm);
+        // Keep the cache consistent: if this is a brand-new tag, append it.
+        if (!_allTags.Contains(norm))
+            _allTags = [.. _allTags, norm];
         TagInput = "";
         RefreshSuggestions();
     }
@@ -83,9 +93,8 @@ public sealed partial class SectionDetailViewModel(
     {
         var query = TagRepository.Normalize(TagInput);
         var applied = new HashSet<string>(Tags);
-        var all = tags.GetAllTags();
         Suggestions.Clear();
-        foreach (var t in all)
+        foreach (var t in _allTags)
         {
             if (applied.Contains(t)) continue;
             if (query.Length > 0 && !t.Contains(query, StringComparison.OrdinalIgnoreCase)) continue;
