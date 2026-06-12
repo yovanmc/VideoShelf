@@ -26,10 +26,11 @@ public sealed class SectionDetailViewModelTests
         var lib = new LibraryRepository(db.Db);
         var tags = new TagRepository(db.Db);
         var watch = new WatchRepository(db.Db);
+        var art = new CreatorArtRepository(db.Db);
         var src = lib.UpsertSource(@"C:\m", "M");
         var sec = lib.UpsertSection(src, "Creator A");
         lib.UpsertVideo(lib.UpsertSeries(sec, "Show", false), @"C:\m\Show\e01.mkv", 1, "mkv");
-        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs());
+        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null));
         return new Fx(db, lib, tags, vm, sec);
     }
 
@@ -90,5 +91,112 @@ public sealed class SectionDetailViewModelTests
         f.Vm.TagInput = "com";
         f.Vm.Suggestions.ShouldContain("comic relief");
         f.Vm.Suggestions.ShouldNotContain("comedy"); // already applied -> excluded
+    }
+}
+
+public sealed class SectionDetailCreatorArtTests
+{
+    private sealed class FakePicker(string? result) : IImagePicker
+    {
+        public string? PickImage(string? initialFolder = null) => result;
+    }
+
+    private static SectionDetailViewModel CreateVm(AppTempDb temp, IImagePicker picker, CreatorArtRepository art)
+    {
+        var lib = new LibraryRepository(temp.Db);
+        var tags = new TagRepository(temp.Db);
+        var watch = new WatchRepository(temp.Db);
+        return new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, picker);
+    }
+
+    private sealed class NullThumbs : IThumbnailService
+    {
+        public Task<string?> GetThumbnailPathAsync(string videoPath, CancellationToken ct)
+            => Task.FromResult<string?>(null);
+    }
+
+    [Fact]
+    public async Task SetCreatorArt_picks_and_persists_then_exposes_path()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+
+        var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
+        await vm.LoadAsync(sectionId);
+
+        vm.SetCreatorArtCommand.Execute(null);
+
+        art.GetArtPath(sectionId).ShouldBe(@"C:\pics\a.png");
+        vm.CreatorArtPath.ShouldBe(@"C:\pics\a.png");
+    }
+
+    [Fact]
+    public async Task SetCreatorArt_noop_when_picker_cancelled()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+
+        var vm = CreateVm(temp, new FakePicker(null), art);
+        await vm.LoadAsync(sectionId);
+
+        vm.SetCreatorArtCommand.Execute(null);
+
+        art.GetArtPath(sectionId).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ClearCreatorArt_removes_override()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+        art.SetArtPath(sectionId, @"C:\pics\a.png");
+
+        var vm = CreateVm(temp, new FakePicker(null), art);
+        await vm.LoadAsync(sectionId);
+        vm.ClearCreatorArtCommand.Execute(null);
+
+        art.GetArtPath(sectionId).ShouldBeNull();
+        vm.CreatorArtPath.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task LoadAsync_refreshes_CreatorArtPath_from_db()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+        art.SetArtPath(sectionId, @"C:\pics\existing.png");
+
+        var vm = CreateVm(temp, new FakePicker(null), art);
+        await vm.LoadAsync(sectionId);
+
+        vm.CreatorArtPath.ShouldBe(@"C:\pics\existing.png");
+        vm.HasCreatorArt.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void SetCreatorArt_before_LoadAsync_is_noop()
+    {
+        // SectionId defaults to 0; executing the command must not touch the DB or throw.
+        using var temp = new AppTempDb();
+        var art = new CreatorArtRepository(temp.Db);
+        var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
+
+        // No LoadAsync called — SectionId is still 0.
+        var ex = Record.Exception(() => vm.SetCreatorArtCommand.Execute(null));
+        ex.ShouldBeNull();
+        // DB untouched: GetArtPath(0) should remain null (section 0 does not exist).
+        art.GetArtPath(0).ShouldBeNull();
     }
 }

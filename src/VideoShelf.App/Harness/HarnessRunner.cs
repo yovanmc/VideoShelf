@@ -133,18 +133,27 @@ public sealed class HarnessRunner
             // Tag the first section with "demo"
             _tags.AddTag(sections[0].Id, "demo");
 
-            var seriesList = _library.GetSeriesForSection(sections[0].Id);
-            if (seriesList.Count == 0) continue;
-
-            var episodes = _library.GetEpisodes(seriesList[0].Id);
-            if (episodes.Count == 0) continue;
+            // Seed watched+resume on the richest series available (the most episodes),
+            // not blindly sections[0]'s first series — that section may hold only
+            // single-file standalones, leaving the continue-watching rail empty.
+            var richest = sections
+                .SelectMany(s => _library.GetSeriesForSection(s.Id))
+                .Select(se => _library.GetEpisodes(se.Id))
+                .Where(eps => eps.Count > 0)
+                .OrderByDescending(eps => eps.Count)
+                .FirstOrDefault();
+            if (richest is null) continue;
 
             // Mark first episode watched
-            _watch.SetWatched(episodes[0].VideoId, true);
+            _watch.SetWatched(richest[0].VideoId, true);
 
-            // Set a resume position on the second episode if present
-            if (episodes.Count > 1)
-                _library.SetResumePosition(episodes[1].VideoId, 30.0);
+            // Set a partial resume position on the second episode if present (populates
+            // the continue-watching rail with a visibly partial progress bar). Falls back
+            // to the first video for a standalone so the rail is still exercised.
+            if (richest.Count > 1)
+                _library.SetResumePosition(richest[1].VideoId, 12.0);
+            else
+                _library.SetResumePosition(richest[0].VideoId, 12.0);
 
             break; // seed one source is sufficient for demo
         }

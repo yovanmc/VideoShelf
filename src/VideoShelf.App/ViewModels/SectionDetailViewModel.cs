@@ -15,9 +15,17 @@ public sealed partial class SectionDetailViewModel(
     LibraryRepository library,
     TagRepository tags,
     WatchRepository watch,
-    IThumbnailService thumbnails) : ObservableObject
+    IThumbnailService thumbnails,
+    CreatorArtRepository art,
+    IImagePicker imagePicker) : ObservableObject
 {
     public long SectionId { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
+    private string? _creatorArtPath;
+
+    public bool HasCreatorArt => !string.IsNullOrEmpty(CreatorArtPath);
 
     [ObservableProperty] private string _displayName = "";
     [ObservableProperty] private string _tagInput = "";
@@ -56,6 +64,28 @@ public sealed partial class SectionDetailViewModel(
         Tags.Clear();
         foreach (var t in sectionTags) Tags.Add(t);
         RefreshSuggestions();
+        RefreshCreatorArt();
+    }
+
+    private void RefreshCreatorArt() => CreatorArtPath = art.GetArtPath(SectionId);
+
+    [RelayCommand]
+    private void SetCreatorArt()
+    {
+        if (SectionId <= 0) return;
+        var picked = imagePicker.PickImage();
+        if (string.IsNullOrWhiteSpace(picked))
+            return;
+        art.SetArtPath(SectionId, picked);
+        CreatorArtPath = picked;
+    }
+
+    [RelayCommand]
+    private void ClearCreatorArt()
+    {
+        if (SectionId <= 0) return;
+        art.ClearArtPath(SectionId);
+        CreatorArtPath = null;
     }
 
     [RelayCommand]

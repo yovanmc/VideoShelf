@@ -15,6 +15,7 @@ public sealed partial class LibraryViewModel(
     WatchRepository watch,
     IThumbnailService thumbnails) : ObservableObject
 {
+    private CancellationTokenSource? _opCts;
     private Task _pending = Task.CompletedTask;
 
     public ObservableCollection<SectionViewModel> Sections { get; } = [];
@@ -50,20 +51,43 @@ public sealed partial class LibraryViewModel(
             await section.LoadSeriesAsync(SortMode, CancellationToken.None);
     }
 
+    private CancellationToken NextOperation()
+    {
+        _opCts?.Cancel();
+        _opCts?.Dispose();
+        _opCts = new CancellationTokenSource();
+        return _opCts.Token;
+    }
+
+    /// <summary>
+    /// Wraps an inner task so that if it is cancelled (because a superseding operation called
+    /// <see cref="NextOperation"/>) the <see cref="OperationCanceledException"/> is swallowed
+    /// gracefully rather than leaving an unobserved faulted task.
+    /// <see cref="WaitForIdleAsync"/> callers still see normal completion.
+    /// </summary>
+    private static async Task CancelSafe(Task inner)
+    {
+        try { await inner.ConfigureAwait(false); }
+        catch (OperationCanceledException) { }
+    }
+
     partial void OnSortModeChanged(BrowseSort value)
     {
+        var ct = NextOperation();
         if (SelectedSection is { } section)
-            _pending = section.LoadSeriesAsync(value, CancellationToken.None);
+            _pending = CancelSafe(section.LoadSeriesAsync(value, ct));
     }
 
     partial void OnSearchTextChanged(string value)
     {
-        _pending = RunSearchAsync(value);
+        var ct = NextOperation();
+        _pending = CancelSafe(RunSearchAsync(value, ct));
     }
 
-    private async Task RunSearchAsync(string query)
+    private async Task RunSearchAsync(string query, CancellationToken ct = default)
     {
-        var hits = await Task.Run(() => library.Search(query));
+        var hits = await Task.Run(() => library.Search(query), ct);
+        ct.ThrowIfCancellationRequested();
         SearchResults.Clear();
         foreach (var h in hits)
             SearchResults.Add(h);

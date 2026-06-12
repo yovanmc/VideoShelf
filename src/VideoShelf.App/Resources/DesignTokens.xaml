@@ -69,4 +69,9 @@
             </EventTrigger>
         </Style.Triggers>
     </Style>
+
+    <!-- v2 card system (additive) -->
+    <CornerRadius x:Key="CardImageRadius">10</CornerRadius>
+    <Thickness x:Key="CardGap">0,0,16,16</Thickness>
+    <SolidColorBrush x:Key="CardCaptionBrush" Color="#B0FFFFFF" />
 </ResourceDictionary>

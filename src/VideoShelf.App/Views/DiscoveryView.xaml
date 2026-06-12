@@ -1,7 +1,8 @@
 <UserControl x:Class="VideoShelf.App.Views.DiscoveryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:VideoShelf.App.Views">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
@@ -22,17 +23,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
-                                        Background="Transparent" BorderThickness="0" Width="200">
-                                    <StackPanel>
-                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
-                                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction}"
-                                                     Height="3" Margin="0,2,0,4"/>
-                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
+                                <views:VideoCard />
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

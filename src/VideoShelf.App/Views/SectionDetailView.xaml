@@ -12,8 +12,15 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
-            <!-- Section title -->
-            <TextBlock Text="{Binding DisplayName}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
+            <!-- Creator title -->
+            <TextBlock Text="{Binding DisplayName}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+            <!-- Creator art override row -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="0,0,8,0" />
+                <ui:Button Content="Use default" Command="{Binding ClearCreatorArtCommand}"
+                           Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
 
             <!-- Tag editor -->
             <TextBlock Text="TAGS" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
