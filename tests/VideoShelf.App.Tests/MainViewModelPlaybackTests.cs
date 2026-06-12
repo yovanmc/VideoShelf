@@ -2,6 +2,8 @@ using Shouldly;
 using VideoShelf.App.Services;
 using VideoShelf.App.Tests.TestSupport;
 using VideoShelf.App.ViewModels;
+using VideoShelf.App.ViewModels.Discovery;
+using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
@@ -26,6 +28,7 @@ public class MainViewModelPlaybackTests
     {
         var lib = new LibraryRepository(temp.Db);
         var watch = new WatchRepository(temp.Db);
+        var tags = new TagRepository(temp.Db);
         var settings = new SettingsRepository(temp.Db);
         var seriesId = lib.UpsertSeries(lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S"), "Base", false);
         videoId = lib.UpsertVideo(seriesId, @"C:\V\S\a.mp4", 1, ".mp4");
@@ -34,7 +37,11 @@ public class MainViewModelPlaybackTests
         var sources = new SourcesViewModel(lib, new FakeFolderPicker());
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
         var settingsVm = new SettingsViewModel(settings);
-        return new MainViewModel(sources, library, new NullScan(), player, settingsVm);
+        var disc = new DiscoveryRepository(temp.Db, lib, tags);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs);
+        return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
+            discoveryVm, sectionDetailVm);
     }
 
     [Fact]

@@ -117,6 +117,17 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return list;
     }
 
+    public Section? GetSection(long id)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, source_id, folder_name, display_name FROM sections WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        return new Section(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3));
+    }
+
     public IReadOnlyList<Series> GetSeriesForSection(long sectionId)
     {
         using var conn = db.Open();
@@ -302,8 +313,9 @@ public sealed class LibraryRepository(VideoShelfDb db)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE videos SET resume_position = $p WHERE id = $id";
+        cmd.CommandText = "UPDATE videos SET resume_position = $p, resume_updated_at = $t WHERE id = $id";
         cmd.Parameters.AddWithValue("$p", seconds);
+        cmd.Parameters.AddWithValue("$t", System.DateTimeOffset.UtcNow.ToString("O"));
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }
@@ -313,7 +325,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE videos SET resume_position = NULL WHERE id = $id";
+        cmd.CommandText = "UPDATE videos SET resume_position = NULL, resume_updated_at = NULL WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }

@@ -1,0 +1,126 @@
+<UserControl x:Class="VideoShelf.App.Views.SectionDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+
+            <!-- Section title -->
+            <TextBlock Text="{Binding DisplayName}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+            <!-- Tag editor -->
+            <TextBlock Text="TAGS" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+
+            <!-- Applied tag pills -->
+            <ItemsControl ItemsSource="{Binding Tags}" Margin="0,0,0,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource SubtleFillBrush}"
+                                CornerRadius="{StaticResource ControlRadius}"
+                                Padding="8,4" Margin="0,0,6,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <Button Content="✕" Padding="4,2"
+                                        Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="Transparent" BorderThickness="0"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Tag input row -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}"
+                            PlaceholderText="Add tag…" Width="220"/>
+                <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- Tag suggestions -->
+            <ItemsControl ItemsSource="{Binding Suggestions}" Margin="0,0,0,16">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Content="{Binding}" Margin="0,0,6,6"
+                                Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Series list — mirrors MainWindow browse series card template -->
+            <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="0,0,0,8"/>
+            <ItemsControl ItemsSource="{Binding SeriesList}"
+                          VirtualizingStackPanel.IsVirtualizing="True"
+                          VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,10" Padding="10"
+                                Background="{StaticResource SubtleFillBrush}"
+                                CornerRadius="{StaticResource CardRadius}">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Left" Width="120" Height="68"
+                                        Background="{StaticResource ThumbPlaceholderBrush}"
+                                        CornerRadius="{StaticResource ControlRadius}"
+                                        Margin="0,0,12,0">
+                                    <Image Style="{StaticResource ThumbnailImage}"
+                                           Source="{Binding ThumbnailPath, IsAsync=True,
+                                                    NotifyOnTargetUpdated=True}" />
+                                </Border>
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
+                                                CornerRadius="{StaticResource ControlRadius}"
+                                                Padding="6,1"
+                                                Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock FontSize="11" Foreground="#101010">
+                                                <Run Text="{Binding UnwatchedCount, Mode=OneWay}" />
+                                                <Run Text=" unwatched" />
+                                            </TextBlock>
+                                        </Border>
+                                        <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" />
+                                    </DockPanel>
+                                    <ItemsControl ItemsSource="{Binding Episodes}" Margin="0,6,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <DockPanel Margin="0,2"
+                                                           Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
+                                                    <CheckBox DockPanel.Dock="Right"
+                                                              IsChecked="{Binding Watched, Mode=OneWay}"
+                                                              Command="{Binding ToggleWatchedCommand}" />
+                                                    <ui:Button DockPanel.Dock="Left" Content="&#9654;"
+                                                               Padding="8,2" Margin="0,0,8,0"
+                                                               ToolTip="Play"
+                                                               Command="{Binding PlayCommand}" />
+                                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

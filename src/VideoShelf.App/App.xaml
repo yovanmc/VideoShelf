@@ -1,7 +1,8 @@
 <Application x:Class="VideoShelf.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -10,6 +11,10 @@
                 <!-- Shared design tokens (color/surface/radius/spacing/type). -->
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <!-- App-wide converters shared by all views. -->
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:MissingToOpacity x:Key="MissingToOpacity" />
+            <conv:EnumToVisibility x:Key="EnumToVis" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

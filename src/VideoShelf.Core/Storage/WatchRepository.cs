@@ -31,7 +31,7 @@ public sealed class WatchRepository(VideoShelfDb db)
             }
 
             using var clr = conn.CreateCommand();
-            clr.CommandText = "UPDATE videos SET resume_position = NULL WHERE id = $id";
+            clr.CommandText = "UPDATE videos SET resume_position = NULL, resume_updated_at = NULL WHERE id = $id";
             clr.Parameters.AddWithValue("$id", videoId);
             clr.ExecuteNonQuery();
         }

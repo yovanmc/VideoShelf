@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.ViewModels;
+using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.App.Views;
+using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
 
@@ -47,6 +49,10 @@ public static class ServiceCollectionExtensions
             return vm;
         });
 
+        services.AddSingleton<TagRepository>();
+        services.AddSingleton<DiscoveryRepository>();
+        services.AddSingleton<DiscoveryViewModel>();
+        services.AddSingleton<SectionDetailViewModel>();
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();

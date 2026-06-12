@@ -34,4 +34,15 @@ public class HostBuildsTests
 
         provider.GetRequiredService<VideoShelf.Core.Storage.SettingsRepository>().ShouldNotBeNull();
     }
+
+    [Fact]
+    public void Host_resolves_discovery_services()
+    {
+        var provider = new ServiceCollection().AddVideoShelf().BuildServiceProvider();
+
+        provider.GetService(typeof(VideoShelf.Core.Storage.TagRepository)).ShouldNotBeNull();
+        provider.GetService(typeof(VideoShelf.Core.Discovery.DiscoveryRepository)).ShouldNotBeNull();
+        provider.GetService(typeof(VideoShelf.App.ViewModels.Discovery.DiscoveryViewModel)).ShouldNotBeNull();
+        provider.GetService(typeof(VideoShelf.App.ViewModels.SectionDetailViewModel)).ShouldNotBeNull();
+    }
 }

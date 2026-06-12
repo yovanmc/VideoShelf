@@ -50,4 +50,30 @@ public class LibraryRepositoryTests
         var v = repo.GetVideosForSeries(seriesId).Single();
         v.EpisodeNo.ShouldBe(2);
     }
+
+    [Fact]
+    public void GetSection_returns_section_by_id()
+    {
+        using var temp = new TempDb();
+        var repo = new LibraryRepository(temp.Db);
+        var sourceId = repo.UpsertSource(@"C:\Vids", "Vids");
+        var sectionId = repo.UpsertSection(sourceId, "Creator A");
+
+        var section = repo.GetSection(sectionId);
+
+        section.ShouldNotBeNull();
+        section!.DisplayName.ShouldBe("Creator A");
+        section.Id.ShouldBe(sectionId);
+    }
+
+    [Fact]
+    public void GetSection_returns_null_for_missing_id()
+    {
+        using var temp = new TempDb();
+        var repo = new LibraryRepository(temp.Db);
+
+        var result = repo.GetSection(9999);
+
+        result.ShouldBeNull();
+    }
 }

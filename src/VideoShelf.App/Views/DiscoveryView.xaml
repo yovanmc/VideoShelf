@@ -1,0 +1,166 @@
+<UserControl x:Class="VideoShelf.App.Views.DiscoveryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+
+            <!-- Empty state -->
+            <TextBlock Text="Nothing here yet — add a source and start watching."
+                       Opacity="0.7" Margin="0,40"
+                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
+
+            <!-- Continue watching rail -->
+            <StackPanel Visibility="{Binding HasContinueWatching, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Continue watching" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding ContinueWatching}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
+                                        Background="Transparent" BorderThickness="0" Width="200">
+                                    <StackPanel>
+                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
+                                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction}"
+                                                     Height="3" Margin="0,2,0,4"/>
+                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- For you rail -->
+            <StackPanel Margin="0,24,0,0"
+                        Visibility="{Binding HasForYou, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="For you" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding ForYou}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding OpenCommand}" Margin="0,0,12,0" Width="200"
+                                        HorizontalContentAlignment="Left">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding TagsLabel}" Opacity="0.7" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding UnwatchedCount, StringFormat='{}{0} unwatched'}"
+                                                   Opacity="0.6" FontSize="12"
+                                                   Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- Recently added rail -->
+            <StackPanel Margin="0,24,0,0"
+                        Visibility="{Binding HasRecentlyAdded, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Recently added" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding RecentlyAdded}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
+                                        Background="Transparent" BorderThickness="0" Width="200">
+                                    <StackPanel>
+                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
+                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- Recently watched rail -->
+            <StackPanel Margin="0,24,0,0"
+                        Visibility="{Binding HasRecentlyWatched, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Recently watched" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding RecentlyWatched}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
+                                        Background="Transparent" BorderThickness="0" Width="200">
+                                    <StackPanel>
+                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
+                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- Pick-a-tag section -->
+            <StackPanel Margin="0,24,0,0"
+                        Visibility="{Binding HasTags, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Pick a tag" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ItemsControl ItemsSource="{Binding AvailableTags}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ToggleButton Content="{Binding Label}" IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                          Margin="0,0,8,8"
+                                          Command="{Binding DataContext.ToggleTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                          CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl ItemsSource="{Binding TagResults}" Margin="0,8,0,0"
+                              Visibility="{Binding HasTagResults, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding OpenCommand}" Content="{Binding DisplayName}"
+                                    Margin="0,0,8,8"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
