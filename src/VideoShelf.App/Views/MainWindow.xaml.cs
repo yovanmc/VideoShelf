@@ -2,7 +2,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using Wpf.Ui.Controls;
-using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 
 namespace VideoShelf.App.Views;
@@ -10,7 +9,7 @@ namespace VideoShelf.App.Views;
 public partial class MainWindow : FluentWindow
 {
     private readonly MainViewModel _viewModel;
-    private MiniPlayerWindow? _miniPlayer;
+    private PlayerView? _playerView;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -28,8 +27,8 @@ public partial class MainWindow : FluentWindow
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.IsPictureInPicture))
-            UpdatePictureInPicture(_viewModel.IsPictureInPicture);
+        if (e.PropertyName == nameof(MainViewModel.IsPlayerVisible))
+            UpdatePlayerHost(_viewModel.IsPlayerVisible);
     }
 
     private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -57,35 +56,19 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private void UpdatePictureInPicture(bool on)
+    /// <summary>Realizes the player (and its VideoView) only while playing; tearing it down on hide
+    /// destroys the airspace overlay window that otherwise bleeds the transport bar onto other views.
+    /// PiP is an in-window mode of the SAME PlayerView — no separate window, so the vout never re-hosts.</summary>
+    private void UpdatePlayerHost(bool visible)
     {
-        if (_viewModel.Player.Engine is not LibVlcPlaybackEngine vlc)
-            return;
-
-        if (on)
+        if (visible)
         {
-            // A MediaPlayer may be hosted by only one VideoView: free the inline surface
-            // BEFORE the mini-player claims it, else the video blanks/freezes.
-            InlinePlayer.DetachSurface();
-
-            _miniPlayer = new MiniPlayerWindow(vlc.MediaPlayer);
-            _miniPlayer.ReturnRequested += (_, _) => _viewModel.IsPictureInPicture = false;
-            _miniPlayer.Closed += (_, _) =>
-            {
-                // Closing the mini window leaves PiP and returns the player inline.
-                if (_viewModel.IsPictureInPicture)
-                    _viewModel.IsPictureInPicture = false;
-            };
-            _miniPlayer.Show();
+            _playerView ??= new PlayerView { DataContext = _viewModel };
+            if (PlayerHost.Content is null) PlayerHost.Content = _playerView;
         }
-        else if (_miniPlayer is not null)
+        else
         {
-            _miniPlayer.DetachPlayer();   // release the MediaPlayer before the inline surface re-hosts it
-            var w = _miniPlayer;
-            _miniPlayer = null;
-            w.Close();
-            // Re-host the shared MediaPlayer on the inline surface now that PiP has cleared.
-            InlinePlayer.AttachSurface();
+            PlayerHost.Content = null; // Unloaded -> DetachSurface + VideoView/overlay HWND destroyed
         }
     }
 }

@@ -164,12 +164,12 @@
 
                 </Grid>
 
-                <!-- Inline player pane: overlays both columns while playing and not in PiP. -->
-                <views:PlayerView x:Name="InlinePlayer"
-                                  Grid.Column="0" Grid.ColumnSpan="2"
-                                  DataContext="{Binding}"
-                                  Visibility="{Binding IsInlinePlayerVisible, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </Grid>
+
+        <!-- Immersive player host: overlays the ENTIRE window while playing. Content is set in code-behind
+             only while playing, so the VideoView (and its airspace overlay HWND) is torn down when hidden —
+             this is the fix for the transport-bar bleed onto non-player views. -->
+        <ContentControl x:Name="PlayerHost" Grid.Row="0" Grid.RowSpan="2" />
     </Grid>
 </ui:FluentWindow>

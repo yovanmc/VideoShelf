@@ -215,7 +215,7 @@ public sealed class HarnessRunner
     /// <summary>
     /// Plays a clip via MainViewModel.PlayEpisode(EpisodeView). Constructs a synthetic
     /// EpisodeView from the clip path (VideoId=0, SeriesId=0 — sufficient for engine.Load).
-    /// If pip=true, sets IsPictureInPicture after playback starts (triggers MiniPlayerWindow).
+    /// If pip=true, sets IsPictureInPicture after playback starts (activates PiP mode in PlayerView).
     /// </summary>
     private async Task PlayAsync(string clip, bool pip)
     {
