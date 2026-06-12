@@ -58,7 +58,7 @@
             <!-- Recommended creators rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recommended creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedCreators}">
                         <ItemsControl.ItemsPanel>
@@ -76,7 +76,7 @@
             <!-- Recommended videos rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recommended videos" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="More to watch" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedVideos}">
                         <ItemsControl.ItemsPanel>
