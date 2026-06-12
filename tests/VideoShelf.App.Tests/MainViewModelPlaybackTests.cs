@@ -8,8 +8,8 @@ using VideoShelf.Core.Models;
 using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Storage;
 using VideoShelf.Core.Tests;
-
 namespace VideoShelf.App.Tests;
+
 
 public class MainViewModelPlaybackTests
 {
@@ -41,7 +41,8 @@ public class MainViewModelPlaybackTests
         var settingsVm = new SettingsViewModel(settings);
         var disc = new DiscoveryRepository(temp.Db, lib, tags);
         var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs);
+        var art = new CreatorArtRepository(temp.Db);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);

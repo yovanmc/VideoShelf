@@ -70,7 +70,8 @@ public class MainViewModelTests
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
         var settingsVm = new SettingsViewModel(settings);
         var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs);
+        var art = new CreatorArtRepository(temp.Db);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
