@@ -80,6 +80,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<RenameExecutor>();
         services.AddSingleton<RenameToolViewModel>();
 
+        services.AddSingleton<CreatorCardFactory>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;
