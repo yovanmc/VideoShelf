@@ -117,6 +117,17 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return list;
     }
 
+    public Section? GetSection(long id)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, source_id, folder_name, display_name FROM sections WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", id);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        return new Section(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3));
+    }
+
     public IReadOnlyList<Series> GetSeriesForSection(long sectionId)
     {
         using var conn = db.Open();
