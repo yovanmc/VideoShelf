@@ -138,4 +138,50 @@ public sealed class DiscoveryRepositoryTests
         more.Select(s => s.SeriesId).ShouldNotContain(serA);
         more.Select(s => s.SeriesId).ShouldContain(serB);
     }
+
+    [Fact]
+    public void GetRecommendedVideos_returns_unwatched_videos_from_recommended_sections()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var watchedSec = f.Lib.UpsertSection(src, "Watched");
+        var candidate = f.Lib.UpsertSection(src, "Candidate");
+        var unrelated = f.Lib.UpsertSection(src, "Unrelated");
+        f.Tags.AddTag(watchedSec, "comedy");
+        f.Tags.AddTag(candidate, "comedy");
+        f.Tags.AddTag(unrelated, "horror");
+        var w = AddVideo(f, watchedSec, "WShow", false, 1);
+        var c1 = AddVideo(f, candidate, "CShow", false, 1);
+        var c2 = AddVideo(f, candidate, "CShow", false, 2);
+        AddVideo(f, unrelated, "UShow", false, 1);
+        SetRaw(f.Db, "INSERT INTO watch_events (video_id, watched_at) VALUES ($v,$t)",
+            ("$v", w), ("$t", Now.AddDays(-1).ToString("O")));
+        // Mark c1 as watched to verify it is excluded
+        SetRaw(f.Db, "UPDATE videos SET watched=1 WHERE id=$id", ("$id", c1));
+
+        // GetForYou should include the candidate section
+        var sugg = f.Disc.GetForYou(limit: 10, now: Now);
+        sugg.Select(s => s.SectionId).ShouldContain(candidate);
+
+        // GetRecommendedVideos should return only unwatched videos from recommended sections
+        var recs = f.Disc.GetRecommendedVideos(10, Now);
+        recs.ShouldNotBeEmpty();
+        recs.ShouldAllBe(v => !v.Watched);
+        recs.ShouldAllBe(v => v.SectionId == candidate);
+        recs.Select(v => v.VideoId).ShouldContain(c2);
+        recs.Select(v => v.VideoId).ShouldNotContain(c1);
+    }
+
+    [Fact]
+    public void GetRecommendedVideos_returns_empty_without_history()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "S");
+        f.Tags.AddTag(sec, "comedy");
+        AddVideo(f, sec, "Show", false, 1);
+        // No watch events seeded → history is empty → ScoreSections returns []
+        var recs = f.Disc.GetRecommendedVideos(10, Now);
+        recs.ShouldBeEmpty();
+    }
 }

@@ -82,7 +82,10 @@ public sealed class DiscoveryRepository(VideoShelfDb db, LibraryRepository libra
         return result;
     }
 
-    public IReadOnlyList<SectionSuggestion> GetForYou(int limit, DateTimeOffset now)
+    public IReadOnlyList<SectionSuggestion> GetForYou(int limit, DateTimeOffset now) =>
+        ScoreSections(now).Take(limit).ToList();
+
+    private List<SectionSuggestion> ScoreSections(DateTimeOffset now)
     {
         var history = ReadWatchedTags();
         if (history.Count == 0) return [];
@@ -101,7 +104,45 @@ public sealed class DiscoveryRepository(VideoShelfDb db, LibraryRepository libra
         return scored
             .OrderByDescending(s => s.Score)
             .ThenBy(s => s.DisplayName, StringComparer.OrdinalIgnoreCase)
-            .Take(limit).ToList();
+            .ToList();
+    }
+
+    public IReadOnlyList<RecencyItem> GetRecommendedVideos(int limit, DateTimeOffset now)
+    {
+        var sections = ScoreSections(now);
+        if (sections.Count == 0) return [];
+
+        // Map each recommended section to its rank (recommendation order).
+        var rank = new Dictionary<long, int>();
+        for (var i = 0; i < sections.Count; i++) rank[sections[i].SectionId] = i;
+
+        // section ids are trusted integer keys from our own DB (never user input), so an
+        // inlined IN-list is safe here and avoids dynamic LIKE/param plumbing.
+        var ids = string.Join(",", rank.Keys);
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = $"""
+            SELECT v.id, v.series_id, s.section_id, s.base_title, s.is_standalone,
+                   v.episode_no, v.watched, v.thumbnail_path
+            FROM videos v
+            JOIN series s ON s.id = v.series_id
+            WHERE v.missing = 0 AND v.watched = 0 AND s.section_id IN ({ids})
+            ORDER BY v.added_at DESC, v.id DESC;
+            """;
+        var all = new List<RecencyItem>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            all.Add(new RecencyItem(
+                VideoId: r.GetInt64(0), SeriesId: r.GetInt64(1), SectionId: r.GetInt64(2),
+                SeriesTitle: r.GetString(3), IsStandalone: r.GetInt64(4) != 0,
+                EpisodeNo: r.GetInt32(5), Watched: r.GetInt64(6) != 0,
+                ThumbnailSeedPath: r.IsDBNull(7) ? null : r.GetString(7)));
+
+        return all
+            .OrderBy(v => rank[v.SectionId])
+            .ThenByDescending(v => v.VideoId)
+            .Take(limit)
+            .ToList();
     }
 
     public IReadOnlyList<SectionSuggestion> GetSectionsByTags(IReadOnlyList<string> selectedTags, int limit)
