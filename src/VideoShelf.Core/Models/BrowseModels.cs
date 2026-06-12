@@ -2,7 +2,8 @@ namespace VideoShelf.Core.Models;
 
 /// <summary>A section as shown in the browse sidebar, with its aggregated unwatched count.</summary>
 public sealed record SectionSummary(
-    long SectionId, long SourceId, string DisplayName, int SeriesCount, int UnwatchedCount);
+    long SectionId, long SourceId, string DisplayName, int SeriesCount, int UnwatchedCount,
+    int VideoCount, string? ThumbnailSeedPath);
 
 /// <summary>A series or standalone card: episode/unwatched counts plus a thumbnail seed (first episode path).</summary>
 public sealed record SeriesSummary(

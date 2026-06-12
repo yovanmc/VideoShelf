@@ -76,4 +76,23 @@ public class LibraryRepositoryTests
 
         result.ShouldBeNull();
     }
+
+    [Fact]
+    public void GetSectionSummaries_reports_total_video_count_and_a_seed_path()
+    {
+        using var temp = new TempDb();
+        var repo = new LibraryRepository(temp.Db);
+
+        var sourceId = repo.UpsertSource(@"C:\Vids", "Vids");
+        var sectionId = repo.UpsertSection(sourceId, "Creator A");
+        var seriesId = repo.UpsertSeries(sectionId, "Cool Story", isStandalone: false);
+        repo.UpsertVideo(seriesId, @"C:\Vids\Creator A\Cool Story 1.mp4", episodeNo: 1, format: ".mp4");
+        repo.UpsertVideo(seriesId, @"C:\Vids\Creator A\Cool Story 2.mp4", episodeNo: 2, format: ".mp4");
+
+        var summary = repo.GetSectionSummaries().Single(s => s.SectionId == sectionId);
+
+        summary.VideoCount.ShouldBe(2);
+        summary.ThumbnailSeedPath.ShouldNotBeNull();
+        summary.ThumbnailSeedPath!.ShouldEndWith(".mp4");
+    }
 }
