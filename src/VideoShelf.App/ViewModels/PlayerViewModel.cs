@@ -69,6 +69,29 @@ public sealed partial class PlayerViewModel(
     [ObservableProperty]
     private TrackOption? _selectedSubtitleTrack;
 
+    /// <summary>The scrubber's bound value. Mirrors PositionSeconds during playback, but is user-driven
+    /// while IsScrubbing (so dragging the thumb doesn't fight the per-second position updates).</summary>
+    [ObservableProperty]
+    private double _scrubPosition;
+
+    [ObservableProperty]
+    private bool _isScrubbing;
+
+    /// <summary>Path to the current seek-preview frame (shown in the thumbnail popup while scrubbing); null = none.</summary>
+    [ObservableProperty]
+    private string? _seekPreviewPath;
+
+    /// <summary>Drives the auto-hiding overlay's visibility. The View shows controls on activity and hides
+    /// them after an idle delay while playing; both set this. Starts visible.</summary>
+    [ObservableProperty]
+    private bool _areControlsVisible = true;
+
+    /// <summary>When true, the View's auto-hide timer is suppressed (controls stay up). Set by the harness
+    /// so the screenshot sweep captures the transport; off in normal use.</summary>
+    public bool AutoHideSuppressed { get; set; }
+
+    private CancellationTokenSource? _previewCts;
+
     [ObservableProperty]
     private bool _isFullscreen;
 
@@ -109,16 +132,14 @@ public sealed partial class PlayerViewModel(
     }
 
     /// <summary>Produces a seek-preview frame PNG for the given position, or null on failure (fail-safe).</summary>
-    /// <remarks>The current engine snapshots the live frame regardless of <paramref name="seconds"/>
-    /// (a dedicated off-screen positioned decode is a Phase 6 refinement). Because the frame does not
-    /// correspond to the requested position, we deliberately do NOT cache it under a per-position key —
-    /// that would serve a stale, wrong-position image on a later hover. Each request regenerates afresh.</remarks>
+    /// <remarks>The frame is position-accurate and cached per rounded second.</remarks>
     public async Task<string?> RequestSeekPreviewAsync(double seconds, CancellationToken cancellationToken)
     {
         try
         {
             Directory.CreateDirectory(SeekPreviewDirectory);
-            var target = Path.Combine(SeekPreviewDirectory, "preview.png");
+            var target = Path.Combine(SeekPreviewDirectory, $"preview_{(int)Math.Round(seconds)}.png");
+            if (File.Exists(target) && new FileInfo(target).Length > 0) return target;
 
             var ok = await engine.TryGeneratePreviewFrameAsync(seconds, target, cancellationToken)
                 .ConfigureAwait(false);
@@ -132,6 +153,34 @@ public sealed partial class PlayerViewModel(
         {
             return null; // fail-safe
         }
+    }
+
+    /// <summary>Begins a scrub gesture: freezes ScrubPosition from playback updates.</summary>
+    public void BeginScrub() => IsScrubbing = true;
+
+    /// <summary>Loads (debounced, cancellable) the seek-preview frame for the scrubbed position.</summary>
+    public async Task UpdateScrubPreviewAsync(double seconds)
+    {
+        _previewCts?.Cancel();
+        var cts = _previewCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(60, cts.Token).ConfigureAwait(true); // debounce rapid drag
+            var path = await RequestSeekPreviewAsync(seconds, cts.Token).ConfigureAwait(true);
+            if (!cts.Token.IsCancellationRequested) SeekPreviewPath = path;
+        }
+        catch (OperationCanceledException) { /* superseded by a newer hover */ }
+    }
+
+    /// <summary>Commits the scrub: seeks the engine to ScrubPosition and ends the gesture.</summary>
+    public void CommitScrub()
+    {
+        engine.SeekTo(ScrubPosition);
+        PositionSeconds = ScrubPosition;
+        IsScrubbing = false;
+        SeekPreviewPath = null;
+        _previewCts?.Cancel();
+        CanResume = false; // a manual seek dismisses the resume offer
     }
 
     partial void OnSelectedAudioTrackChanged(TrackOption? value)
@@ -195,6 +244,8 @@ public sealed partial class PlayerViewModel(
         _current = episode;
         _lastSavedAt = 0;
         _length = 0;
+        ScrubPosition = 0;
+        SeekPreviewPath = null;
         Title = episode.Title;
         CanResume = false;
         ResumePositionSeconds = library.GetResumePosition(episode.VideoId) ?? 0;
@@ -228,6 +279,7 @@ public sealed partial class PlayerViewModel(
     private void OnPositionChanged(object? sender, double seconds)
     {
         PositionSeconds = seconds;
+        if (!IsScrubbing) ScrubPosition = seconds;
         if (_current is { } cur && resumePolicy.ShouldSaveOnTick(_lastSavedAt, seconds))
         {
             library.SetResumePosition(cur.VideoId, seconds);

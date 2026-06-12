@@ -105,4 +105,92 @@ public class PlayerViewModelTests
         engine.IsPlaying.ShouldBeFalse();
         lib.GetResumePosition(ep.VideoId).ShouldBe(2.0);
     }
+
+    [Fact]
+    public void Scrubbing_freezes_ScrubPosition_from_position_updates()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+
+        vm.BeginScrub();
+        vm.ScrubPosition = 42;
+        engine.RaisePosition(5);
+
+        vm.ScrubPosition.ShouldBe(42);
+        vm.IsScrubbing.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Not_scrubbing_ScrubPosition_tracks_playback()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+
+        engine.RaiseLength(100);
+        engine.RaisePosition(30);
+
+        vm.ScrubPosition.ShouldBe(30);
+    }
+
+    [Fact]
+    public void CommitScrub_seeks_engine_to_scrub_position_and_ends_gesture()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+
+        vm.BeginScrub();
+        vm.ScrubPosition = 55;
+        vm.CommitScrub();
+
+        engine.Seeks[^1].ShouldBe(55);
+        vm.IsScrubbing.ShouldBeFalse();
+        vm.SeekPreviewPath.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateScrubPreviewAsync_passes_position_to_engine_and_sets_path()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+        System.IO.Directory.CreateDirectory(dir);
+        vm.SeekPreviewDirectory = dir;
+
+        await vm.UpdateScrubPreviewAsync(33);
+
+        engine.LastPreviewSeconds.ShouldBe(33);
+        vm.SeekPreviewPath.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task UpdateScrubPreviewAsync_returns_null_path_when_engine_fails()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+
+        engine.SnapshotShouldFail = true;
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+        System.IO.Directory.CreateDirectory(dir);
+        vm.SeekPreviewDirectory = dir;
+
+        await vm.UpdateScrubPreviewAsync(20);
+
+        vm.SeekPreviewPath.ShouldBeNull();
+    }
 }
