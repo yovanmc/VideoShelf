@@ -69,8 +69,9 @@ public class MainViewModelTests
         var engine = new FakePlaybackEngine();
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
         var settingsVm = new SettingsViewModel(settings);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
         var art = new CreatorArtRepository(temp.Db);
+        var cardFactory = new CreatorCardFactory(art, thumbs);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
