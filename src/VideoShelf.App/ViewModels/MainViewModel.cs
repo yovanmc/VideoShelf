@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -48,7 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
-        RenameTool.CloseRequested += (_, _) => CurrentView = AppView.SectionDetail;
+        RenameTool.CloseRequested += (_, _) => GoBack();
         Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
         Search.PlayRequested += (_, e) => PlayEpisode(e);
         Search.OpenCreatorRequested += async id => await OpenSectionAsync(id);
@@ -56,8 +56,12 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // Typing in the persistent search box drives the user into the Search view.
             if (e.PropertyName == nameof(SearchViewModel.Query) && !string.IsNullOrEmpty(Search.Query))
+            {
+                if (CurrentView != AppView.Search) PushNav(CurrentView);
                 CurrentView = AppView.Search;
+            }
         };
+        Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
     }
 
     public string Title => "VideoShelf";
@@ -90,6 +94,36 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsPlayerVisibleChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
     partial void OnIsPictureInPictureChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
 
+    private readonly System.Collections.Generic.Stack<AppView> _backStack = new();
+    public bool CanGoBack => _backStack.Count > 0;
+
+    /// <summary>True at first run / when no source folders are configured (drives the empty-state CTA).</summary>
+    public bool IsLibraryEmpty => Sources.Sources.Count == 0;
+
+    private void PushNav(AppView from)
+    {
+        if (_backStack.Count == 0 || _backStack.Peek() != from)
+            _backStack.Push(from);
+        OnPropertyChanged(nameof(CanGoBack));
+    }
+
+    private void ClearBack()
+    {
+        _backStack.Clear();
+        OnPropertyChanged(nameof(CanGoBack));
+    }
+
+    [RelayCommand]
+    private void GoBack()
+    {
+        if (_backStack.Count == 0) return;
+        CurrentView = _backStack.Pop();
+        OnPropertyChanged(nameof(CanGoBack));
+    }
+
+    [RelayCommand]
+    private void ShowSettings() { ClearBack(); CurrentView = AppView.Settings; }
+
     /// <summary>Routes a play request into the player and shows the player pane.</summary>
     public void PlayEpisode(EpisodeView episode)
     {
@@ -98,20 +132,22 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowHome() => CurrentView = AppView.Home;
+    private void ShowHome()   { ClearBack(); CurrentView = AppView.Home; }
 
     [RelayCommand]
-    private void ShowBrowse() => CurrentView = AppView.Browse;
+    private void ShowBrowse() { ClearBack(); CurrentView = AppView.Browse; }
 
     public async Task OpenSectionAsync(long sectionId)
     {
         await SectionDetail.LoadAsync(sectionId);
+        PushNav(CurrentView);
         CurrentView = AppView.SectionDetail;
     }
 
     public async Task OpenRenameToolAsync(SeriesViewModel series)
     {
         await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
+        PushNav(CurrentView);
         CurrentView = AppView.RenameTool;
     }
 
@@ -132,6 +168,7 @@ public sealed partial class MainViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         Sources.Load();
+        OnPropertyChanged(nameof(IsLibraryEmpty));
         await Library.LoadSectionsAsync();
         await Discovery.LoadAsync();
         await Creators.LoadAsync(CancellationToken.None);
@@ -149,6 +186,8 @@ public sealed partial class MainViewModel : ObservableObject
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();
             await Creators.LoadAsync(CancellationToken.None);
+            Settings.MarkScanned();
+            OnPropertyChanged(nameof(IsLibraryEmpty));
         }
         finally
         {
