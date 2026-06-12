@@ -76,8 +76,21 @@ public sealed class HarnessRunner
                 await _main.OpenRenameToolAsync((await FindRichestSeriesAsync()).Series); break;
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
             case "PiP": await PlayAsync(_options.Play!, pip: true); break;
+            case "Search": await NavigateSearchAsync(); break;
             default: _main.CurrentView = AppView.Home; break;
         }
+    }
+
+    /// <summary>
+    /// Seeds the Search view with a term matching the first scanned creator so the
+    /// Creators section is populated for the screenshot sweep.
+    /// </summary>
+    private async Task NavigateSearchAsync()
+    {
+        var summaries = _library.GetSectionSummaries();
+        var term = summaries.Count > 0 ? summaries[0].DisplayName : "video";
+        _main.Search.Query = term;
+        await _main.Search.WaitForIdleAsync();
     }
 
     private async Task SettleAsync(bool isVideo)

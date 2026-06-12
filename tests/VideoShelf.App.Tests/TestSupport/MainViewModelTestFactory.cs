@@ -55,9 +55,11 @@ public static class MainViewModelTestFactory
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
+        var searchCardFactory = new CreatorCardFactory(art, thumbs);
+        var searchVm = new SearchViewModel(lib, searchCardFactory);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

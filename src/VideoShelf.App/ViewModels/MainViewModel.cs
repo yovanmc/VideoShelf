@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -27,7 +27,8 @@ public sealed partial class MainViewModel : ObservableObject
         DiscoveryViewModel discovery,
         SectionDetailViewModel sectionDetail,
         RenameToolViewModel renameTool,
-        CreatorsViewModel creators)
+        CreatorsViewModel creators,
+        SearchViewModel search)
     {
         _sources = sources;
         _library = library;
@@ -42,12 +43,21 @@ public sealed partial class MainViewModel : ObservableObject
         SectionDetail = sectionDetail;
         RenameTool = renameTool;
         Creators = creators;
+        Search = search;
         Discovery.PlayRequested += (_, e) => PlayEpisode(e);
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
         RenameTool.CloseRequested += (_, _) => CurrentView = AppView.SectionDetail;
         Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
+        Search.PlayRequested += (_, e) => PlayEpisode(e);
+        Search.OpenCreatorRequested += async id => await OpenSectionAsync(id);
+        Search.PropertyChanged += (_, e) =>
+        {
+            // Typing in the persistent search box drives the user into the Search view.
+            if (e.PropertyName == nameof(SearchViewModel.Query) && !string.IsNullOrEmpty(Search.Query))
+                CurrentView = AppView.Search;
+        };
     }
 
     public string Title => "VideoShelf";
@@ -60,6 +70,7 @@ public sealed partial class MainViewModel : ObservableObject
     public SectionDetailViewModel SectionDetail { get; }
     public RenameToolViewModel RenameTool { get; }
     public CreatorsViewModel Creators { get; }
+    public SearchViewModel Search { get; }
 
     [ObservableProperty]
     private AppView _currentView = AppView.Home;

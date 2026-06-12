@@ -48,8 +48,10 @@ public class MainViewModelPlaybackTests
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
+        var searchCardFactory = new CreatorCardFactory(art, thumbs);
+        var searchVm = new SearchViewModel(lib, searchCardFactory);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
     }
 
     [Fact]
