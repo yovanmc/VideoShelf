@@ -39,3 +39,13 @@ desktop.ini
 
 # Git worktrees (per WORKFLOW-execution.md runbook)
 .worktrees/
+
+# Visual harness scratch
+/tests/screenshots/
+.harness/
+
+# Packaging artifacts
+*.msix
+*.pfx
+/packaging/_staging/
+/packaging/_publish/
