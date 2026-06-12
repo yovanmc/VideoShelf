@@ -11,8 +11,9 @@ public sealed record TrackOption(int Id, string Label)
     public const int SubtitlesOffId = -1;
 }
 
-/// <summary>An embedded chapter. Index is the libVLC chapter index (0-based); Name may be empty.</summary>
-public sealed record ChapterOption(int Index, string Name);
+/// <summary>An embedded chapter. Index is the libVLC chapter index (0-based); Name may be empty.
+/// StartSeconds is the chapter's start offset in seconds (for scrubber tick marks; 0 if unknown).</summary>
+public sealed record ChapterOption(int Index, string Name, double StartSeconds = 0);
 
 /// <summary>
 /// Abstracts the libVLC MediaPlayer so all playback decision logic stays unit-testable.
