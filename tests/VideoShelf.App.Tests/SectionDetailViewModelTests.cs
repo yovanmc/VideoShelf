@@ -46,6 +46,24 @@ public sealed class SectionDetailViewModelTests
     }
 
     [Fact]
+    public async Task LoadAsync_sets_VideoCount()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        await f.Vm.LoadAsync(f.SectionId);
+        // One video was upserted in NewFx
+        f.Vm.VideoCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task LoadAsync_BackgroundImagePath_is_null_with_no_override_and_NullThumbs()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        await f.Vm.LoadAsync(f.SectionId);
+        // NullThumbs returns null and no override set → BackgroundImagePath is null
+        f.Vm.BackgroundImagePath.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task AddTag_persists_and_appears_in_collection()
     {
         var f = NewFx(); using var _d = f.Db;
@@ -127,10 +145,27 @@ public sealed class SectionDetailCreatorArtTests
         var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
         await vm.LoadAsync(sectionId);
 
-        vm.SetCreatorArtCommand.Execute(null);
+        await vm.SetCreatorArtCommand.ExecuteAsync(null);
 
         art.GetArtPath(sectionId).ShouldBe(@"C:\pics\a.png");
         vm.CreatorArtPath.ShouldBe(@"C:\pics\a.png");
+    }
+
+    [Fact]
+    public async Task SetCreatorArt_sets_BackgroundImagePath_to_override()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+
+        var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
+        await vm.LoadAsync(sectionId);
+
+        await vm.SetCreatorArtCommand.ExecuteAsync(null);
+
+        vm.BackgroundImagePath.ShouldBe(@"C:\pics\a.png");
     }
 
     [Fact]
@@ -145,7 +180,7 @@ public sealed class SectionDetailCreatorArtTests
         var vm = CreateVm(temp, new FakePicker(null), art);
         await vm.LoadAsync(sectionId);
 
-        vm.SetCreatorArtCommand.Execute(null);
+        await vm.SetCreatorArtCommand.ExecuteAsync(null);
 
         art.GetArtPath(sectionId).ShouldBeNull();
     }
@@ -162,10 +197,31 @@ public sealed class SectionDetailCreatorArtTests
 
         var vm = CreateVm(temp, new FakePicker(null), art);
         await vm.LoadAsync(sectionId);
-        vm.ClearCreatorArtCommand.Execute(null);
+        await vm.ClearCreatorArtCommand.ExecuteAsync(null);
 
         art.GetArtPath(sectionId).ShouldBeNull();
         vm.CreatorArtPath.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ClearCreatorArt_re_resolves_BackgroundImagePath_to_null_when_no_seed()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+        art.SetArtPath(sectionId, @"C:\pics\a.png");
+
+        var vm = CreateVm(temp, new FakePicker(null), art);
+        await vm.LoadAsync(sectionId);
+        // Before clear: BackgroundImagePath == override
+        vm.BackgroundImagePath.ShouldBe(@"C:\pics\a.png");
+
+        await vm.ClearCreatorArtCommand.ExecuteAsync(null);
+
+        // After clear: no seed (no videos in this section), NullThumbs → null
+        vm.BackgroundImagePath.ShouldBeNull();
     }
 
     [Fact]
@@ -186,7 +242,24 @@ public sealed class SectionDetailCreatorArtTests
     }
 
     [Fact]
-    public void SetCreatorArt_before_LoadAsync_is_noop()
+    public async Task LoadAsync_BackgroundImagePath_equals_override_when_art_set()
+    {
+        using var temp = new AppTempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var art = new CreatorArtRepository(temp.Db);
+        var sourceId = lib.UpsertSource(@"C:\V", "V");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+        art.SetArtPath(sectionId, @"C:\pics\existing.png");
+
+        var vm = CreateVm(temp, new FakePicker(null), art);
+        await vm.LoadAsync(sectionId);
+
+        // Override path takes precedence → BackgroundImagePath == override
+        vm.BackgroundImagePath.ShouldBe(@"C:\pics\existing.png");
+    }
+
+    [Fact]
+    public async Task SetCreatorArt_before_LoadAsync_is_noop()
     {
         // SectionId defaults to 0; executing the command must not touch the DB or throw.
         using var temp = new AppTempDb();
@@ -194,8 +267,7 @@ public sealed class SectionDetailCreatorArtTests
         var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
 
         // No LoadAsync called — SectionId is still 0.
-        var ex = Record.Exception(() => vm.SetCreatorArtCommand.Execute(null));
-        ex.ShouldBeNull();
+        await vm.SetCreatorArtCommand.ExecuteAsync(null);
         // DB untouched: GetArtPath(0) should remain null (section 0 does not exist).
         art.GetArtPath(0).ShouldBeNull();
     }
