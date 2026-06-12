@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.Data.Sqlite;
+using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 
 namespace VideoShelf.Core.Storage;
@@ -297,6 +298,76 @@ public sealed class LibraryRepository(VideoShelfDb db)
         while (r.Read())
             list.Add(new SearchHit(
                 (SearchHitKind)r.GetInt32(0), r.GetInt64(1), r.GetInt64(2), r.GetString(3)));
+        return list;
+    }
+
+    public IReadOnlyList<SectionSummary> SearchCreators(string query, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return [];
+        var pattern = "%" + query.Trim()
+            .Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT sc.id, sc.source_id, sc.display_name,
+                   COUNT(DISTINCT se.id) AS series_count,
+                   COALESCE(SUM(CASE WHEN v.id IS NOT NULL AND v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched,
+                   COUNT(v.id) AS video_count,
+                   (SELECT v2.file_path
+                      FROM videos v2
+                      JOIN series se2 ON se2.id = v2.series_id
+                     WHERE se2.section_id = sc.id AND v2.missing = 0
+                     ORDER BY se2.id, v2.episode_no
+                     LIMIT 1) AS seed_path
+            FROM sections sc
+            LEFT JOIN series se ON se.section_id = sc.id
+            LEFT JOIN videos v ON v.series_id = se.id
+            WHERE sc.display_name LIKE $q ESCAPE '\'
+            GROUP BY sc.id, sc.source_id, sc.display_name
+            ORDER BY sc.display_name
+            LIMIT $limit
+            """;
+        cmd.Parameters.AddWithValue("$q", pattern);
+        cmd.Parameters.AddWithValue("$limit", limit);
+        var list = new List<SectionSummary>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new SectionSummary(
+                SectionId: r.GetInt64(0), SourceId: r.GetInt64(1), DisplayName: r.GetString(2),
+                SeriesCount: r.GetInt32(3), UnwatchedCount: r.GetInt32(4), VideoCount: r.GetInt32(5),
+                ThumbnailSeedPath: r.IsDBNull(6) ? null : r.GetString(6)));
+        return list;
+    }
+
+    public IReadOnlyList<RecencyItem> SearchVideos(string query, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return [];
+        var pattern = "%" + query.Trim()
+            .Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, s.section_id, s.base_title, s.is_standalone,
+                   v.episode_no, v.watched, v.thumbnail_path
+            FROM videos v
+            JOIN series s ON s.id = v.series_id
+            WHERE v.missing = 0
+              AND (v.raw_filename LIKE $q ESCAPE '\' OR s.base_title LIKE $q ESCAPE '\')
+            ORDER BY s.base_title, v.episode_no
+            LIMIT $limit
+            """;
+        cmd.Parameters.AddWithValue("$q", pattern);
+        cmd.Parameters.AddWithValue("$limit", limit);
+        var list = new List<RecencyItem>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new RecencyItem(
+                VideoId: r.GetInt64(0), SeriesId: r.GetInt64(1), SectionId: r.GetInt64(2),
+                SeriesTitle: r.GetString(3), IsStandalone: r.GetInt64(4) != 0,
+                EpisodeNo: r.GetInt32(5), Watched: r.GetInt64(6) != 0,
+                ThumbnailSeedPath: r.IsDBNull(7) ? null : r.GetString(7)));
         return list;
     }
 
