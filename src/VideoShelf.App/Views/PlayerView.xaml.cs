@@ -17,6 +17,8 @@ public partial class PlayerView : UserControl
     private readonly DispatcherTimer _autoHide;
     private MainViewModel? _main;
 
+    private FrameworkElement? Host => this.Parent as FrameworkElement;
+
     public PlayerView()
     {
         InitializeComponent();
@@ -149,16 +151,22 @@ public partial class PlayerView : UserControl
         if (_main is null) return;
         var pip = _main.IsPictureInPicture;
         BackToWindowButton.Visibility = pip ? Visibility.Visible : Visibility.Collapsed;
-        if (pip)
+        var host = Host;
+        if (host is not null)
         {
-            // Seed the floating panel near the bottom-right via layout Margin (top-left anchored).
-            var left = Math.Max(0, ActualWidth - 360 - 24);
-            var top = Math.Max(0, ActualHeight - 203 - 24);
-            PlayerShell.Margin = new Thickness(left, top, 0, 0);
-        }
-        else
-        {
-            PlayerShell.Margin = new Thickness(0);
+            if (pip)
+            {
+                var win = Window.GetWindow(this);
+                var w = win?.ActualWidth ?? 1180;
+                var h = win?.ActualHeight ?? 760;
+                var left = Math.Max(0, w - 360 - 48);
+                var top = Math.Max(0, h - 203 - 96);
+                host.Margin = new Thickness(left, top, 0, 0);
+            }
+            else
+            {
+                host.Margin = new Thickness(0);
+            }
         }
         ShowControls();
         Dispatcher.BeginInvoke(new Action(RenderChapterTicks), DispatcherPriority.Loaded);
@@ -180,14 +188,17 @@ public partial class PlayerView : UserControl
 
     private void OnTopBarMouseMove(object sender, MouseEventArgs e)
     {
-        if (!_dragging) return;
+        if (!_dragging || Host is not FrameworkElement host) return;
         var p = e.GetPosition(this);
         var dx = p.X - _dragStart.X;
         var dy = p.Y - _dragStart.Y;
         _dragStart = p;
-        var left = Math.Clamp(PlayerShell.Margin.Left + dx, 0, Math.Max(0, ActualWidth - 360));
-        var top = Math.Clamp(PlayerShell.Margin.Top + dy, 0, Math.Max(0, ActualHeight - 203));
-        PlayerShell.Margin = new Thickness(left, top, 0, 0);
+        var win = Window.GetWindow(this);
+        var maxLeft = Math.Max(0, (win?.ActualWidth ?? 1180) - 360);
+        var maxTop = Math.Max(0, (win?.ActualHeight ?? 760) - 203);
+        var left = Math.Clamp(host.Margin.Left + dx, 0, maxLeft);
+        var top = Math.Clamp(host.Margin.Top + dy, 0, maxTop);
+        host.Margin = new Thickness(left, top, 0, 0);
     }
 
     private void OnTopBarMouseUp(object sender, MouseButtonEventArgs e)

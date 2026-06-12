@@ -170,6 +170,23 @@
         <!-- Immersive player host: overlays the ENTIRE window while playing. Content is set in code-behind
              only while playing, so the VideoView (and its airspace overlay HWND) is torn down when hidden —
              this is the fix for the transport-bar bleed onto non-player views. -->
-        <ContentControl x:Name="PlayerHost" Grid.Row="0" Grid.RowSpan="2" />
+        <ContentControl x:Name="PlayerHost" Grid.Row="0" Grid.RowSpan="2">
+            <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                    <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    <Setter Property="VerticalAlignment" Value="Stretch" />
+                    <Style.Triggers>
+                        <!-- In-window PiP: the host itself becomes a small corner panel, so the rest of
+                             the window is ordinary (fully visible) app content behind it. -->
+                        <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
+                            <Setter Property="HorizontalAlignment" Value="Left" />
+                            <Setter Property="VerticalAlignment" Value="Top" />
+                            <Setter Property="Width" Value="360" />
+                            <Setter Property="Height" Value="203" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ContentControl.Style>
+        </ContentControl>
     </Grid>
 </ui:FluentWindow>

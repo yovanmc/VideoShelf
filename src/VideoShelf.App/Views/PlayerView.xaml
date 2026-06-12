@@ -15,23 +15,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid x:Name="RootGrid" MouseMove="OnSurfaceMouseMove">
+    <Grid x:Name="RootGrid" Background="Black" MouseMove="OnSurfaceMouseMove">
         <Border x:Name="PlayerShell" Background="Black">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="HorizontalAlignment" Value="Stretch" />
-                    <Setter Property="VerticalAlignment" Value="Stretch" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
-                            <Setter Property="HorizontalAlignment" Value="Left" />
-                            <Setter Property="VerticalAlignment" Value="Top" />
-                            <Setter Property="Width" Value="360" />
-                            <Setter Property="Height" Value="203" />
-                            <Setter Property="CornerRadius" Value="8" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
             <vlc:VideoView x:Name="VideoSurface">
                 <Grid x:Name="OverlayRoot">
 
@@ -136,15 +121,5 @@
             </vlc:VideoView>
         </Border>
 
-        <Grid.Style>
-            <Style TargetType="Grid">
-                <Setter Property="Background" Value="Black" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
-                        <Setter Property="Background" Value="{x:Null}" />
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </Grid.Style>
     </Grid>
 </UserControl>
