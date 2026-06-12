@@ -59,7 +59,8 @@ public static class MainViewModelTestFactory
         var searchVm = new SearchViewModel(lib, searchCardFactory);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()));
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

@@ -45,6 +45,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IScanCoordinator, ScanCoordinator>();
 
         services.AddSingleton<IMediaProbe, LibVlcMediaProbe>();
+        services.AddSingleton<MediaBackfillService>();
         services.AddSingleton<IThumbnailSnapshotter, LibVlcThumbnailService>();
         services.AddSingleton<IThumbnailService>(sp =>
             new ThumbnailCache(

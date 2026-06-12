@@ -51,7 +51,8 @@ public class MainViewModelPlaybackTests
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()));
     }
 
     [Fact]
