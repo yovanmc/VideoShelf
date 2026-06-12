@@ -42,7 +42,8 @@ public class MainViewModelPlaybackTests
         var disc = new DiscoveryRepository(temp.Db, lib, tags);
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
+        var statsRepo = new StatsRepository(temp.Db);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");

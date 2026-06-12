@@ -10,7 +10,7 @@ namespace VideoShelf.App.ViewModels.Discovery;
 
 public sealed partial class DiscoveryViewModel(
     DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
-    CreatorCardFactory cards) : ObservableObject
+    CreatorCardFactory cards, StatsRepository stats) : ObservableObject
 {
     private const int RailLimit = 24;
 
@@ -21,6 +21,12 @@ public sealed partial class DiscoveryViewModel(
     public ObservableCollection<RecencyCardViewModel> RecentlyWatched { get; } = [];
     public ObservableCollection<TagChipViewModel> AvailableTags { get; } = [];
     public ObservableCollection<CreatorCardViewModel> TagResults { get; } = [];
+    public ObservableCollection<CreatorWatchCount> TopCreators { get; } = new();
+
+    [ObservableProperty] private string _watchedSummary = "";
+    [ObservableProperty] private string _inProgressSummary = "";
+    [ObservableProperty] private bool _hasStats;
+    [ObservableProperty] private bool _hasInProgress;
 
     public bool HasContinueWatching => ContinueWatching.Count > 0;
     public bool HasRecommendedCreators => RecommendedCreators.Count > 0;
@@ -48,7 +54,9 @@ public sealed partial class DiscoveryViewModel(
             added: discovery.GetRecentlyAdded(RailLimit),
             watched: discovery.GetRecentlyWatched(RailLimit),
             tagCounts: tags.GetTagCounts(),
-            summaries: library.GetSectionSummaries()));
+            summaries: library.GetSectionSummaries(),
+            libStats: stats.GetLibraryStats(),
+            topCreators: stats.GetTopCreatorsByWatched(5)));
 
         _summaryById = data.summaries.ToDictionary(s => s.SectionId);
 
@@ -61,6 +69,14 @@ public sealed partial class DiscoveryViewModel(
         AvailableTags.Clear();
         foreach (var tc in data.tagCounts) AvailableTags.Add(new TagChipViewModel(tc.Tag, tc.SectionCount));
         TagResults.Clear();
+
+        var s = data.libStats;
+        WatchedSummary = $"{s.WatchedVideos} of {s.TotalVideos} watched · {FormatDuration(s.WatchedDurationSeconds)}";
+        HasInProgress = s.InProgressVideos > 0;
+        InProgressSummary = HasInProgress ? $"{s.InProgressVideos} in progress" : "";
+        TopCreators.Clear();
+        foreach (var c in data.topCreators) TopCreators.Add(c);
+        HasStats = s.TotalVideos > 0;
 
         RaiseAllHasFlags();
     }
@@ -132,5 +148,13 @@ public sealed partial class DiscoveryViewModel(
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(HasTagResults));
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    private static string FormatDuration(double seconds)
+    {
+        var total = (int)Math.Round(seconds);
+        var h = total / 3600;
+        var m = (total % 3600) / 60;
+        return h > 0 ? $"{h}h {m}m" : $"{m}m";
     }
 }

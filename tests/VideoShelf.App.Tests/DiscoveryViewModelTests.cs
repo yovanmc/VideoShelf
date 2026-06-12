@@ -21,7 +21,7 @@ public sealed class DiscoveryViewModelTests
     }
 
     private sealed record Fx(AppTempDb Db, LibraryRepository Lib, WatchRepository Watch,
-        TagRepository Tags, DiscoveryRepository Disc, DiscoveryViewModel Vm);
+        TagRepository Tags, DiscoveryRepository Disc, StatsRepository Stats, DiscoveryViewModel Vm);
 
     private static Fx NewFx()
     {
@@ -30,11 +30,12 @@ public sealed class DiscoveryViewModelTests
         var watch = new WatchRepository(db.Db);
         var tags = new TagRepository(db.Db);
         var disc = new DiscoveryRepository(db.Db, lib, tags);
+        var statsRepo = new StatsRepository(db.Db);
         var art = new CreatorArtRepository(db.Db);
         var thumbs = new NullThumbs();
         var cardFactory = new CreatorCardFactory(art, thumbs);
-        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
-        return new Fx(db, lib, watch, tags, disc, vm);
+        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
+        return new Fx(db, lib, watch, tags, disc, statsRepo, vm);
     }
 
     [Fact]
@@ -134,5 +135,25 @@ public sealed class DiscoveryViewModelTests
         f.Vm.TagResults.ShouldNotBeEmpty();
         f.Vm.TagResults[0].ShouldBeOfType<CreatorCardViewModel>();
         f.Vm.TagResults.Select(r => r.SectionId).ShouldContain(s1);
+    }
+
+    [Fact]
+    public async Task Stats_populate_on_load()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "Creator A");
+        var ser = f.Lib.UpsertSeries(sec, "ShowA", false);
+        var vid1 = f.Lib.UpsertVideo(ser, @"C:\m\ShowA\e01.mkv", 1, "mkv");
+        var vid2 = f.Lib.UpsertVideo(ser, @"C:\m\ShowA\e02.mkv", 2, "mkv");
+        f.Lib.SetDuration(vid1, 3600);
+        f.Watch.SetWatched(vid1, true);
+        // vid2 is present but not watched
+
+        await f.Vm.LoadAsync();
+
+        f.Vm.HasStats.ShouldBeTrue();
+        f.Vm.WatchedSummary.ShouldContain("watched");
+        f.Vm.TopCreators.ShouldNotBeEmpty();
     }
 }
