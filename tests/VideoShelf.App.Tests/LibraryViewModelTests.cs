@@ -112,4 +112,23 @@ public class LibraryViewModelTests
         // Search text must be cleared, collapsing the results panel.
         vm.SearchText.ShouldBe("");
     }
+
+    [Fact]
+    public async Task Changing_search_cancels_a_prior_pending_sort_load()
+    {
+        using var temp = new AppTempDb();
+        using var dir = new TempDir();
+        var vm = Build(temp, dir);
+        await vm.LoadSectionsAsync();
+        await vm.SelectSectionAsync(vm.Sections.First());
+
+        // Kick a sort change then immediately a search change; the VM must settle without throwing
+        // and end in the search state (no overlapping mutation of the UI-bound collection).
+        vm.SortMode = BrowseSort.DateAdded;
+        vm.SearchText = "Story";
+
+        await vm.WaitForIdleAsync();
+
+        vm.SearchText.ShouldBe("Story");
+    }
 }

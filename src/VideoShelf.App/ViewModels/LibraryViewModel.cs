@@ -15,6 +15,7 @@ public sealed partial class LibraryViewModel(
     WatchRepository watch,
     IThumbnailService thumbnails) : ObservableObject
 {
+    private CancellationTokenSource? _opCts;
     private Task _pending = Task.CompletedTask;
 
     public ObservableCollection<SectionViewModel> Sections { get; } = [];
@@ -50,20 +51,31 @@ public sealed partial class LibraryViewModel(
             await section.LoadSeriesAsync(SortMode, CancellationToken.None);
     }
 
+    private CancellationToken NextOperation()
+    {
+        _opCts?.Cancel();
+        _opCts?.Dispose();
+        _opCts = new CancellationTokenSource();
+        return _opCts.Token;
+    }
+
     partial void OnSortModeChanged(BrowseSort value)
     {
+        var ct = NextOperation();
         if (SelectedSection is { } section)
-            _pending = section.LoadSeriesAsync(value, CancellationToken.None);
+            _pending = section.LoadSeriesAsync(value, ct);
     }
 
     partial void OnSearchTextChanged(string value)
     {
-        _pending = RunSearchAsync(value);
+        var ct = NextOperation();
+        _pending = RunSearchAsync(value, ct);
     }
 
-    private async Task RunSearchAsync(string query)
+    private async Task RunSearchAsync(string query, CancellationToken ct = default)
     {
-        var hits = await Task.Run(() => library.Search(query));
+        var hits = await Task.Run(() => library.Search(query), ct);
+        ct.ThrowIfCancellationRequested();
         SearchResults.Clear();
         foreach (var h in hits)
             SearchResults.Add(h);
