@@ -1,0 +1,25 @@
+<UserControl x:Class="VideoShelf.App.Views.CreatorCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Button Command="{Binding OpenCommand}" Width="200" Padding="0"
+            Background="Transparent" BorderThickness="0" Cursor="Hand"
+            HorizontalContentAlignment="Stretch">
+        <StackPanel>
+            <Border CornerRadius="{StaticResource CardImageRadius}"
+                    Background="{StaticResource ThumbPlaceholderBrush}"
+                    Height="120" ClipToBounds="True">
+                <Image Source="{Binding ImagePath, IsAsync=True}" Stretch="UniformToFill" />
+            </Border>
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="2,8,2,0"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{Binding VideoCountLabel}" Opacity="0.7" FontSize="12" Margin="2,1,2,0" />
+        </StackPanel>
+    </Button>
+</UserControl>
