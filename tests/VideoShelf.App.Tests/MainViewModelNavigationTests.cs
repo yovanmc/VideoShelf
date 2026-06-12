@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Shouldly;
 using VideoShelf.App.ViewModels;
@@ -78,10 +79,20 @@ public sealed class MainViewModelNavigationTests
         // Fire the card's Open command — this raises SearchViewModel.OpenCreatorRequested,
         // which the ctor-wired handler converts to OpenSectionAsync.
         vm.Search.CreatorResults[0].OpenCommand.Execute(null);
-        // Give the async handler a tick to complete.
-        await Task.Yield();
+        // The handler is async-void (Action<long> wired to an async lambda that awaits
+        // OpenSectionAsync -> SectionDetail.LoadAsync), so poll until the navigation
+        // completes rather than racing on a single yield (a single Task.Yield is enough
+        // locally but not on slower CI).
+        await WaitForAsync(() => vm.CurrentView == AppView.SectionDetail);
 
         vm.CurrentView.ShouldBe(AppView.SectionDetail);
         vm.SectionDetail.SectionId.ShouldBe(ctx.SectionId);
+    }
+
+    private static async Task WaitForAsync(Func<bool> condition, int timeoutMs = 5000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (!condition() && DateTime.UtcNow < deadline)
+            await Task.Delay(10);
     }
 }
