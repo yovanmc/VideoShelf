@@ -162,6 +162,12 @@
                                           Converter={StaticResource EnumToVis},
                                           ConverterParameter=Search}" />
 
+                    <!-- Settings view -->
+                    <views:SettingsView Visibility="{Binding DataContext.CurrentView,
+                                            RelativeSource={RelativeSource AncestorType=Window},
+                                            Converter={StaticResource EnumToVis},
+                                            ConverterParameter=Settings}" />
+
                 </Grid>
 
             </Grid>

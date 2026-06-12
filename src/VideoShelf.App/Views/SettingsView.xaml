@@ -1,0 +1,76 @@
+<UserControl x:Class="VideoShelf.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             xmlns:views="clr-namespace:VideoShelf.App.Views">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+
+            <!-- Page title -->
+            <TextBlock Text="Settings" FontSize="24" FontWeight="Bold" Margin="0,0,0,16" />
+
+            <!-- LIBRARY section -->
+            <TextBlock Text="LIBRARY" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+
+            <!-- Actions row -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
+                <ui:Button Content="Add source"
+                           Appearance="Primary"
+                           Command="{Binding Sources.AddSourceCommand}" />
+                <ui:Button Content="Scan"
+                           Margin="8,0,0,0"
+                           Command="{Binding ScanAndReloadCommand}" />
+                <ui:ProgressRing IsIndeterminate="True"
+                                 Width="20" Height="20"
+                                 Margin="12,0,0,0"
+                                 VerticalAlignment="Center"
+                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text="{Binding Settings.LastScanText}"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           Opacity="0.75" />
+            </StackPanel>
+
+            <!-- Sources list -->
+            <ItemsControl ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="0,2">
+                            <ui:Button DockPanel.Dock="Right"
+                                       Content="Remove"
+                                       Command="{Binding DataContext.Sources.RemoveSourceCommand,
+                                                 RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                       CommandParameter="{Binding}" />
+                            <TextBlock Text="{Binding DisplayName}"
+                                       VerticalAlignment="Center"
+                                       Opacity="0.85" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- PLAYBACK section -->
+            <TextBlock Text="PLAYBACK" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+            <CheckBox Margin="0,8,0,0"
+                      Content="Auto-play next episode"
+                      IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
+
+            <!-- APPEARANCE section -->
+            <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+            <TextBlock Margin="0,8,0,0"
+                       Opacity="0.6"
+                       Text="Light/dark theme options are coming in a later update." />
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

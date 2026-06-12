@@ -206,11 +206,10 @@ public sealed class HarnessRunner
     }
 
     /// <summary>
-    /// Shows settings by navigating to Home (Settings controls live in the sidebar,
-    /// always visible; there is no separate AppView for settings).
+    /// Shows the dedicated Settings view.
     /// </summary>
     private void ShowSettings()
-        => _main.CurrentView = AppView.Home;
+        => _main.CurrentView = AppView.Settings;
 
     /// <summary>
     /// Plays a clip via MainViewModel.PlayEpisode(EpisodeView). Constructs a synthetic
