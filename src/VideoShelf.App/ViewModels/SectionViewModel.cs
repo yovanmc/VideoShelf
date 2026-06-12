@@ -36,6 +36,7 @@ public sealed partial class SectionViewModel(
         SeriesList.Clear();
         foreach (var s in summaries)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var seriesVm = new SeriesViewModel(s, library, watch, thumbnails);
             seriesVm.UnwatchedChanged += (_, _) => RecomputeUnwatched();
             seriesVm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);

@@ -72,6 +72,7 @@ public sealed partial class SectionDetailViewModel(
     [RelayCommand]
     private void SetCreatorArt()
     {
+        if (SectionId <= 0) return;
         var picked = imagePicker.PickImage();
         if (string.IsNullOrWhiteSpace(picked))
             return;
@@ -82,6 +83,7 @@ public sealed partial class SectionDetailViewModel(
     [RelayCommand]
     private void ClearCreatorArt()
     {
+        if (SectionId <= 0) return;
         art.ClearArtPath(SectionId);
         CreatorArtPath = null;
     }

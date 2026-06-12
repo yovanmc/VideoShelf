@@ -184,4 +184,19 @@ public sealed class SectionDetailCreatorArtTests
         vm.CreatorArtPath.ShouldBe(@"C:\pics\existing.png");
         vm.HasCreatorArt.ShouldBeTrue();
     }
+
+    [Fact]
+    public void SetCreatorArt_before_LoadAsync_is_noop()
+    {
+        // SectionId defaults to 0; executing the command must not touch the DB or throw.
+        using var temp = new AppTempDb();
+        var art = new CreatorArtRepository(temp.Db);
+        var vm = CreateVm(temp, new FakePicker(@"C:\pics\a.png"), art);
+
+        // No LoadAsync called — SectionId is still 0.
+        var ex = Record.Exception(() => vm.SetCreatorArtCommand.Execute(null));
+        ex.ShouldBeNull();
+        // DB untouched: GetArtPath(0) should remain null (section 0 does not exist).
+        art.GetArtPath(0).ShouldBeNull();
+    }
 }

@@ -30,12 +30,20 @@ public partial class CreatorsViewModel : ObservableObject
     {
         // Heavy work off the UI thread; resume on the captured context to mutate the UI-bound collection.
         // NOTE: do NOT use ConfigureAwait(false) on this chain (the Cross-thread ObservableCollection gotcha).
-        var summaries = await Task.Run(() => _library.GetSectionSummaries(), ct);
+        // GetArtPath is also resolved in the same background Task.Run to avoid per-card SQLite round-trips
+        // on the UI thread.
+        var cards = await Task.Run(() =>
+        {
+            var summaries = _library.GetSectionSummaries();
+            var result = new System.Collections.Generic.List<(VideoShelf.Core.Models.SectionSummary Summary, string? OverridePath)>(summaries.Count);
+            foreach (var s in summaries)
+                result.Add((s, _art.GetArtPath(s.SectionId)));
+            return result;
+        }, ct);
 
         Creators.Clear();
-        foreach (var summary in summaries)
+        foreach (var (summary, overridePath) in cards)
         {
-            var overridePath = _art.GetArtPath(summary.SectionId);
             var card = new CreatorCardViewModel(summary, overridePath, _thumbnails);
             card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
             Creators.Add(card);

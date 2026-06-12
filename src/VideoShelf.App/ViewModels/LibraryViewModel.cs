@@ -59,17 +59,29 @@ public sealed partial class LibraryViewModel(
         return _opCts.Token;
     }
 
+    /// <summary>
+    /// Wraps an inner task so that if it is cancelled (because a superseding operation called
+    /// <see cref="NextOperation"/>) the <see cref="OperationCanceledException"/> is swallowed
+    /// gracefully rather than leaving an unobserved faulted task.
+    /// <see cref="WaitForIdleAsync"/> callers still see normal completion.
+    /// </summary>
+    private static async Task CancelSafe(Task inner)
+    {
+        try { await inner.ConfigureAwait(false); }
+        catch (OperationCanceledException) { }
+    }
+
     partial void OnSortModeChanged(BrowseSort value)
     {
         var ct = NextOperation();
         if (SelectedSection is { } section)
-            _pending = section.LoadSeriesAsync(value, ct);
+            _pending = CancelSafe(section.LoadSeriesAsync(value, ct));
     }
 
     partial void OnSearchTextChanged(string value)
     {
         var ct = NextOperation();
-        _pending = RunSearchAsync(value, ct);
+        _pending = CancelSafe(RunSearchAsync(value, ct));
     }
 
     private async Task RunSearchAsync(string query, CancellationToken ct = default)
