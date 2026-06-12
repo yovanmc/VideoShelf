@@ -29,6 +29,7 @@ public sealed partial class SectionDetailViewModel(
     public ObservableCollection<string> Suggestions { get; } = [];
 
     public event EventHandler<EpisodeView>? PlayRequested;
+    public event EventHandler<SeriesViewModel>? RenameRequested;
 
     public async Task LoadAsync(long sectionId)
     {
@@ -48,6 +49,7 @@ public sealed partial class SectionDetailViewModel(
         {
             var svm = new SeriesViewModel(s, library, watch, thumbnails);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
+            svm.RenameRequested += (_, s) => RenameRequested?.Invoke(this, s);
             SeriesList.Add(svm);
         }
 

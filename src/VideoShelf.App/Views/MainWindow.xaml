@@ -231,6 +231,13 @@
                                                  Converter={StaticResource EnumToVis},
                                                  ConverterParameter=SectionDetail}" />
 
+                    <!-- Rename tool view -->
+                    <views:RenameToolView DataContext="{Binding RenameTool}"
+                                          Visibility="{Binding CurrentView,
+                                              RelativeSource={RelativeSource AncestorType=Window},
+                                              Converter={StaticResource EnumToVis},
+                                              ConverterParameter=RenameTool}" />
+
                 </Grid>
 
                 <!-- Inline player pane: overlays both columns while playing and not in PiP. -->

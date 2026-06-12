@@ -31,6 +31,10 @@ public sealed partial class SeriesViewModel(
 
     public event System.EventHandler? UnwatchedChanged;
     public event System.EventHandler<EpisodeView>? PlayRequested;
+    public event System.EventHandler<SeriesViewModel>? RenameRequested;
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private void RequestRename() => RenameRequested?.Invoke(this, this);
 
     partial void OnUnwatchedCountChanged(int value)
     {
