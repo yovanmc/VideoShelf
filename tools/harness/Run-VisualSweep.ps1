@@ -4,7 +4,8 @@
 param(
     [string]$OutDir   = (Join-Path $PSScriptRoot '..\..\tests\screenshots'),
     [string]$Fixtures = (Join-Path $env:TEMP 'vs-fixtures'),
-    [int]$TimeoutSec  = 120
+    [int]$TimeoutSec  = 120,
+    [int]$SettleSeconds = 5   # post-foreground wait so the WPF-UI Mica/Fluent surface composes (capturing too early yields an all-black frame)
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,18 +36,41 @@ public static class Win32 {
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
 }
 "@
 [Win32]::SetProcessDPIAware() | Out-Null
 
 function Capture-Window {
     param([System.Diagnostics.Process]$Proc, [string]$PngPath)
-    $Proc.Refresh()
+    # Wait for a real, visible main-window handle (not just a non-zero handle).
+    $deadline = (Get-Date).AddSeconds(20)
+    while ((Get-Date) -lt $deadline) {
+        $Proc.Refresh()
+        $h = $Proc.MainWindowHandle
+        if ($h -ne [IntPtr]::Zero -and [Win32]::IsWindowVisible($h)) { break }
+        Start-Sleep -Milliseconds 300
+    }
     $h = $Proc.MainWindowHandle
     if ($h -eq [IntPtr]::Zero) { Write-Warning "No main window handle for $PngPath"; return $false }
     [Win32]::ShowWindow($h, 9) | Out-Null          # SW_RESTORE
+    # Bring the window to the very top of the Z-order, then immediately drop it back out
+    # of the always-on-top band. SetForegroundWindow alone is unreliable from a background
+    # script (focus-stealing prevention) and lets another app occlude the capture; a
+    # *permanent* TOPMOST, however, breaks LibVLCSharp.WPF's separate foreground/overlay
+    # window (it whites out the player). The TOPMOST -> NOTOPMOST toggle gives a reliable
+    # bring-to-front for every view without leaving the window topmost.
+    $HWND_TOPMOST = New-Object IntPtr(-1)
+    $HWND_NOTOPMOST = New-Object IntPtr(-2)
+    $SWP_NOMOVE_NOSIZE = 0x0001 -bor 0x0002        # SWP_NOSIZE | SWP_NOMOVE
+    [Win32]::SetWindowPos($h, $HWND_TOPMOST,   0, 0, 0, 0, $SWP_NOMOVE_NOSIZE) | Out-Null
+    [Win32]::SetWindowPos($h, $HWND_NOTOPMOST, 0, 0, 0, 0, $SWP_NOMOVE_NOSIZE) | Out-Null
     [Win32]::SetForegroundWindow($h) | Out-Null
-    Start-Sleep -Milliseconds 600
+    # Let the WPF-UI Mica/Fluent backdrop compose — CopyFromScreen before DWM
+    # composition completes captures an all-black frame (the proven settle from
+    # the VideoTriage capture harness).
+    Start-Sleep -Seconds $SettleSeconds
     $r = New-Object Win32+RECT
     [Win32]::GetWindowRect($h, [ref]$r) | Out-Null
     $w = $r.Right - $r.Left; $hh = $r.Bottom - $r.Top

@@ -71,9 +71,9 @@ public sealed class HarnessRunner
             case "Browse": _main.CurrentView = AppView.Browse; break;
             case "Settings": ShowSettings(); break;
             case "SectionDetail":
-                await _main.OpenSectionAsync(FirstSectionId()); break;
+                await _main.OpenSectionAsync((await FindRichestSeriesAsync()).SectionId); break;
             case "RenameTool":
-                await _main.OpenRenameToolAsync(await LoadFirstSeriesAsync()); break;
+                await _main.OpenRenameToolAsync((await FindRichestSeriesAsync()).Series); break;
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
             case "PiP": await PlayAsync(_options.Play!, pip: true); break;
             default: _main.CurrentView = AppView.Home; break;
@@ -153,26 +153,27 @@ public sealed class HarnessRunner
     }
 
     /// <summary>
-    /// Returns the first section id from the loaded library sections, or 0 if none.
-    /// Reads from Library.Sections (populated by ScanAndReloadAsync → LoadSectionsAsync).
+    /// Finds the series with the most episodes across all sections (so the SectionDetail
+    /// and RenameTool shots land on a meaningful multi-episode series rather than a
+    /// single-file standalone). Loads each section's series list on demand. Throws if the
+    /// scan found no media.
     /// </summary>
-    private long FirstSectionId()
-        => _main.Library.Sections.FirstOrDefault()?.SectionId ?? 0;
-
-    /// <summary>
-    /// Returns the first SeriesViewModel from the first section. Loads series for the
-    /// first section if not already loaded. Throws if none found (scan must find media).
-    /// </summary>
-    private async Task<SeriesViewModel> LoadFirstSeriesAsync()
+    private async Task<(long SectionId, SeriesViewModel Series)> FindRichestSeriesAsync()
     {
-        var section = _main.Library.Sections.FirstOrDefault()
-            ?? throw new InvalidOperationException("No sections found after scan.");
+        (long SectionId, SeriesViewModel Series)? best = null;
+        foreach (var section in _main.Library.Sections)
+        {
+            if (section.SeriesList.Count == 0)
+                await section.LoadSeriesAsync(BrowseSort.Name, CancellationToken.None);
 
-        if (section.SeriesList.Count == 0)
-            await section.LoadSeriesAsync(BrowseSort.Name, CancellationToken.None);
+            foreach (var series in section.SeriesList)
+            {
+                if (best is null || series.EpisodeCount > best.Value.Series.EpisodeCount)
+                    best = (section.SectionId, series);
+            }
+        }
 
-        return section.SeriesList.FirstOrDefault()
-            ?? throw new InvalidOperationException("No series found in first section.");
+        return best ?? throw new InvalidOperationException("No series found after scan.");
     }
 
     /// <summary>
@@ -189,8 +190,13 @@ public sealed class HarnessRunner
     /// </summary>
     private async Task PlayAsync(string clip, bool pip)
     {
-        var title = Path.GetFileNameWithoutExtension(clip);
-        var episode = new EpisodeView(0L, 0L, clip, 1, title, false, false);
+        // Play a REAL scanned episode (DB-backed VideoId + on-disk path) rather than a
+        // synthetic EpisodeView: the player's missing-file guard rejects ids that aren't
+        // in the library, so a fabricated episode renders the "File not found" banner.
+        // The first episode of the richest series (e.g. Big Buck Bunny 1) is a known clip.
+        var (_, series) = await FindRichestSeriesAsync();
+        var episode = _library.GetEpisodes(series.SeriesId).FirstOrDefault()
+            ?? throw new InvalidOperationException("Richest series has no episodes to play.");
         _main.PlayEpisode(episode);
 
         if (pip)
