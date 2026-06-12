@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.ViewModels;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
@@ -8,25 +9,31 @@ using VideoShelf.Core.Storage;
 namespace VideoShelf.App.ViewModels.Discovery;
 
 public sealed partial class DiscoveryViewModel(
-    DiscoveryRepository discovery, LibraryRepository library, TagRepository tags) : ObservableObject
+    DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
+    CreatorCardFactory cards) : ObservableObject
 {
     private const int RailLimit = 24;
 
     public ObservableCollection<ContinueWatchingCardViewModel> ContinueWatching { get; } = [];
+    public ObservableCollection<CreatorCardViewModel> RecommendedCreators { get; } = [];
+    public ObservableCollection<RecencyCardViewModel> RecommendedVideos { get; } = [];
     public ObservableCollection<RecencyCardViewModel> RecentlyAdded { get; } = [];
     public ObservableCollection<RecencyCardViewModel> RecentlyWatched { get; } = [];
-    public ObservableCollection<SectionCardViewModel> ForYou { get; } = [];
     public ObservableCollection<TagChipViewModel> AvailableTags { get; } = [];
-    public ObservableCollection<SectionCardViewModel> TagResults { get; } = [];
+    public ObservableCollection<CreatorCardViewModel> TagResults { get; } = [];
 
     public bool HasContinueWatching => ContinueWatching.Count > 0;
+    public bool HasRecommendedCreators => RecommendedCreators.Count > 0;
+    public bool HasRecommendedVideos => RecommendedVideos.Count > 0;
     public bool HasRecentlyAdded => RecentlyAdded.Count > 0;
     public bool HasRecentlyWatched => RecentlyWatched.Count > 0;
-    public bool HasForYou => ForYou.Count > 0;
     public bool HasTags => AvailableTags.Count > 0;
     public bool HasTagResults => TagResults.Count > 0;
     public bool IsEmpty =>
-        !HasContinueWatching && !HasRecentlyAdded && !HasRecentlyWatched && !HasForYou && !HasTags;
+        !HasContinueWatching && !HasRecommendedCreators && !HasRecommendedVideos
+        && !HasRecentlyAdded && !HasRecentlyWatched && !HasTags;
+
+    private Dictionary<long, SectionSummary> _summaryById = new();
 
     public event EventHandler<EpisodeView>? PlayRequested;
     public event EventHandler<long>? SectionOpenRequested;
@@ -36,15 +43,20 @@ public sealed partial class DiscoveryViewModel(
         var now = DateTimeOffset.UtcNow;
         var data = await Task.Run(() => (
             cont: discovery.GetContinueWatching(RailLimit),
+            forYou: discovery.GetForYou(RailLimit, now),
+            recVideos: discovery.GetRecommendedVideos(RailLimit, now),
             added: discovery.GetRecentlyAdded(RailLimit),
             watched: discovery.GetRecentlyWatched(RailLimit),
-            forYou: discovery.GetForYou(RailLimit, now),
-            tagCounts: tags.GetTagCounts()));
+            tagCounts: tags.GetTagCounts(),
+            summaries: library.GetSectionSummaries()));
+
+        _summaryById = data.summaries.ToDictionary(s => s.SectionId);
 
         Fill(ContinueWatching, data.cont, MakeContinueCard);
+        FillCreators(RecommendedCreators, data.forYou);
+        Fill(RecommendedVideos, data.recVideos, MakeRecencyCard);
         Fill(RecentlyAdded, data.added, MakeRecencyCard);
         Fill(RecentlyWatched, data.watched, MakeRecencyCard);
-        Fill(ForYou, data.forYou, MakeSectionCard);
 
         AvailableTags.Clear();
         foreach (var tc in data.tagCounts) AvailableTags.Add(new TagChipViewModel(tc.Tag, tc.SectionCount));
@@ -59,10 +71,28 @@ public sealed partial class DiscoveryViewModel(
         chip.IsSelected = !chip.IsSelected;
         var selected = AvailableTags.Where(t => t.IsSelected).Select(t => t.Tag).ToList();
         var results = selected.Count == 0
-            ? []
+            ? Array.Empty<SectionSuggestion>()
             : await Task.Run(() => discovery.GetSectionsByTags(selected, RailLimit));
-        Fill(TagResults, results, MakeSectionCard);
+        TagResults.Clear();
+        foreach (var s in results)
+            if (_summaryById.TryGetValue(s.SectionId, out var summary))
+                TagResults.Add(MakeCreatorCard(summary));
         OnPropertyChanged(nameof(HasTagResults));
+    }
+
+    private void FillCreators(ObservableCollection<CreatorCardViewModel> target, IReadOnlyList<SectionSuggestion> items)
+    {
+        target.Clear();
+        foreach (var s in items)
+            if (_summaryById.TryGetValue(s.SectionId, out var summary))
+                target.Add(MakeCreatorCard(summary));
+    }
+
+    private CreatorCardViewModel MakeCreatorCard(SectionSummary summary)
+    {
+        var card = cards.Create(summary);
+        card.OpenRequested += id => SectionOpenRequested?.Invoke(this, id);
+        return card;
     }
 
     private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i)
@@ -76,13 +106,6 @@ public sealed partial class DiscoveryViewModel(
     {
         var card = new RecencyCardViewModel(i);
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
-        return card;
-    }
-
-    private SectionCardViewModel MakeSectionCard(SectionSuggestion s)
-    {
-        var card = new SectionCardViewModel(s);
-        card.OpenInvoked += (_, _) => SectionOpenRequested?.Invoke(this, s.SectionId);
         return card;
     }
 
@@ -102,9 +125,10 @@ public sealed partial class DiscoveryViewModel(
     private void RaiseAllHasFlags()
     {
         OnPropertyChanged(nameof(HasContinueWatching));
+        OnPropertyChanged(nameof(HasRecommendedCreators));
+        OnPropertyChanged(nameof(HasRecommendedVideos));
         OnPropertyChanged(nameof(HasRecentlyAdded));
         OnPropertyChanged(nameof(HasRecentlyWatched));
-        OnPropertyChanged(nameof(HasForYou));
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(HasTagResults));
         OnPropertyChanged(nameof(IsEmpty));

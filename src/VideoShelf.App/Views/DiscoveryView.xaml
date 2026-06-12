@@ -30,32 +30,37 @@
                 </ScrollViewer>
             </StackPanel>
 
-            <!-- For you rail -->
+            <!-- Recommended creators rail -->
             <StackPanel Margin="0,24,0,0"
-                        Visibility="{Binding HasForYou, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="For you" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Recommended creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding ForYou}">
+                    <ItemsControl ItemsSource="{Binding RecommendedCreators}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Command="{Binding OpenCommand}" Margin="0,0,12,0" Width="200"
-                                        HorizontalContentAlignment="Left">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding TagsLabel}" Opacity="0.7" FontSize="12"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding UnwatchedCount, StringFormat='{}{0} unwatched'}"
-                                                   Opacity="0.6" FontSize="12"
-                                                   Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}"/>
-                                    </StackPanel>
-                                </Button>
-                            </DataTemplate>
+                            <DataTemplate><views:CreatorCard Margin="0,0,12,0"/></DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- Recommended videos rail -->
+            <StackPanel Margin="0,24,0,0"
+                        Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="Recommended videos" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding RecommendedVideos}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate><views:VideoCard/></DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
@@ -144,10 +149,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Command="{Binding OpenCommand}" Content="{Binding DisplayName}"
-                                    Margin="0,0,8,8"/>
-                        </DataTemplate>
+                        <DataTemplate><views:CreatorCard Margin="0,0,12,0"/></DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>

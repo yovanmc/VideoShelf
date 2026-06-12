@@ -86,6 +86,7 @@ function Capture-Window {
 # 4. Per-view launch + capture
 $views = [ordered]@{
     'home'          = @('--view','Home','--seed-demo')
+    'search'        = @('--view','Search','--seed-demo')
     'browse'        = @('--view','Browse')
     'section-detail'= @('--view','SectionDetail')
     'rename-tool'   = @('--view','RenameTool')

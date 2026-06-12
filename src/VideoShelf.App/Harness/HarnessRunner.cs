@@ -76,8 +76,21 @@ public sealed class HarnessRunner
                 await _main.OpenRenameToolAsync((await FindRichestSeriesAsync()).Series); break;
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
             case "PiP": await PlayAsync(_options.Play!, pip: true); break;
+            case "Search": await NavigateSearchAsync(); break;
             default: _main.CurrentView = AppView.Home; break;
         }
+    }
+
+    /// <summary>
+    /// Seeds the Search view with a term matching the first scanned creator so the
+    /// Creators section is populated for the screenshot sweep.
+    /// </summary>
+    private async Task NavigateSearchAsync()
+    {
+        var summaries = _library.GetSectionSummaries();
+        var term = summaries.Count > 0 ? summaries[0].DisplayName : "video";
+        _main.Search.Query = term;
+        await _main.Search.WaitForIdleAsync();
     }
 
     private async Task SettleAsync(bool isVideo)
@@ -130,8 +143,12 @@ public sealed class HarnessRunner
             var sections = _library.GetSections(source.Id);
             if (sections.Count == 0) continue;
 
-            // Tag the first section with "demo"
-            _tags.AddTag(sections[0].Id, "demo");
+            // Tag EVERY section with "demo" so that, once a video in one section is marked
+            // watched (below), the OTHER unwatched sections share that tag's affinity and
+            // surface in the For-you / Recommended-creators / Recommended-videos rails.
+            // (Tagging only one section left those rails empty — GetForYou needs a watched,
+            // tagged section to build affinity AND a distinct unwatched section sharing it.)
+            foreach (var section in sections) _tags.AddTag(section.Id, "demo");
 
             // Seed watched+resume on the richest series available (the most episodes),
             // not blindly sections[0]'s first series — that section may hold only

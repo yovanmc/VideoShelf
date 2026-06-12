@@ -1,4 +1,8 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Shouldly;
+using VideoShelf.App.Services;
+using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
@@ -10,6 +14,12 @@ namespace VideoShelf.App.Tests;
 
 public sealed class DiscoveryViewModelTests
 {
+    private sealed class NullThumbs : IThumbnailService
+    {
+        public Task<string?> GetThumbnailPathAsync(string videoPath, CancellationToken ct)
+            => Task.FromResult<string?>(null);
+    }
+
     private sealed record Fx(AppTempDb Db, LibraryRepository Lib, WatchRepository Watch,
         TagRepository Tags, DiscoveryRepository Disc, DiscoveryViewModel Vm);
 
@@ -20,7 +30,10 @@ public sealed class DiscoveryViewModelTests
         var watch = new WatchRepository(db.Db);
         var tags = new TagRepository(db.Db);
         var disc = new DiscoveryRepository(db.Db, lib, tags);
-        var vm = new DiscoveryViewModel(disc, lib, tags);
+        var art = new CreatorArtRepository(db.Db);
+        var thumbs = new NullThumbs();
+        var cardFactory = new CreatorCardFactory(art, thumbs);
+        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
         return new Fx(db, lib, watch, tags, disc, vm);
     }
 
@@ -61,7 +74,7 @@ public sealed class DiscoveryViewModelTests
     }
 
     [Fact]
-    public async Task Section_card_Open_raises_SectionOpenRequested()
+    public async Task RecommendedCreators_card_Open_raises_SectionOpenRequested()
     {
         var f = NewFx(); using var _d = f.Db;
         var src = f.Lib.UpsertSource(@"C:\m", "M");
@@ -75,16 +88,37 @@ public sealed class DiscoveryViewModelTests
         f.Watch.SetWatched(wv, true);
 
         await f.Vm.LoadAsync();
-        f.Vm.ForYou.ShouldNotBeEmpty();
+        f.Vm.RecommendedCreators.ShouldNotBeEmpty();
+        f.Vm.HasRecommendedCreators.ShouldBeTrue();
 
         long? opened = null;
         f.Vm.SectionOpenRequested += (_, id) => opened = id;
-        f.Vm.ForYou[0].OpenCommand.Execute(null);
+        f.Vm.RecommendedCreators[0].OpenCommand.Execute(null);
         opened.ShouldBe(candidate);
     }
 
     [Fact]
-    public async Task ToggleTag_recomputes_tag_results()
+    public async Task RecommendedCreators_items_are_CreatorCardViewModel()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var watchedSec = f.Lib.UpsertSection(src, "Watched");
+        var candidate = f.Lib.UpsertSection(src, "Candidate");
+        f.Tags.AddTag(watchedSec, "action");
+        f.Tags.AddTag(candidate, "action");
+        var ser = f.Lib.UpsertSeries(watchedSec, "WShow", false);
+        var wv = f.Lib.UpsertVideo(ser, @"C:\m\WShow\e01.mkv", 1, "mkv");
+        f.Lib.UpsertVideo(f.Lib.UpsertSeries(candidate, "CShow", false), @"C:\m\CShow\e01.mkv", 1, "mkv");
+        f.Watch.SetWatched(wv, true);
+
+        await f.Vm.LoadAsync();
+
+        f.Vm.RecommendedCreators.ShouldNotBeEmpty();
+        f.Vm.RecommendedCreators[0].ShouldBeOfType<CreatorCardViewModel>();
+    }
+
+    [Fact]
+    public async Task ToggleTag_fills_TagResults_with_CreatorCardViewModel()
     {
         var f = NewFx(); using var _d = f.Db;
         var src = f.Lib.UpsertSource(@"C:\m", "M");
@@ -97,6 +131,8 @@ public sealed class DiscoveryViewModelTests
         await f.Vm.ToggleTagCommand.ExecuteAsync(chip);
 
         chip.IsSelected.ShouldBeTrue();
+        f.Vm.TagResults.ShouldNotBeEmpty();
+        f.Vm.TagResults[0].ShouldBeOfType<CreatorCardViewModel>();
         f.Vm.TagResults.Select(r => r.SectionId).ShouldContain(s1);
     }
 }

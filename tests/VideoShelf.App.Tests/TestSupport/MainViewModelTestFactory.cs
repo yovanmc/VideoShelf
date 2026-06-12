@@ -47,16 +47,19 @@ public static class MainViewModelTestFactory
         var engine = new FakePlaybackEngine();
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
         var settingsVm = new SettingsViewModel(settings);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
         var art = new CreatorArtRepository(temp.Db);
+        var cardFactory = new CreatorCardFactory(art, thumbs);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
+        var searchCardFactory = new CreatorCardFactory(art, thumbs);
+        var searchVm = new SearchViewModel(lib, searchCardFactory);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

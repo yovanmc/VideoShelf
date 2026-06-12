@@ -46,6 +46,8 @@
                 <StackPanel Orientation="Horizontal" Margin="16,8">
                     <ui:Button Content="Home" Command="{Binding ShowHomeCommand}" Appearance="Transparent" Margin="0,0,8,0" />
                     <ui:Button Content="Browse" Command="{Binding ShowBrowseCommand}" Appearance="Transparent" />
+                    <ui:TextBox PlaceholderText="Search creators and videos…" Width="280" Margin="24,0,0,0"
+                                Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>
             </Border>
 
@@ -152,6 +154,13 @@
                                               RelativeSource={RelativeSource AncestorType=Window},
                                               Converter={StaticResource EnumToVis},
                                               ConverterParameter=RenameTool}" />
+
+                    <!-- Search view -->
+                    <views:SearchView DataContext="{Binding Search}"
+                                      Visibility="{Binding DataContext.CurrentView,
+                                          RelativeSource={RelativeSource AncestorType=Window},
+                                          Converter={StaticResource EnumToVis},
+                                          ConverterParameter=Search}" />
 
                 </Grid>
 
