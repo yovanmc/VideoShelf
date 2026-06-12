@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail }
+public enum AppView { Home, Browse, SectionDetail, RenameTool }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -25,7 +25,8 @@ public sealed partial class MainViewModel : ObservableObject
         PlayerViewModel player,
         SettingsViewModel settings,
         DiscoveryViewModel discovery,
-        SectionDetailViewModel sectionDetail)
+        SectionDetailViewModel sectionDetail,
+        RenameToolViewModel renameTool)
     {
         _sources = sources;
         _library = library;
@@ -38,9 +39,12 @@ public sealed partial class MainViewModel : ObservableObject
 
         Discovery = discovery;
         SectionDetail = sectionDetail;
+        RenameTool = renameTool;
         Discovery.PlayRequested += (_, e) => PlayEpisode(e);
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
+        SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
+        RenameTool.CloseRequested += (_, _) => CurrentView = AppView.SectionDetail;
     }
 
     public string Title => "VideoShelf";
@@ -51,6 +55,7 @@ public sealed partial class MainViewModel : ObservableObject
     public SettingsViewModel Settings => _settings;
     public DiscoveryViewModel Discovery { get; }
     public SectionDetailViewModel SectionDetail { get; }
+    public RenameToolViewModel RenameTool { get; }
 
     [ObservableProperty]
     private AppView _currentView = AppView.Home;
@@ -87,6 +92,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         await SectionDetail.LoadAsync(sectionId);
         CurrentView = AppView.SectionDetail;
+    }
+
+    public async Task OpenRenameToolAsync(SeriesViewModel series)
+    {
+        await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
+        CurrentView = AppView.RenameTool;
     }
 
     [RelayCommand]

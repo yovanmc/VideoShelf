@@ -3,6 +3,7 @@ using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.App.Views;
 using VideoShelf.Core.Discovery;
+using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
 
@@ -56,6 +57,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();
+
+        services.AddSingleton<IFileSystem, RealFileSystem>();
+        services.AddSingleton<RenamePlanner>();
+        services.AddSingleton<RenameExecutor>();
+        services.AddSingleton<RenameToolViewModel>();
+
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;
