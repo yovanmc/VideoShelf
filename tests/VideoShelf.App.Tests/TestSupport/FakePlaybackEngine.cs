@@ -54,8 +54,15 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
         return !SnapshotShouldFail;
     }
 
+    public double? LastPreviewSeconds { get; private set; }
+
     public Task<bool> TryGeneratePreviewFrameAsync(double seconds, string outputPngPath, CancellationToken cancellationToken)
-        => Task.FromResult(!SnapshotShouldFail);
+    {
+        LastPreviewSeconds = seconds;
+        if (SnapshotShouldFail) return Task.FromResult(false);
+        try { System.IO.File.WriteAllBytes(outputPngPath, new byte[] { 0x89, 0x50, 0x4E, 0x47 }); } catch { }
+        return Task.FromResult(true);
+    }
 
     public event EventHandler<double>? PositionChanged;
     public event EventHandler<double>? LengthChanged;

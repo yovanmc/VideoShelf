@@ -215,7 +215,7 @@ public sealed class HarnessRunner
     /// <summary>
     /// Plays a clip via MainViewModel.PlayEpisode(EpisodeView). Constructs a synthetic
     /// EpisodeView from the clip path (VideoId=0, SeriesId=0 — sufficient for engine.Load).
-    /// If pip=true, sets IsPictureInPicture after playback starts (triggers MiniPlayerWindow).
+    /// If pip=true, sets IsPictureInPicture after playback starts (activates PiP mode in PlayerView).
     /// </summary>
     private async Task PlayAsync(string clip, bool pip)
     {
@@ -226,6 +226,10 @@ public sealed class HarnessRunner
         var (_, series) = await FindRichestSeriesAsync();
         var episode = _library.GetEpisodes(series.SeriesId).FirstOrDefault()
             ?? throw new InvalidOperationException("Richest series has no episodes to play.");
+
+        // Keep the auto-hiding controls up so the screenshot sweep captures the transport bar
+        // instead of an auto-hidden (controls-faded) frame.
+        _main.Player.AutoHideSuppressed = true;
         _main.PlayEpisode(episode);
 
         if (pip)
@@ -233,6 +237,9 @@ public sealed class HarnessRunner
             // Let the player initialise before toggling PiP so the MediaPlayer is live.
             await Task.Delay(600);
             _main.IsPictureInPicture = true;
+            // Render the floating PiP panel over real content (proves in-window placement +
+            // click-through) rather than over a black full-window player backdrop.
+            _main.CurrentView = AppView.Home;
         }
     }
 }

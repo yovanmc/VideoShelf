@@ -19,6 +19,8 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     private readonly LibVLC _libVlc;
     private readonly MediaPlayer _player;
     private readonly Dispatcher _dispatcher;
+    private MediaPlayer? _previewPlayer;
+    private string? _previewMediaPath;
 
     /// <summary>The underlying libVLC player, for the VideoView to host. App-internal use only.</summary>
     public MediaPlayer MediaPlayer => _player;
@@ -120,7 +122,8 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
             var chapters = _player.FullChapterDescriptions();
             if (chapters is not null)
                 for (var i = 0; i < chapters.Length; i++)
-                    list.Add(new ChapterOption(i, chapters[i].Name ?? $"Chapter {i + 1}"));
+                    list.Add(new ChapterOption(i, chapters[i].Name ?? $"Chapter {i + 1}",
+                                               chapters[i].TimeOffset / 1000.0));
         }
         catch { }
         return list;
@@ -141,15 +144,54 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
 
     public async Task<bool> TryGeneratePreviewFrameAsync(double seconds, string outputPngPath, CancellationToken cancellationToken)
     {
-        // Seek-preview uses the live player's snapshot at the hovered time. A dedicated off-screen
-        // decode is a Phase 6 refinement; here we snapshot the current frame fail-safely.
         try
         {
-            await Task.Yield();
-            cancellationToken.ThrowIfCancellationRequested();
-            return TrySnapshot(outputPngPath);
+            if (await TryOffScreenPreviewAsync(seconds, outputPngPath, cancellationToken).ConfigureAwait(false))
+                return true;
         }
+        catch { /* fall through to live snapshot */ }
+
+        // Fail-safe fallback: snapshot the live frame (previous behaviour). Always non-throwing.
+        try { return TrySnapshot(outputPngPath); }
         catch { return false; }
+    }
+
+    /// <summary>Decodes the frame at <paramref name="seconds"/> on a hidden, audio-disabled MediaPlayer
+    /// (so live playback is untouched) and snapshots it. Returns false (caller falls back) if a frame
+    /// can't be produced within a short budget.</summary>
+    private async Task<bool> TryOffScreenPreviewAsync(double seconds, string outputPngPath, CancellationToken ct)
+    {
+        var srcPath = _player.Media?.Mrl;
+        if (string.IsNullOrEmpty(srcPath)) return false;
+
+        if (_previewPlayer is null)
+        {
+            _previewPlayer = new MediaPlayer(_libVlc) { Mute = true };
+            _previewMediaPath = null;
+        }
+        if (_previewMediaPath != srcPath)
+        {
+            using var m = new Media(_libVlc, new Uri(srcPath), ":no-audio");
+            _previewPlayer.Media = m;
+            _previewMediaPath = srcPath;
+        }
+
+        if (!_previewPlayer.IsPlaying) _previewPlayer.Play();
+        _previewPlayer.Time = (long)(seconds * 1000);
+
+        var deadline = DateTime.UtcNow.AddMilliseconds(700);
+        while (DateTime.UtcNow < deadline)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (_previewPlayer.TakeSnapshot(0, outputPngPath, 0, 0)
+                && File.Exists(outputPngPath) && new FileInfo(outputPngPath).Length > 0)
+            {
+                _previewPlayer.SetPause(true);
+                return true;
+            }
+            await Task.Delay(50, ct).ConfigureAwait(false);
+        }
+        return false;
     }
 
     public event EventHandler<double>? PositionChanged;
@@ -159,6 +201,7 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
 
     public void Dispose()
     {
+        try { _previewPlayer?.Dispose(); } catch { }
         try { _player.Dispose(); } catch { }
         try { _libVlc.Dispose(); } catch { }
     }
