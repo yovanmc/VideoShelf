@@ -23,6 +23,8 @@
     <UseWPF>true</UseWPF>
     <LangVersion>latest</LangVersion>
     <GenerateThemeInfoAttribute>false</GenerateThemeInfoAttribute>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <ApplicationIcon>..\..\packaging\Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

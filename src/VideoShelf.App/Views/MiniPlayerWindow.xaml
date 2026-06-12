@@ -10,8 +10,12 @@
         Background="Black"
         WindowStartupLocation="Manual">
     <Grid>
-        <vlc:VideoView x:Name="MiniSurface" />
-        <ui:Button Content="Back to window" VerticalAlignment="Bottom" HorizontalAlignment="Right"
-                   Margin="8" Click="OnReturnClick" />
+        <!-- Overlay button must be inside the VideoView so it floats above the airspace HWND. -->
+        <vlc:VideoView x:Name="MiniSurface">
+            <Grid>
+                <ui:Button Content="Back to window" VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                           Margin="8" Click="OnReturnClick" />
+            </Grid>
+        </vlc:VideoView>
     </Grid>
 </Window>

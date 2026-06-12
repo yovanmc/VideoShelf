@@ -1,9 +1,13 @@
 using System;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using VideoShelf.App.Harness;
 using VideoShelf.App.Services;
+using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
+using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App;
 
@@ -15,15 +19,29 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        var options = HarnessOptions.Parse(e.Args);
+
         try
         {
             _host = Host.CreateDefaultBuilder()
-                .ConfigureServices(services => services.AddVideoShelf())
+                .ConfigureServices(services => services.AddVideoShelf(options.DataDir))
                 .Build();
 
             _host.StartAsync().GetAwaiter().GetResult();
             var window = _host.Services.GetRequiredService<MainWindow>();
             window.Show();
+
+            if (options.IsHarness)
+            {
+                var main = _host.Services.GetRequiredService<MainViewModel>();
+                var runner = new HarnessRunner(
+                    main,
+                    options,
+                    _host.Services.GetRequiredService<LibraryRepository>(),
+                    _host.Services.GetRequiredService<WatchRepository>(),
+                    _host.Services.GetRequiredService<TagRepository>());
+                _ = Dispatcher.InvokeAsync(async () => await runner.RunAsync(), DispatcherPriority.Background);
+            }
         }
         catch (Exception exception)
         {

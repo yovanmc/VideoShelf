@@ -31,3 +31,60 @@ jobs:
       - name: Test
         shell: pwsh
         run: dotnet test VideoShelf.slnx -c Release --no-build --verbosity normal
+
+  package:
+    needs: build-and-test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish (self-contained win-x64)
+        shell: pwsh
+        run: >
+          dotnet publish src/VideoShelf.App/VideoShelf.App.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=false -o packaging/_publish --nologo
+
+      - name: Assert no media tools bundled
+        shell: pwsh
+        run: ./tools/package/Assert-NoMediaTools.ps1 -Path packaging/_publish
+
+      - name: Stage package layout
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force packaging/_staging | Out-Null
+          Copy-Item -Recurse -Force packaging/_publish/* packaging/_staging
+          Copy-Item -Force packaging/AppxManifest.xml packaging/_staging
+          Copy-Item -Recurse -Force packaging/Assets packaging/_staging/Assets
+
+      - name: Pack + sign MSIX
+        shell: pwsh
+        run: |
+          $sdkBin = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Directory |
+            Where-Object { $_.Name -match '^10\.' } | Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdkBin) { throw 'Windows SDK bin not found.' }
+          $makeappx = Join-Path $sdkBin.FullName 'x64\makeappx.exe'
+          $signtool = Join-Path $sdkBin.FullName 'x64\signtool.exe'
+          & $makeappx pack /o /d packaging/_staging /p VideoShelf.msix
+          if ($LASTEXITCODE -ne 0) { throw 'makeappx failed' }
+          $cert = New-SelfSignedCertificate -Type Custom -Subject 'CN=VideoShelf' `
+            -KeyUsage DigitalSignature -FriendlyName 'VideoShelf CI' `
+            -CertStoreLocation 'Cert:\CurrentUser\My' `
+            -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3','2.5.29.19={text}')
+          $pwd = ConvertTo-SecureString -String 'videoshelf' -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath cert.pfx -Password $pwd | Out-Null
+          & $signtool sign /fd SHA256 /a /f cert.pfx /p 'videoshelf' VideoShelf.msix
+          if ($LASTEXITCODE -ne 0) { throw 'signtool failed' }
+          Remove-Item cert.pfx -Force
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VideoShelf-msix
+          path: VideoShelf.msix
+          if-no-files-found: error

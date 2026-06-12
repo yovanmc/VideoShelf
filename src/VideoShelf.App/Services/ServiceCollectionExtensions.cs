@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
@@ -11,9 +12,22 @@ namespace VideoShelf.App.Services;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddVideoShelf(this IServiceCollection services)
+    /// <summary>
+    /// Registers all VideoShelf services.
+    /// <paramref name="dataDirOverride"/> redirects the DB and data files to a custom directory
+    /// (used by the visual-verification harness for isolation). Real users omit it.
+    /// </summary>
+    public static IServiceCollection AddVideoShelf(this IServiceCollection services, string? dataDirOverride = null)
     {
-        services.AddSingleton<AppPaths>();
+        if (dataDirOverride is not null)
+        {
+            Directory.CreateDirectory(dataDirOverride);
+            services.AddSingleton(new AppPaths(dataDirOverride));
+        }
+        else
+        {
+            services.AddSingleton<AppPaths>();
+        }
         services.AddSingleton<LibraryBootstrap>();
         services.AddSingleton<VideoShelfDb>(sp =>
             sp.GetRequiredService<LibraryBootstrap>().OpenLibrary());
