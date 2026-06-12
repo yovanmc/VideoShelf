@@ -151,12 +151,14 @@ public partial class PlayerView : UserControl
         BackToWindowButton.Visibility = pip ? Visibility.Visible : Visibility.Collapsed;
         if (pip)
         {
-            PipTranslate.X = Math.Max(0, ActualWidth - 360 - 24);
-            PipTranslate.Y = Math.Max(0, ActualHeight - 203 - 24);
+            // Seed the floating panel near the bottom-right via layout Margin (top-left anchored).
+            var left = Math.Max(0, ActualWidth - 360 - 24);
+            var top = Math.Max(0, ActualHeight - 203 - 24);
+            PlayerShell.Margin = new Thickness(left, top, 0, 0);
         }
         else
         {
-            PipTranslate.X = 0; PipTranslate.Y = 0;
+            PlayerShell.Margin = new Thickness(0);
         }
         ShowControls();
         Dispatcher.BeginInvoke(new Action(RenderChapterTicks), DispatcherPriority.Loaded);
@@ -183,8 +185,9 @@ public partial class PlayerView : UserControl
         var dx = p.X - _dragStart.X;
         var dy = p.Y - _dragStart.Y;
         _dragStart = p;
-        PipTranslate.X = Math.Clamp(PipTranslate.X + dx, 0, Math.Max(0, ActualWidth - 360));
-        PipTranslate.Y = Math.Clamp(PipTranslate.Y + dy, 0, Math.Max(0, ActualHeight - 203));
+        var left = Math.Clamp(PlayerShell.Margin.Left + dx, 0, Math.Max(0, ActualWidth - 360));
+        var top = Math.Clamp(PlayerShell.Margin.Top + dy, 0, Math.Max(0, ActualHeight - 203));
+        PlayerShell.Margin = new Thickness(left, top, 0, 0);
     }
 
     private void OnTopBarMouseUp(object sender, MouseButtonEventArgs e)

@@ -32,10 +32,6 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-            <Border.RenderTransform>
-                <TranslateTransform x:Name="PipTranslate" X="0" Y="0" />
-            </Border.RenderTransform>
-
             <vlc:VideoView x:Name="VideoSurface">
                 <Grid x:Name="OverlayRoot">
 
