@@ -75,8 +75,9 @@ public class MainViewModelTests
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
+        var creators = new CreatorsViewModel(lib, art, thumbs);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool);
+            discoveryVm, sectionDetailVm, renameTool, creators);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

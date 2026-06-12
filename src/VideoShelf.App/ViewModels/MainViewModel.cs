@@ -26,7 +26,8 @@ public sealed partial class MainViewModel : ObservableObject
         SettingsViewModel settings,
         DiscoveryViewModel discovery,
         SectionDetailViewModel sectionDetail,
-        RenameToolViewModel renameTool)
+        RenameToolViewModel renameTool,
+        CreatorsViewModel creators)
     {
         _sources = sources;
         _library = library;
@@ -40,11 +41,13 @@ public sealed partial class MainViewModel : ObservableObject
         Discovery = discovery;
         SectionDetail = sectionDetail;
         RenameTool = renameTool;
+        Creators = creators;
         Discovery.PlayRequested += (_, e) => PlayEpisode(e);
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
         RenameTool.CloseRequested += (_, _) => CurrentView = AppView.SectionDetail;
+        Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
     }
 
     public string Title => "VideoShelf";
@@ -56,6 +59,7 @@ public sealed partial class MainViewModel : ObservableObject
     public DiscoveryViewModel Discovery { get; }
     public SectionDetailViewModel SectionDetail { get; }
     public RenameToolViewModel RenameTool { get; }
+    public CreatorsViewModel Creators { get; }
 
     [ObservableProperty]
     private AppView _currentView = AppView.Home;
@@ -119,6 +123,7 @@ public sealed partial class MainViewModel : ObservableObject
         Sources.Load();
         await Library.LoadSectionsAsync();
         await Discovery.LoadAsync();
+        await Creators.LoadAsync(CancellationToken.None);
         CurrentView = AppView.Home;
     }
 
@@ -132,6 +137,7 @@ public sealed partial class MainViewModel : ObservableObject
             Sources.Load();
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();
+            await Creators.LoadAsync(CancellationToken.None);
         }
         finally
         {

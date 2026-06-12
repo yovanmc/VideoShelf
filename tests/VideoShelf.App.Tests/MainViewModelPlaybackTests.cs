@@ -46,8 +46,9 @@ public class MainViewModelPlaybackTests
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
+        var creators = new CreatorsViewModel(lib, art, thumbs);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool);
+            discoveryVm, sectionDetailVm, renameTool, creators);
     }
 
     [Fact]
