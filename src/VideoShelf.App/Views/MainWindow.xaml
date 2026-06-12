@@ -113,14 +113,14 @@
 
                     <!-- Home view — DiscoveryView -->
                     <views:DiscoveryView DataContext="{Binding Discovery}"
-                                         Visibility="{Binding CurrentView,
+                                         Visibility="{Binding DataContext.CurrentView,
                                              RelativeSource={RelativeSource AncestorType=Window},
                                              Converter={StaticResource EnumToVis},
                                              ConverterParameter=Home}" />
 
                     <!-- Browse view — existing browse content (MOVED here, not deleted) -->
                     <DockPanel Margin="16"
-                               Visibility="{Binding CurrentView,
+                               Visibility="{Binding DataContext.CurrentView,
                                    RelativeSource={RelativeSource AncestorType=Window},
                                    Converter={StaticResource EnumToVis},
                                    ConverterParameter=Browse}">
@@ -226,14 +226,14 @@
 
                     <!-- Section detail view -->
                     <views:SectionDetailView DataContext="{Binding SectionDetail}"
-                                             Visibility="{Binding CurrentView,
+                                             Visibility="{Binding DataContext.CurrentView,
                                                  RelativeSource={RelativeSource AncestorType=Window},
                                                  Converter={StaticResource EnumToVis},
                                                  ConverterParameter=SectionDetail}" />
 
                     <!-- Rename tool view -->
                     <views:RenameToolView DataContext="{Binding RenameTool}"
-                                          Visibility="{Binding CurrentView,
+                                          Visibility="{Binding DataContext.CurrentView,
                                               RelativeSource={RelativeSource AncestorType=Window},
                                               Converter={StaticResource EnumToVis},
                                               ConverterParameter=RenameTool}" />
