@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,6 +31,10 @@ public sealed partial class SectionDetailViewModel(
     [ObservableProperty] private string _displayName = "";
     [ObservableProperty] private string _tagInput = "";
 
+    [ObservableProperty] private string? _backgroundImagePath;
+    [ObservableProperty] private int _videoCount;
+    private string? _seedPath;   // section representative seed frame, for the background fallback
+
     private IReadOnlyList<string> _allTags = [];
 
     public ObservableCollection<SeriesViewModel> SeriesList { get; } = [];
@@ -43,8 +48,12 @@ public sealed partial class SectionDetailViewModel(
     {
         SectionId = sectionId;
 
-        var section = library.GetSection(sectionId);
+        // GetSection(long) returns a lean Section without VideoCount/ThumbnailSeedPath;
+        // use GetSectionSummaries().First(...) to get the full SectionSummary.
+        var section = library.GetSectionSummaries().FirstOrDefault(s => s.SectionId == sectionId);
         DisplayName = section?.DisplayName ?? "";
+        VideoCount = section?.VideoCount ?? 0;
+        _seedPath = section?.ThumbnailSeedPath;
 
         var (summaries, sectionTags, allTags) = await Task.Run(() => (
             library.GetSeriesSummaries(sectionId),
@@ -57,35 +66,45 @@ public sealed partial class SectionDetailViewModel(
         {
             var svm = new SeriesViewModel(s, library, watch, thumbnails);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
-            svm.RenameRequested += (_, s) => RenameRequested?.Invoke(this, s);
+            svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             SeriesList.Add(svm);
+            _ = svm.LoadThumbnailAsync(CancellationToken.None);   // eager tile art (cached + fail-safe)
         }
 
         Tags.Clear();
         foreach (var t in sectionTags) Tags.Add(t);
         RefreshSuggestions();
-        RefreshCreatorArt();
+        RefreshCreatorArt();                 // existing: sets CreatorArtPath from the override
+        await ResolveBackgroundAsync();
     }
 
     private void RefreshCreatorArt() => CreatorArtPath = art.GetArtPath(SectionId);
 
-    [RelayCommand]
-    private void SetCreatorArt()
+    private async Task ResolveBackgroundAsync()
     {
-        if (SectionId <= 0) return;
-        var picked = imagePicker.PickImage();
-        if (string.IsNullOrWhiteSpace(picked))
-            return;
-        art.SetArtPath(SectionId, picked);
-        CreatorArtPath = picked;
+        if (!string.IsNullOrWhiteSpace(CreatorArtPath)) { BackgroundImagePath = CreatorArtPath; return; }
+        if (string.IsNullOrWhiteSpace(_seedPath)) { BackgroundImagePath = null; return; }
+        BackgroundImagePath = await thumbnails.GetThumbnailPathAsync(_seedPath!, CancellationToken.None);
     }
 
     [RelayCommand]
-    private void ClearCreatorArt()
+    private async Task SetCreatorArt()
+    {
+        if (SectionId <= 0) return;
+        var picked = imagePicker.PickImage();
+        if (string.IsNullOrWhiteSpace(picked)) return;
+        art.SetArtPath(SectionId, picked);
+        CreatorArtPath = picked;
+        await ResolveBackgroundAsync();
+    }
+
+    [RelayCommand]
+    private async Task ClearCreatorArt()
     {
         if (SectionId <= 0) return;
         art.ClearArtPath(SectionId);
         CreatorArtPath = null;
+        await ResolveBackgroundAsync();
     }
 
     [RelayCommand]

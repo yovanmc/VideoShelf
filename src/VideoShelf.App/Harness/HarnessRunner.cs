@@ -71,7 +71,10 @@ public sealed class HarnessRunner
             case "Browse": _main.CurrentView = AppView.Browse; break;
             case "Settings": ShowSettings(); break;
             case "SectionDetail":
-                await _main.OpenSectionAsync((await FindRichestSeriesAsync()).SectionId); break;
+                await _main.OpenSectionAsync((await FindRichestSeriesAsync()).SectionId);
+                var expandable = _main.SectionDetail.SeriesList.FirstOrDefault(s => !s.IsStandalone);
+                if (expandable is not null) await expandable.ActivateCommand.ExecuteAsync(null);
+                break;
             case "RenameTool":
                 await _main.OpenRenameToolAsync((await FindRichestSeriesAsync()).Series); break;
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
