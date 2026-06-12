@@ -15,6 +15,7 @@
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:MissingToOpacity x:Key="MissingToOpacity" />
             <conv:EnumToVisibility x:Key="EnumToVis" />
+            <conv:FractionToWidth x:Key="FractionToWidth" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

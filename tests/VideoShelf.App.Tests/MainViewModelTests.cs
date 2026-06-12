@@ -71,7 +71,8 @@ public class MainViewModelTests
         var settingsVm = new SettingsViewModel(settings);
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory);
+        var statsRepo = new StatsRepository(temp.Db);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
@@ -80,7 +81,8 @@ public class MainViewModelTests
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
-            discoveryVm, sectionDetailVm, renameTool, creators, searchVm);
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()));
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

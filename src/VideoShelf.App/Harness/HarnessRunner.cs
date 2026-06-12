@@ -170,10 +170,20 @@ public sealed class HarnessRunner
             // Set a partial resume position on the second episode if present (populates
             // the continue-watching rail with a visibly partial progress bar). Falls back
             // to the first video for a standalone so the rail is still exercised.
-            if (richest.Count > 1)
-                _library.SetResumePosition(richest[1].VideoId, 12.0);
-            else
-                _library.SetResumePosition(richest[0].VideoId, 12.0);
+            var resumedId = richest.Count > 1 ? richest[1].VideoId : richest[0].VideoId;
+            _library.SetResumePosition(resumedId, 12.0);
+
+            // Seed a deterministic duration + chapters on the resumed video so the sweep can
+            // verify M12 visibly: 12s of 60s → a ~20% progress bar, and resume=12s falls in the
+            // "Main" chapter (starts at 10s) → the continue card shows the chapter-granular label.
+            // (Fixtures carry no real duration/chapters, so the libVLC backfill can't exercise this
+            // on its own; this keeps the visual check deterministic.)
+            _library.SetDuration(resumedId, 60.0);
+            _library.ReplaceChapters(resumedId, new[]
+            {
+                new ChapterRecord(0, "Intro", 0.0),
+                new ChapterRecord(1, "Main", 10.0),
+            });
 
             break; // seed one source is sufficient for demo
         }

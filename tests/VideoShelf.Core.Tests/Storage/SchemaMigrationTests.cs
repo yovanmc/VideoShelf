@@ -41,4 +41,22 @@ public class SchemaMigrationTests
         var cols = VideoColumns(temp);
         cols.ShouldContain("missing");
     }
+
+    [Fact]
+    public void Migrate_creates_video_chapters_table_and_duration_column()
+    {
+        using var temp = new TempDb();
+
+        // Assert duration column exists in videos table
+        var cols = VideoColumns(temp);
+        cols.ShouldContain("duration");
+
+        // Assert video_chapters table exists
+        using var conn = temp.Db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='video_chapters'";
+        using var reader = cmd.ExecuteReader();
+        reader.Read().ShouldBeTrue("video_chapters table should exist");
+        reader.GetString(0).ShouldBe("video_chapters");
+    }
 }

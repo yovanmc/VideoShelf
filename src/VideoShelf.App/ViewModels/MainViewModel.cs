@@ -17,6 +17,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IScanCoordinator _scanCoordinator;
     private readonly PlayerViewModel _player;
     private readonly SettingsViewModel _settings;
+    private readonly MediaBackfillService _backfill;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -28,13 +29,15 @@ public sealed partial class MainViewModel : ObservableObject
         SectionDetailViewModel sectionDetail,
         RenameToolViewModel renameTool,
         CreatorsViewModel creators,
-        SearchViewModel search)
+        SearchViewModel search,
+        MediaBackfillService backfill)
     {
         _sources = sources;
         _library = library;
         _scanCoordinator = scanCoordinator;
         _player = player;
         _settings = settings;
+        _backfill = backfill;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _player.NextEpisodeRequested += (_, ep) => PlayEpisode(ep);
@@ -182,6 +185,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             await _scanCoordinator.ScanAllAsync(CancellationToken.None);
+            await _backfill.BackfillAsync(CancellationToken.None);
             Sources.Load();
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();

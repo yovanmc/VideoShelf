@@ -17,12 +17,17 @@
                     Height="112" ClipToBounds="True">
                 <Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
             </Border>
-            <!-- RangeBase.Value binds TwoWay by default; ProgressFraction is read-only, so pin OneWay. -->
-            <ProgressBar Minimum="0" Maximum="1" Value="{Binding ProgressFraction, Mode=OneWay}"
-                         Height="3" Margin="0,2,0,4" />
+            <!-- Continue-watching progress: a fixed-width track with a left accent fill.
+                 (A height-constrained WPF-UI ProgressBar renders nothing, so use plain Borders — additive, theming-clean.) -->
+            <Border Height="4" CornerRadius="2" Margin="0,2,0,4" Background="{StaticResource ThumbPlaceholderBrush}">
+                <Border HorizontalAlignment="Left" CornerRadius="2" Background="{StaticResource AccentBrush}"
+                        Width="{Binding ProgressFraction, Converter={StaticResource FractionToWidth}, ConverterParameter=200}" />
+            </Border>
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12" />
+            <TextBlock Text="{Binding ChapterLabel}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"
+                       Visibility="{Binding HasChapter, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
     </Button>
 </UserControl>

@@ -1,0 +1,53 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Shouldly;
+using VideoShelf.App.Services;
+using VideoShelf.App.Tests.TestSupport;
+using VideoShelf.Core.Models;
+using VideoShelf.Core.Storage;
+
+namespace VideoShelf.App.Tests;
+
+public class MediaBackfillServiceTests
+{
+    [Fact]
+    public async Task BackfillAsync_populates_duration_and_chapters()
+    {
+        using var temp = new AppTempDb();
+        var library = new LibraryRepository(temp.Db);
+
+        // Seed source → section → series → video (null duration by default)
+        var sourceId = library.UpsertSource(@"C:\Videos", "Videos");
+        var sectionId = library.UpsertSection(sourceId, "Creator A");
+        var seriesId = library.UpsertSeries(sectionId, "Cool Story", isStandalone: false);
+        var videoId = library.UpsertVideo(seriesId, @"C:\Videos\Creator A\ep1.mp4", episodeNo: 1, format: ".mp4");
+
+        // Confirm it starts as needing duration
+        library.GetVideosNeedingDuration().Count.ShouldBe(1);
+
+        var fake = new FakeMediaProbe
+        {
+            Result = new MediaProbeResult(120.0, new List<ChapterRecord>
+            {
+                new ChapterRecord(0, "Intro", 0.0),
+                new ChapterRecord(1, "Part 2", 60.0),
+            })
+        };
+
+        var svc = new MediaBackfillService(library, fake);
+        await svc.BackfillAsync(CancellationToken.None);
+
+        // Duration stored → no longer needs backfill
+        library.GetVideosNeedingDuration().ShouldBeEmpty();
+
+        // Chapters stored correctly
+        var chapters = library.GetChapters(videoId);
+        chapters.Count.ShouldBe(2);
+
+        // Re-running is a no-op: still 0 pending, still 2 chapters
+        await svc.BackfillAsync(CancellationToken.None);
+        library.GetVideosNeedingDuration().ShouldBeEmpty();
+        library.GetChapters(videoId).Count.ShouldBe(2);
+    }
+}

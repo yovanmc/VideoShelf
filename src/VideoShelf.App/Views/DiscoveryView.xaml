@@ -6,6 +6,31 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
 
+            <!-- Stats header -->
+            <StackPanel Margin="0,0,0,16" Visibility="{Binding HasStats, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding WatchedSummary}" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding InProgressSummary}" Opacity="0.7" Margin="0,2,0,0"
+                           Visibility="{Binding HasInProgress, Converter={StaticResource BoolToVisibility}}" />
+                <ItemsControl ItemsSource="{Binding TopCreators}" Margin="0,8,0,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource SubtleFillBrush}" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                                <TextBlock>
+                                    <Run Text="{Binding Name}" />
+                                    <Run Text=" · " />
+                                    <Run Text="{Binding WatchedCount}" />
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
             <!-- Empty state -->
             <TextBlock Text="Nothing here yet — add a source and start watching."
                        Opacity="0.7" Margin="0,40"
@@ -33,7 +58,7 @@
             <!-- Recommended creators rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recommended creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedCreators}">
                         <ItemsControl.ItemsPanel>
@@ -51,7 +76,7 @@
             <!-- Recommended videos rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recommended videos" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="More to watch" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedVideos}">
                         <ItemsControl.ItemsPanel>

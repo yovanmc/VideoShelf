@@ -42,6 +42,8 @@ public sealed class VideoShelfDb : IDisposable
         EnsureColumn(conn, "videos", "resume_position", "REAL");
         // resume_updated_at: ISO8601 timestamp of the last resume write (Milestone 4 discovery ordering)
         EnsureColumn(conn, "videos", "resume_updated_at", "TEXT");
+        // duration: pre-schema DBs may lack this column even though it is in base CREATE TABLE
+        EnsureColumn(conn, "videos", "duration", "REAL");
         CreateAddedAtIndex(conn);
     }
 
@@ -134,6 +136,14 @@ public sealed class VideoShelfDb : IDisposable
         CREATE TABLE IF NOT EXISTS creator_art (
             section_id INTEGER NOT NULL PRIMARY KEY REFERENCES sections(id) ON DELETE CASCADE,
             image_path TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS video_chapters (
+            video_id      INTEGER NOT NULL,
+            idx           INTEGER NOT NULL,
+            name          TEXT    NOT NULL DEFAULT '',
+            start_seconds REAL    NOT NULL DEFAULT 0,
+            PRIMARY KEY (video_id, idx),
+            FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
         );
         """;
 }
