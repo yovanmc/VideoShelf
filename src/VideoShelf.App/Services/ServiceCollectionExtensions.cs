@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<LibraryRepository>();
         services.AddSingleton<WatchRepository>();
         services.AddSingleton<SettingsRepository>();
+        services.AddSingleton<StatsRepository>();
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
         services.AddSingleton<IImagePicker, ImagePicker>();
