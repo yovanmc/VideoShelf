@@ -3,9 +3,12 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
+using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
+
+public enum AppView { Home, Browse, SectionDetail }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -20,7 +23,9 @@ public sealed partial class MainViewModel : ObservableObject
         LibraryViewModel library,
         IScanCoordinator scanCoordinator,
         PlayerViewModel player,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        DiscoveryViewModel discovery,
+        SectionDetailViewModel sectionDetail)
     {
         _sources = sources;
         _library = library;
@@ -30,6 +35,12 @@ public sealed partial class MainViewModel : ObservableObject
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _player.NextEpisodeRequested += (_, ep) => PlayEpisode(ep);
+
+        Discovery = discovery;
+        SectionDetail = sectionDetail;
+        Discovery.PlayRequested += (_, e) => PlayEpisode(e);
+        Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
+        SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
     }
 
     public string Title => "VideoShelf";
@@ -38,6 +49,11 @@ public sealed partial class MainViewModel : ObservableObject
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
     public SettingsViewModel Settings => _settings;
+    public DiscoveryViewModel Discovery { get; }
+    public SectionDetailViewModel SectionDetail { get; }
+
+    [ObservableProperty]
+    private AppView _currentView = AppView.Home;
 
     [ObservableProperty]
     private bool _isScanning;
@@ -62,6 +78,18 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ShowHome() => CurrentView = AppView.Home;
+
+    [RelayCommand]
+    private void ShowBrowse() => CurrentView = AppView.Browse;
+
+    public async Task OpenSectionAsync(long sectionId)
+    {
+        await SectionDetail.LoadAsync(sectionId);
+        CurrentView = AppView.SectionDetail;
+    }
+
+    [RelayCommand]
     private void TogglePictureInPicture() => IsPictureInPicture = !IsPictureInPicture;
 
     [RelayCommand]
@@ -79,6 +107,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         Sources.Load();
         await Library.LoadSectionsAsync();
+        await Discovery.LoadAsync();
+        CurrentView = AppView.Home;
     }
 
     [RelayCommand]

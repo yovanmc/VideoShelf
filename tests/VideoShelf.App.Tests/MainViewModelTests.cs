@@ -1,13 +1,15 @@
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
 using VideoShelf.App.Services;
 using VideoShelf.App.Tests.TestSupport;
 using VideoShelf.App.ViewModels;
+using VideoShelf.App.ViewModels.Discovery;
+using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
 using VideoShelf.Core.Tests.TestSupport;
-using System.Threading;
 
 namespace VideoShelf.App.Tests;
 
@@ -32,12 +34,18 @@ public class MainViewModelTests
         var scanService = new ScanService(temp.Db, lib);
         var coordinator = new ScanCoordinator(lib, scanService);
 
+        var tags = new TagRepository(temp.Db);
+        var disc = new DiscoveryRepository(temp.Db, lib, tags);
+        var thumbs = new NullThumbs();
         var sources = new SourcesViewModel(lib, new FakeFolderPicker(dir.Path));
-        var libraryVm = new LibraryViewModel(lib, watch, new NullThumbs());
+        var libraryVm = new LibraryViewModel(lib, watch, thumbs);
         var engine = new FakePlaybackEngine();
         var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
         var settingsVm = new SettingsViewModel(settings);
-        var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs);
+        var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
+            discoveryVm, sectionDetailVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();
