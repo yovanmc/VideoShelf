@@ -131,5 +131,9 @@ public sealed class VideoShelfDb : IDisposable
         CREATE INDEX IF NOT EXISTS ix_videos_series ON videos(series_id);
         CREATE INDEX IF NOT EXISTS ix_sections_source ON sections(source_id);
         CREATE INDEX IF NOT EXISTS ix_series_section ON series(section_id);
+        CREATE TABLE IF NOT EXISTS creator_art (
+            section_id INTEGER NOT NULL PRIMARY KEY REFERENCES sections(id) ON DELETE CASCADE,
+            image_path TEXT NOT NULL
+        );
         """;
 }
