@@ -15,6 +15,20 @@ public sealed class EnumToVisibility : IValueConverter
         => throw new NotSupportedException();
 }
 
+/// <summary>Visible when the bound enum's name is in the comma-separated ConverterParameter set
+/// (e.g. "Browse,SectionDetail,RenameTool"); used for active top-nav highlighting.</summary>
+public sealed class EnumSetToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+    {
+        var cur = value?.ToString();
+        var set = (p?.ToString() ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return System.Array.IndexOf(set, cur) >= 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c)
+        => throw new NotSupportedException();
+}
+
 public sealed class BoolToVisibility : IValueConverter
 {
     public object Convert(object? value, Type t, object? p, CultureInfo c)

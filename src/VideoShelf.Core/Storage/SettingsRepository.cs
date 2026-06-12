@@ -34,4 +34,16 @@ public sealed class SettingsRepository(VideoShelfDb db)
 
     public void SetAutoAdvanceEpisodes(bool value)
         => SetString(AutoAdvanceKey, value ? "true" : "false");
+
+    public const string LastScanUtcKey = "last_scan_utc";
+
+    /// <summary>Returns the last successful library-scan time (UTC), or null if never scanned.</summary>
+    public DateTime? GetLastScanUtc()
+    {
+        var raw = GetString(LastScanUtcKey, "");
+        return DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : null;
+    }
+
+    public void SetLastScanUtc(DateTime utc)
+        => SetString(LastScanUtcKey, utc.ToString("o"));
 }

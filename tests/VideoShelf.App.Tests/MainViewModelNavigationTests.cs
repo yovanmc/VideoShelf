@@ -89,6 +89,56 @@ public sealed class MainViewModelNavigationTests
         vm.SectionDetail.SectionId.ShouldBe(ctx.SectionId);
     }
 
+    [Fact]
+    public void ShowSettings_sets_CurrentView_Settings()
+    {
+        var vm = MainViewModelTestFactory.Create(out _);
+        vm.ShowSettingsCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Settings);
+    }
+
+    [Fact]
+    public async Task OpenSection_then_GoBack_returns_to_prior_view()
+    {
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _ = ctx.Db;
+
+        // Starting from Home
+        vm.CurrentView.ShouldBe(AppView.Home);
+
+        await vm.OpenSectionAsync(ctx.SectionId);
+        vm.CurrentView.ShouldBe(AppView.SectionDetail);
+        vm.CanGoBack.ShouldBeTrue();
+
+        vm.GoBackCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Home);
+        vm.CanGoBack.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ShowBrowse_clears_back_stack()
+    {
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _ = ctx.Db;
+
+        // Navigate into a section to get a back-stack entry
+        await vm.OpenSectionAsync(ctx.SectionId);
+        vm.CanGoBack.ShouldBeTrue();
+
+        // ShowBrowse should clear the back-stack
+        vm.ShowBrowseCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Browse);
+        vm.CanGoBack.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void IsLibraryEmpty_reflects_source_count()
+    {
+        // The factory seeds one source, so Sources.Sources.Count == 1 → IsLibraryEmpty == false
+        var vm = MainViewModelTestFactory.Create(out _);
+        vm.IsLibraryEmpty.ShouldBe(vm.Sources.Sources.Count == 0);
+    }
+
     private static async Task WaitForAsync(Func<bool> condition, int timeoutMs = 5000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);

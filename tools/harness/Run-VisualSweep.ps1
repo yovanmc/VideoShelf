@@ -93,6 +93,7 @@ $views = [ordered]@{
     'player'        = @('--view','Player','--play',$playClip)
     'pip'           = @('--view','PiP','--play',$playClip)
     'settings'      = @('--view','Settings')
+    'empty'         = @('--view','Home','--no-folder')   # first-run empty-library CTA (no source configured)
 }
 
 $results = @()
@@ -102,8 +103,16 @@ foreach ($name in $views.Keys) {
     $signal  = Join-Path $dataDir 'ready.signal'
     New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 
-    $args = @('--folder',$Fixtures,'--data-dir',$dataDir,'--autostart',
-              '--done-signal',$signal) + $views[$name]
+    # '--no-folder' is a harness-only token (stripped before launch): omit '--folder' so the
+    # app starts with no source configured, exercising the first-run empty-library overlay.
+    $viewArgs = $views[$name]
+    if ($viewArgs -contains '--no-folder') {
+        $viewArgs = @($viewArgs | Where-Object { $_ -ne '--no-folder' })
+        $args = @('--data-dir',$dataDir,'--autostart','--done-signal',$signal) + $viewArgs
+    } else {
+        $args = @('--folder',$Fixtures,'--data-dir',$dataDir,'--autostart',
+                  '--done-signal',$signal) + $viewArgs
+    }
     Write-Host "Launching '$name'..."
     $proc = Start-Process -FilePath $exe -ArgumentList $args -PassThru
 

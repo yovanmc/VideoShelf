@@ -23,6 +23,7 @@
             <conv:MissingToOpacity x:Key="MissingToOpacity" />
             <conv:SortModeToIndex x:Key="SortModeToIndex" />
             <conv:EnumToVisibility x:Key="EnumToVis" />
+            <conv:EnumSetToVisibility x:Key="EnumSetToVis" />
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
@@ -40,129 +41,111 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Top nav bar: Home / Browse buttons -->
+            <!-- Top nav bar: Back / Home / Browse / Search / Settings -->
             <Border Grid.Row="0" Background="{StaticResource SubtleFillBrush}"
                     BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,0,1">
-                <StackPanel Orientation="Horizontal" Margin="16,8">
-                    <ui:Button Content="Home" Command="{Binding ShowHomeCommand}" Appearance="Transparent" Margin="0,0,8,0" />
-                    <ui:Button Content="Browse" Command="{Binding ShowBrowseCommand}" Appearance="Transparent" />
-                    <ui:TextBox PlaceholderText="Search creators and videos…" Width="280" Margin="24,0,0,0"
+                <Grid Margin="16,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}" Appearance="Transparent"
+                               Margin="0,0,8,0" ToolTip="Back"
+                               Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisibility}}">
+                        <ui:SymbolIcon Symbol="ArrowLeft24" />
+                    </ui:Button>
+                    <Grid Grid.Column="1" Margin="0,0,4,0">
+                        <ui:Button Content="Home" Command="{Binding ShowHomeCommand}" Appearance="Transparent" />
+                        <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Home}" />
+                    </Grid>
+                    <Grid Grid.Column="2">
+                        <ui:Button Content="Browse" Command="{Binding ShowBrowseCommand}" Appearance="Transparent" />
+                        <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Browse,SectionDetail,RenameTool'}" />
+                    </Grid>
+                    <ui:TextBox Grid.Column="3" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
+                    <Grid Grid.Column="4">
+                        <ui:Button Command="{Binding ShowSettingsCommand}" Appearance="Transparent" ToolTip="Settings">
+                            <ui:SymbolIcon Symbol="Settings24" />
+                        </ui:Button>
+                        <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Settings}" />
+                    </Grid>
+                </Grid>
             </Border>
 
-            <!-- Main content row -->
+            <!-- Main content row (full-width; sidebar removed) -->
             <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="288" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
 
-                <!-- LEFT: sources + sections sidebar (always visible; used by Browse and Section Detail) -->
-                <Border Grid.Column="0" Padding="16"
-                        BorderBrush="{StaticResource DividerBrush}"
-                        BorderThickness="0,0,1,0">
-                    <DockPanel>
-                        <TextBlock DockPanel.Dock="Top" Text="SOURCES" Style="{StaticResource SectionHeader}" />
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,8,0,8">
-                            <ui:Button Content="Add source" Command="{Binding Sources.AddSourceCommand}" />
-                            <ui:Button Content="Scan" Margin="8,0,0,0"
-                                       Command="{Binding ScanAndReloadCommand}" />
-                        </StackPanel>
-                        <CheckBox DockPanel.Dock="Top" Margin="0,0,0,8"
-                                  Content="Auto-play next episode"
-                                  IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
-                        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel Margin="0,2">
-                                        <ui:Button DockPanel.Dock="Right" Content="Remove"
-                                                   Command="{Binding DataContext.Sources.RemoveSourceCommand,
-                                                             RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                   CommandParameter="{Binding}" />
-                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
-                                                   Opacity="0.85" />
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                <!-- Nav-gated content hosts -->
 
-                        <TextBlock DockPanel.Dock="Top" Margin="{StaticResource SectionGap}"
-                                   Text="CREATORS" Style="{StaticResource SectionHeader}" />
-                        <ListBox ItemsSource="{Binding Library.Sections}"
-                                 SelectedItem="{Binding Library.SelectedSection, Mode=TwoWay}"
-                                 VirtualizingStackPanel.IsVirtualizing="True"
-                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
-                                 BorderThickness="0" Background="Transparent">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel>
-                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
-                                                CornerRadius="{StaticResource ControlRadius}"
-                                                Padding="6,1" VerticalAlignment="Center"
-                                                Visibility="{Binding HasUnwatched,
-                                                    Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="{Binding UnwatchedCount}" FontSize="11"
-                                                       Foreground="#101010" />
-                                        </Border>
-                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" />
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
-                </Border>
+                <!-- Home view — DiscoveryView -->
+                <views:DiscoveryView DataContext="{Binding Discovery}"
+                                     Visibility="{Binding DataContext.CurrentView,
+                                         RelativeSource={RelativeSource AncestorType=Window},
+                                         Converter={StaticResource EnumToVis},
+                                         ConverterParameter=Home}" />
 
-                <!-- RIGHT: nav-gated content hosts -->
-                <Grid Grid.Column="1">
+                <!-- Browse view — creator grid -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding DataContext.CurrentView,
+                                  RelativeSource={RelativeSource AncestorType=Window},
+                                  Converter={StaticResource EnumToVis},
+                                  ConverterParameter=Browse}">
+                    <ItemsControl ItemsSource="{Binding Creators.Creators}" Margin="16">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <views:CreatorCard Margin="{StaticResource CardGap}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
 
-                    <!-- Home view — DiscoveryView -->
-                    <views:DiscoveryView DataContext="{Binding Discovery}"
+                <!-- Section detail view -->
+                <views:SectionDetailView DataContext="{Binding SectionDetail}"
                                          Visibility="{Binding DataContext.CurrentView,
                                              RelativeSource={RelativeSource AncestorType=Window},
                                              Converter={StaticResource EnumToVis},
-                                             ConverterParameter=Home}" />
+                                             ConverterParameter=SectionDetail}" />
 
-                    <!-- Browse view — creator grid -->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  Visibility="{Binding DataContext.CurrentView,
-                                      RelativeSource={RelativeSource AncestorType=Window},
-                                      Converter={StaticResource EnumToVis},
-                                      ConverterParameter=Browse}">
-                        <ItemsControl ItemsSource="{Binding Creators.Creators}" Margin="16">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <views:CreatorCard Margin="{StaticResource CardGap}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
-                    <!-- Section detail view -->
-                    <views:SectionDetailView DataContext="{Binding SectionDetail}"
-                                             Visibility="{Binding DataContext.CurrentView,
-                                                 RelativeSource={RelativeSource AncestorType=Window},
-                                                 Converter={StaticResource EnumToVis},
-                                                 ConverterParameter=SectionDetail}" />
-
-                    <!-- Rename tool view -->
-                    <views:RenameToolView DataContext="{Binding RenameTool}"
-                                          Visibility="{Binding DataContext.CurrentView,
-                                              RelativeSource={RelativeSource AncestorType=Window},
-                                              Converter={StaticResource EnumToVis},
-                                              ConverterParameter=RenameTool}" />
-
-                    <!-- Search view -->
-                    <views:SearchView DataContext="{Binding Search}"
+                <!-- Rename tool view -->
+                <views:RenameToolView DataContext="{Binding RenameTool}"
                                       Visibility="{Binding DataContext.CurrentView,
                                           RelativeSource={RelativeSource AncestorType=Window},
                                           Converter={StaticResource EnumToVis},
-                                          ConverterParameter=Search}" />
+                                          ConverterParameter=RenameTool}" />
 
-                </Grid>
+                <!-- Search view -->
+                <views:SearchView DataContext="{Binding Search}"
+                                  Visibility="{Binding DataContext.CurrentView,
+                                      RelativeSource={RelativeSource AncestorType=Window},
+                                      Converter={StaticResource EnumToVis},
+                                      ConverterParameter=Search}" />
+
+                <!-- Settings view -->
+                <views:SettingsView
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Settings}" />
+
+                <!-- Empty-state overlay: shown when no sources added yet.
+                     Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
+                     ordering is safe — overlay is last content-host child, before PlayerHost. -->
+                <Border Background="{StaticResource ApplicationBackgroundBrush}"
+                        Visibility="{Binding DataContext.IsLibraryEmpty, RelativeSource={RelativeSource AncestorType=Window},
+                                     Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
+                        <TextBlock Text="No sources yet" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                        <TextBlock Text="Add a folder of videos to start building your library."
+                                   TextWrapping="Wrap" TextAlignment="Center" Opacity="0.8" Margin="0,8,0,16" />
+                        <ui:Button Content="Add a source" Appearance="Primary" HorizontalAlignment="Center"
+                                   Command="{Binding DataContext.Sources.AddSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    </StackPanel>
+                </Border>
 
             </Grid>
         </Grid>
