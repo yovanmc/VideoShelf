@@ -57,4 +57,28 @@ public class SettingsRepositoryTests
 
         settings.GetString("k", "fallback").ShouldBe("v");
     }
+
+    [Fact]
+    public void GetLastScanUtc_is_null_when_never_set()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.GetLastScanUtc().ShouldBeNull();
+    }
+
+    [Fact]
+    public void SetLastScanUtc_then_GetLastScanUtc_roundtrips()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        var expected = new DateTime(2024, 3, 15, 10, 30, 0, DateTimeKind.Utc);
+        settings.SetLastScanUtc(expected);
+
+        var actual = settings.GetLastScanUtc();
+        actual.ShouldNotBeNull();
+        (actual!.Value - expected).Duration().ShouldBeLessThan(TimeSpan.FromSeconds(1));
+        actual.Value.Kind.ShouldBe(DateTimeKind.Utc);
+    }
 }
