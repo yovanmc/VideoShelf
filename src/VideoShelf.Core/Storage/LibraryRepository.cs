@@ -442,6 +442,76 @@ public sealed class LibraryRepository(VideoShelfDb db)
             r.GetInt64(5) != 0, r.GetInt64(6) != 0);
     }
 
+    /// <summary>Returns all present (non-missing) videos whose duration has not yet been probed.</summary>
+    public IReadOnlyList<VideoToProbe> GetVideosNeedingDuration()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, file_path FROM videos WHERE duration IS NULL AND missing = 0 ORDER BY id";
+        var list = new List<VideoToProbe>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new VideoToProbe(r.GetInt64(0), r.GetString(1)));
+        return list;
+    }
+
+    /// <summary>Saves the probed duration (seconds) for a video.</summary>
+    public void SetDuration(long videoId, double seconds)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET duration = $d WHERE id = $id";
+        cmd.Parameters.AddWithValue("$d", seconds);
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Atomically replaces all chapters for a video. Idempotent on re-probe.</summary>
+    public void ReplaceChapters(long videoId, IReadOnlyList<ChapterRecord> chapters)
+    {
+        using var conn = db.Open();
+        using var tx = conn.BeginTransaction();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "DELETE FROM video_chapters WHERE video_id = $id";
+            cmd.Parameters.AddWithValue("$id", videoId);
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var ch in chapters)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                INSERT INTO video_chapters(video_id, idx, name, start_seconds)
+                VALUES($id, $idx, $name, $start)
+                """;
+            cmd.Parameters.AddWithValue("$id", videoId);
+            cmd.Parameters.AddWithValue("$idx", ch.Index);
+            cmd.Parameters.AddWithValue("$name", ch.Name);
+            cmd.Parameters.AddWithValue("$start", ch.StartSeconds);
+            cmd.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+
+    /// <summary>Returns all chapters for a video, ordered by index.</summary>
+    public IReadOnlyList<ChapterRecord> GetChapters(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT idx, name, start_seconds FROM video_chapters WHERE video_id = $id ORDER BY idx";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        var list = new List<ChapterRecord>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new ChapterRecord(r.GetInt32(0), r.GetString(1), r.GetDouble(2)));
+        return list;
+    }
+
     /// <summary>Repaths a video after an on-disk rename. Updates the stable row's file_path + raw_filename and
     /// any path-keyed grouping_overrides, in one transaction. Watched/resume/tags key off ids and are untouched.</summary>
     public void UpdateVideoPath(long videoId, string oldPath, string newPath)
