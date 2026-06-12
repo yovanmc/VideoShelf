@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
@@ -27,14 +29,41 @@ public sealed partial class SeriesViewModel(
     [ObservableProperty]
     private string? _thumbnailPath;
 
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    private bool _episodesLoaded;
+
+    public string EpisodeCountLabel => IsStandalone ? "Standalone" : $"{EpisodeCount} episodes";
+
     public bool HasUnwatched => UnwatchedCount > 0;
 
     public event System.EventHandler? UnwatchedChanged;
     public event System.EventHandler<EpisodeView>? PlayRequested;
     public event System.EventHandler<SeriesViewModel>? RenameRequested;
 
-    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    [RelayCommand]
     private void RequestRename() => RenameRequested?.Invoke(this, this);
+
+    [RelayCommand]
+    private async Task Activate()
+    {
+        if (IsStandalone)
+        {
+            await EnsureEpisodesLoadedAsync();
+            Episodes.FirstOrDefault()?.PlayCommand.Execute(null);   // raises PlayRequested via the episode
+            return;
+        }
+        IsExpanded = !IsExpanded;
+        if (IsExpanded) await EnsureEpisodesLoadedAsync();
+    }
+
+    private async Task EnsureEpisodesLoadedAsync()
+    {
+        if (_episodesLoaded) return;
+        await LoadEpisodesAsync(CancellationToken.None);
+        _episodesLoaded = true;
+    }
 
     partial void OnUnwatchedCountChanged(int value)
     {
