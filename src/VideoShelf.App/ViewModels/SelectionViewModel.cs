@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -78,8 +79,10 @@ public partial class SelectionViewModel<T> : ObservableObject where T : ISelecta
     [RelayCommand]
     private void ClearSelection()
     {
-        // De-select each item first so cards update their IsSelected state.
-        foreach (var item in SelectedItems)
+        // Snapshot first: setting IsSelected=false re-enters via the host's
+        // PropertyChanged subscription and removes from SelectedItems, which would
+        // otherwise corrupt iteration over the live collection.
+        foreach (var item in SelectedItems.ToList())
             item.IsSelected = false;
         SelectedItems.Clear();
         OnPropertyChanged(nameof(SelectedCount));
