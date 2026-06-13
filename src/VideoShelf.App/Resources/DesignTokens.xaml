@@ -73,6 +73,8 @@
 
     <!-- Subtle overlay fill for interactive surfaces (chips, queue rows, etc.) -->
     <SolidColorBrush x:Key="SubtleFillBrush"       Color="#0F7F7F7F" />
+    <!-- Chip/pill fill — readable on dark canvas and over hero art (SubtleFillBrush #0F.. was too faint to read as a pill). -->
+    <SolidColorBrush x:Key="ChipFillBrush"         Color="#40FFFFFF" />
     <!-- Placeholder fill for thumbnail slots before image loads -->
     <SolidColorBrush x:Key="ThumbPlaceholderBrush" Color="#247F7F7F" />
     <!-- Caption text overlaid directly on card artwork -->
@@ -218,7 +220,7 @@
 
     <!-- Read-only chip (Border wrapper) -->
     <Style x:Key="Chip" TargetType="Border">
-        <Setter Property="Background"    Value="{StaticResource SubtleFillBrush}" />
+        <Setter Property="Background"    Value="{StaticResource ChipFillBrush}" />
         <Setter Property="CornerRadius"  Value="12" />
         <Setter Property="Padding"       Value="10,4" />
     </Style>
@@ -227,7 +229,7 @@
          Uses triggers on IsChecked to flip background to accent; no ControlTemplate
          override — theming-rule-safe. -->
     <Style x:Key="ChipToggle" TargetType="ToggleButton">
-        <Setter Property="Background"       Value="{StaticResource SubtleFillBrush}" />
+        <Setter Property="Background"       Value="{StaticResource ChipFillBrush}" />
         <Setter Property="Padding"          Value="10,4" />
         <Setter Property="Cursor"           Value="Hand" />
         <Setter Property="BorderThickness"  Value="0" />
