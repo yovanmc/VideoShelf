@@ -54,6 +54,18 @@ public partial class MainWindow : FluentWindow
             {
                 _viewModel.ActiveSelectionSource?.ExitSelectionMode();
             };
+
+            // H2 — "Rename…" button: resolve selected series ids from the creator grid and open MultiRename.
+            // Scoped to Browse (creator-grid) only: other pages produce video selections, not whole-series selections.
+            BulkActionBarHost.RenameRequested += async (_, _) =>
+            {
+                if (_viewModel.CurrentView == AppView.Browse)
+                {
+                    var seriesIds = _viewModel.Creators.GetSelectedSeriesIds();
+                    if (seriesIds.Count > 0)
+                        await _viewModel.OpenMultiRenameAsync(seriesIds);
+                }
+            };
         }
 
         // G1 — A–Z jump strip: scroll the creator grid to the first matching creator.

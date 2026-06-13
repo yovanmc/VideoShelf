@@ -93,11 +93,23 @@
                 <ui:Button Command="{Binding AddToQueueCommand}"
                            ToolTip="Add to play queue"
                            Style="{StaticResource TertiaryButton}"
-                           Padding="10,4"
+                           Padding="10,4" Margin="0,0,4,0"
                            AutomationProperties.Name="Add selected to queue">
                     <StackPanel Orientation="Horizontal">
                         <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
                         <TextBlock Text="Queue" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ui:Button>
+
+                <!-- Rename (cross-series template rename — creator-grid selection only) -->
+                <ui:Button ToolTip="Rename with template"
+                           Style="{StaticResource TertiaryButton}"
+                           Padding="10,4"
+                           AutomationProperties.Name="Rename selected series with template"
+                           x:Name="RenameButton">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Edit24" Margin="0,0,4,0" />
+                        <TextBlock Text="Rename…" VerticalAlignment="Center" />
                     </StackPanel>
                 </ui:Button>
 

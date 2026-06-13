@@ -464,6 +464,13 @@
                                           Converter={StaticResource EnumToVis},
                                           ConverterParameter=RenameTool}" />
 
+                <!-- Multi-series template rename view -->
+                <views:MultiRenameView DataContext="{Binding MultiRename}"
+                                       Visibility="{Binding DataContext.CurrentView,
+                                           RelativeSource={RelativeSource AncestorType=Window},
+                                           Converter={StaticResource EnumToVis},
+                                           ConverterParameter=MultiRename}" />
+
                 <!-- Search view -->
                 <views:SearchView DataContext="{Binding Search}"
                                   Visibility="{Binding DataContext.CurrentView,

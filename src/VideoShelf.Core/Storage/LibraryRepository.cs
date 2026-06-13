@@ -141,6 +141,18 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return list;
     }
 
+    /// <summary>Returns the series row for a given id, or null if not found.</summary>
+    public Series? GetSeries(long seriesId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, section_id, base_title, sort_key, is_standalone FROM series WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", seriesId);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        return new Series(r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetString(3), r.GetInt64(4) != 0);
+    }
+
     /// <summary>Marks every video under the given source as missing (a scan will clear the ones it finds).</summary>
     public void MarkAllMissingForSource(long sourceId)
     {
