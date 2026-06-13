@@ -285,4 +285,131 @@ public sealed class TagRepositoryTests
         using var _d = db;
         tags.GetAllTagsAcrossLevels().ShouldBeEmpty();
     }
+
+    // ── GetSectionTagsForSeries ──────────────────────────────────────────────
+
+    [Fact]
+    public void GetSectionTagsForSeries_returns_parent_section_tags_sorted()
+    {
+        var (db, lib, tags, sectionId, seriesId) = SeedSeries();
+        using var _d = db;
+        tags.AddTag(sectionId, "comedy");
+        tags.AddTag(sectionId, "action");
+        tags.GetSectionTagsForSeries(seriesId).ShouldBe(new[] { "action", "comedy" });
+    }
+
+    [Fact]
+    public void GetSectionTagsForSeries_does_not_leak_sibling_series_or_other_section()
+    {
+        var db = new TempDb();
+        using var _d = db;
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+
+        var sourceId = lib.UpsertSource(@"C:\media", "Media");
+        var sectionA = lib.UpsertSection(sourceId, "Section A");
+        var sectionB = lib.UpsertSection(sourceId, "Section B");
+        var targetSeries = lib.UpsertSeries(sectionA, "Show A", isStandalone: false);
+
+        // Tags on the correct parent section
+        tags.AddTag(sectionA, "correct-tag");
+        // Tags on a different section – must NOT appear
+        tags.AddTag(sectionB, "other-section-tag");
+
+        var result = tags.GetSectionTagsForSeries(targetSeries);
+        result.ShouldContain("correct-tag");
+        result.ShouldNotContain("other-section-tag");
+    }
+
+    [Fact]
+    public void GetSectionTagsForSeries_returns_empty_when_section_has_no_tags()
+    {
+        var (db, _, tags, _, seriesId) = SeedSeries();
+        using var _d = db;
+        tags.GetSectionTagsForSeries(seriesId).ShouldBeEmpty();
+    }
+
+    // ── GetSeriesTagsForVideo ────────────────────────────────────────────────
+
+    [Fact]
+    public void GetSeriesTagsForVideo_returns_parent_series_tags_sorted()
+    {
+        var (db, _, tags, _, seriesId, videoId) = SeedVideo();
+        using var _d = db;
+        tags.AddSeriesTag(seriesId, "thriller");
+        tags.AddSeriesTag(seriesId, "action");
+        tags.GetSeriesTagsForVideo(videoId).ShouldBe(new[] { "action", "thriller" });
+    }
+
+    [Fact]
+    public void GetSeriesTagsForVideo_does_not_leak_sibling_series_tags()
+    {
+        var db = new TempDb();
+        using var _d = db;
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+
+        var sourceId = lib.UpsertSource(@"C:\media", "Media");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+        var seriesA = lib.UpsertSeries(sectionId, "Show A", isStandalone: false);
+        var seriesB = lib.UpsertSeries(sectionId, "Show B", isStandalone: false);
+        var targetVideo = lib.UpsertVideo(seriesA, @"C:\media\Creator A\Show A\ep01.mkv", 1, "mkv");
+
+        tags.AddSeriesTag(seriesA, "series-a-tag");
+        tags.AddSeriesTag(seriesB, "series-b-tag");   // must NOT leak
+
+        var result = tags.GetSeriesTagsForVideo(targetVideo);
+        result.ShouldContain("series-a-tag");
+        result.ShouldNotContain("series-b-tag");
+    }
+
+    [Fact]
+    public void GetSeriesTagsForVideo_returns_empty_when_series_has_no_tags()
+    {
+        var (db, _, tags, _, _, videoId) = SeedVideo();
+        using var _d = db;
+        tags.GetSeriesTagsForVideo(videoId).ShouldBeEmpty();
+    }
+
+    // ── GetSectionTagsForVideo ───────────────────────────────────────────────
+
+    [Fact]
+    public void GetSectionTagsForVideo_returns_grandparent_section_tags_sorted()
+    {
+        var (db, _, tags, sectionId, _, videoId) = SeedVideo();
+        using var _d = db;
+        tags.AddTag(sectionId, "zebra");
+        tags.AddTag(sectionId, "apple");
+        tags.GetSectionTagsForVideo(videoId).ShouldBe(new[] { "apple", "zebra" });
+    }
+
+    [Fact]
+    public void GetSectionTagsForVideo_does_not_leak_other_section_tags()
+    {
+        var db = new TempDb();
+        using var _d = db;
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+
+        var sourceId = lib.UpsertSource(@"C:\media", "Media");
+        var sectionA = lib.UpsertSection(sourceId, "Creator A");
+        var sectionB = lib.UpsertSection(sourceId, "Creator B");
+        var seriesA = lib.UpsertSeries(sectionA, "Show A", isStandalone: false);
+        var targetVideo = lib.UpsertVideo(seriesA, @"C:\media\Creator A\Show A\ep01.mkv", 1, "mkv");
+
+        tags.AddTag(sectionA, "correct-tag");
+        tags.AddTag(sectionB, "wrong-section-tag");  // must NOT appear
+
+        var result = tags.GetSectionTagsForVideo(targetVideo);
+        result.ShouldContain("correct-tag");
+        result.ShouldNotContain("wrong-section-tag");
+    }
+
+    [Fact]
+    public void GetSectionTagsForVideo_returns_empty_when_section_has_no_tags()
+    {
+        var (db, _, tags, _, _, videoId) = SeedVideo();
+        using var _d = db;
+        tags.GetSectionTagsForVideo(videoId).ShouldBeEmpty();
+    }
 }

@@ -222,6 +222,60 @@ public sealed class TagRepository(VideoShelfDb db)
         tx.Commit();
     }
 
+    // ── parent-tag resolution helpers ───────────────────────────────────────
+
+    /// <summary>Returns the section_tags of the parent section of the given series.</summary>
+    public IReadOnlyList<string> GetSectionTagsForSeries(long seriesId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT st.tag FROM section_tags st
+            JOIN series s ON s.section_id = st.section_id
+            WHERE s.id = @id ORDER BY st.tag;
+            """;
+        cmd.Parameters.AddWithValue("@id", seriesId);
+        var result = new List<string>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) result.Add(r.GetString(0));
+        return result;
+    }
+
+    /// <summary>Returns the series_tags of the parent series of the given video.</summary>
+    public IReadOnlyList<string> GetSeriesTagsForVideo(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT st.tag FROM series_tags st
+            JOIN videos v ON v.series_id = st.series_id
+            WHERE v.id = @id ORDER BY st.tag;
+            """;
+        cmd.Parameters.AddWithValue("@id", videoId);
+        var result = new List<string>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) result.Add(r.GetString(0));
+        return result;
+    }
+
+    /// <summary>Returns the section_tags of the grandparent section of the given video.</summary>
+    public IReadOnlyList<string> GetSectionTagsForVideo(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT sect.tag FROM section_tags sect
+            JOIN series s ON s.section_id = sect.section_id
+            JOIN videos v ON v.series_id = s.id
+            WHERE v.id = @id ORDER BY sect.tag;
+            """;
+        cmd.Parameters.AddWithValue("@id", videoId);
+        var result = new List<string>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read()) result.Add(r.GetString(0));
+        return result;
+    }
+
     // ── resolution + universe ────────────────────────────────────────────────
 
     public IReadOnlyList<string> GetEffectiveVideoTags(long videoId)
