@@ -83,9 +83,11 @@ public class MainViewModelTests
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
+        var curation = new CurationRepository(temp.Db);
+        var favoritesVm = new FavoritesViewModel(curation, lib);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

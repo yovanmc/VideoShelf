@@ -44,6 +44,9 @@ public sealed class VideoShelfDb : IDisposable
         EnsureColumn(conn, "videos", "resume_updated_at", "TEXT");
         // duration: pre-schema DBs may lack this column even though it is in base CREATE TABLE
         EnsureColumn(conn, "videos", "duration", "REAL");
+        // M16-C: favorites + star ratings
+        EnsureColumn(conn, "videos", "is_favorite", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "videos", "rating", "INTEGER NOT NULL DEFAULT 0");
         CreateAddedAtIndex(conn);
     }
 

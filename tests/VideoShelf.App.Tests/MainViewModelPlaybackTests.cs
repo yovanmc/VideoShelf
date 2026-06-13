@@ -8,6 +8,7 @@ using VideoShelf.Core.Models;
 using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Storage;
 using VideoShelf.Core.Tests;
+
 namespace VideoShelf.App.Tests;
 
 
@@ -54,9 +55,11 @@ public class MainViewModelPlaybackTests
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
+        var curation = new CurationRepository(temp.Db);
+        var favoritesVm = new FavoritesViewModel(curation, lib);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm);
     }
 
     [Fact]
@@ -121,9 +124,11 @@ public class MainViewModelPlaybackTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
         var smartViewsVm2 = new SmartViewsViewModel(smartViews2, tags, lib);
+        var curation2 = new CurationRepository(temp.Db);
+        var favoritesVm2 = new FavoritesViewModel(curation2, lib);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2);
 
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);

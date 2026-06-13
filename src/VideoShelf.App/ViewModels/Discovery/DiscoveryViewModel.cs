@@ -11,7 +11,7 @@ namespace VideoShelf.App.ViewModels.Discovery;
 public sealed partial class DiscoveryViewModel(
     DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
     CreatorCardFactory cards, StatsRepository stats, PlayQueueViewModel playQueue,
-    SmartViewRepository smartViews) : ObservableObject
+    SmartViewRepository smartViews, CurationRepository? curation = null) : ObservableObject
 {
     private const int RailLimit = 24;
 
@@ -25,6 +25,9 @@ public sealed partial class DiscoveryViewModel(
     public ObservableCollection<CreatorWatchCount> TopCreators { get; } = new();
     public ObservableCollection<SmartViewShelfViewModel> SmartShelves { get; } = [];
     public bool HasSmartShelves => SmartShelves.Count > 0;
+
+    public ObservableCollection<RecencyCardViewModel> Favorites { get; } = [];
+    public bool HasFavorites => Favorites.Count > 0;
 
     [ObservableProperty] private string _watchedSummary = "";
     [ObservableProperty] private string _inProgressSummary = "";
@@ -75,7 +78,8 @@ public sealed partial class DiscoveryViewModel(
                 tagCounts: tags.GetTagCounts(),
                 summaries: library.GetSectionSummaries(),
                 libStats: stats.GetLibraryStats(),
-                topCreators: stats.GetTopCreatorsByWatched(5));
+                topCreators: stats.GetTopCreatorsByWatched(5),
+                favItems: curation?.GetFavorites(RailLimit) ?? []);
         });
 
         var smartData = await Task.Run(() =>
@@ -90,6 +94,7 @@ public sealed partial class DiscoveryViewModel(
         Fill(RecommendedVideos, data.recVideos, MakeRecencyCard);
         Fill(RecentlyAdded, data.added, MakeRecencyCard);
         Fill(RecentlyWatched, data.watched, MakeRecencyCard);
+        Fill(Favorites, data.favItems, MakeRecencyCard);
 
         AvailableTags.Clear();
         foreach (var tc in data.tagCounts) AvailableTags.Add(new TagChipViewModel(tc.Tag, tc.SectionCount));
@@ -198,6 +203,7 @@ public sealed partial class DiscoveryViewModel(
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(HasTagResults));
         OnPropertyChanged(nameof(HasSmartShelves));
+        OnPropertyChanged(nameof(HasFavorites));
         OnPropertyChanged(nameof(IsEmpty));
     }
 

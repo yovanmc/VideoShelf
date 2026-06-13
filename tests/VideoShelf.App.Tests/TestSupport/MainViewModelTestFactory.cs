@@ -7,6 +7,7 @@ using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Storage;
 using VideoShelf.Core.Tests;
+
 namespace VideoShelf.App.Tests.TestSupport;
 
 
@@ -62,10 +63,12 @@ public static class MainViewModelTestFactory
         var searchVm = new SearchViewModel(lib, searchCardFactory);
 
         var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
+        var curation = new CurationRepository(temp.Db);
+        var favoritesVm = new FavoritesViewModel(curation, lib);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

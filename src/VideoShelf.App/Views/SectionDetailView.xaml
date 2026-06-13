@@ -2,12 +2,14 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:views="clr-namespace:VideoShelf.App.Views">
+             xmlns:views="clr-namespace:VideoShelf.App.Views"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <conv:StarSymbolConverter x:Key="StarSymbolConv" />
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -182,6 +184,49 @@
                                                                Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
                                                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                                   Command="{Binding ToggleWatchedCommand}"/>
+                                                        <!-- Heart (favorite) toggle: always visible when curation wired -->
+                                                        <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
+                                                                   ToolTip="Favorite" Command="{Binding ToggleFavoriteCommand}"
+                                                                   AutomationProperties.Name="Toggle favorite"
+                                                                   Style="{StaticResource TertiaryButton}"
+                                                                   Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
+                                                            <ui:SymbolIcon>
+                                                                <ui:SymbolIcon.Style>
+                                                                    <Style TargetType="ui:SymbolIcon">
+                                                                        <Setter Property="Symbol" Value="Heart24" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                                <Setter Property="Foreground" Value="Red" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </ui:SymbolIcon.Style>
+                                                            </ui:SymbolIcon>
+                                                        </ui:Button>
+                                                        <!-- 1-5 star rating: always visible when curation wired -->
+                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                                    Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
+                                                            <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="1"
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="1 star">
+                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=1}" />
+                                                            </ui:Button>
+                                                            <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="2"
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="2 stars">
+                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=2}" />
+                                                            </ui:Button>
+                                                            <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="3"
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="3 stars">
+                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=3}" />
+                                                            </ui:Button>
+                                                            <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="4"
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="4 stars">
+                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=4}" />
+                                                            </ui:Button>
+                                                            <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="5"
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="5 stars">
+                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=5}" />
+                                                            </ui:Button>
+                                                        </StackPanel>
                                                         <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
                                                                    ToolTip="Play" Command="{Binding PlayCommand}"
                                                                    AutomationProperties.Name="Play"

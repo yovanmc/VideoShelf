@@ -19,7 +19,8 @@ public sealed partial class SectionDetailViewModel(
     IThumbnailService thumbnails,
     CreatorArtRepository art,
     IImagePicker imagePicker,
-    PlayQueueViewModel playQueue) : ObservableObject
+    PlayQueueViewModel playQueue,
+    CurationRepository? curation = null) : ObservableObject
 {
     public long SectionId { get; private set; }
 
@@ -75,7 +76,7 @@ public sealed partial class SectionDetailViewModel(
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));

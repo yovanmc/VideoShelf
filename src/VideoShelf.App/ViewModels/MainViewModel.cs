@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -33,7 +33,8 @@ public sealed partial class MainViewModel : ObservableObject
         SearchViewModel search,
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
-        SmartViewsViewModel smartViews)
+        SmartViewsViewModel smartViews,
+        FavoritesViewModel favorites)
     {
         _sources = sources;
         _library = library;
@@ -43,6 +44,7 @@ public sealed partial class MainViewModel : ObservableObject
         _backfill = backfill;
         _playQueue = playQueue;
         SmartViews = smartViews;
+        Favorites = favorites;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -74,12 +76,14 @@ public sealed partial class MainViewModel : ObservableObject
                 CurrentView = AppView.Search;
             }
         };
+        Favorites.PlayRequested += (_, e) => PlayEpisode(e);
         Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
     }
 
     public string Title => "VideoShelf";
 
     public SmartViewsViewModel SmartViews { get; }
+    public FavoritesViewModel Favorites { get; }
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
@@ -171,6 +175,14 @@ public sealed partial class MainViewModel : ObservableObject
         SmartViews.Load();
         PushNav(CurrentView);
         CurrentView = AppView.SmartViews;
+    }
+
+    [RelayCommand]
+    private void ShowFavorites()
+    {
+        Favorites.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Favorites;
     }
 
     public async Task OpenSectionAsync(long sectionId)

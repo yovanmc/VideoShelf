@@ -169,6 +169,11 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=SmartViews}" />
 
+                <!-- Favorites page -->
+                <views:FavoritesView DataContext="{Binding Favorites}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Favorites}" />
+
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
                      ordering is safe — overlay is last content-host child, before PlayerHost. -->

@@ -15,7 +15,8 @@ public sealed partial class SeriesViewModel(
     LibraryRepository library,
     WatchRepository watch,
     IThumbnailService thumbnails,
-    TagRepository? tags = null) : ObservableObject
+    TagRepository? tags = null,
+    CurationRepository? curation = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -106,7 +107,7 @@ public sealed partial class SeriesViewModel(
         Episodes.Clear();
         foreach (var row in rows)
         {
-            var ep = new EpisodeViewModel(row, watch, tags);
+            var ep = new EpisodeViewModel(row, watch, tags, curation);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);
