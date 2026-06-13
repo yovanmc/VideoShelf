@@ -1,7 +1,8 @@
 <UserControl x:Class="VideoShelf.App.Views.SectionDetailView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:VideoShelf.App.Views">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -176,19 +177,25 @@
                                     <ItemsControl ItemsSource="{Binding Episodes}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <DockPanel Margin="0,2"
-                                                           Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
-                                                    <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
-                                                              Command="{Binding ToggleWatchedCommand}"/>
-                                                    <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
-                                                               ToolTip="Play" Command="{Binding PlayCommand}"
-                                                               AutomationProperties.Name="Play"
-                                                               Style="{StaticResource TertiaryButton}">
-                                                        <ui:SymbolIcon Symbol="Play24" />
-                                                    </ui:Button>
-                                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                </DockPanel>
+                                                <StackPanel>
+                                                    <DockPanel Margin="0,2"
+                                                               Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
+                                                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
+                                                                  Command="{Binding ToggleWatchedCommand}"/>
+                                                        <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
+                                                                   ToolTip="Play" Command="{Binding PlayCommand}"
+                                                                   AutomationProperties.Name="Play"
+                                                                   Style="{StaticResource TertiaryButton}">
+                                                            <ui:SymbolIcon Symbol="Play24" />
+                                                        </ui:Button>
+                                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                    </DockPanel>
+                                                    <!-- Video tag editor: only in edit mode -->
+                                                    <views:TagEditorView DataContext="{Binding VideoTagEditor}"
+                                                                         Margin="0,2,0,4"
+                                                                         Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -196,6 +203,12 @@
                                                Margin="0,6,0,0" HorizontalAlignment="Left"
                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
                                                Style="{StaticResource SecondaryButton}"/>
+                                    <!-- Series tag editor: only in edit mode, only when wired with tags -->
+                                    <StackPanel Margin="0,8,0,0"
+                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="Tags" FontSize="11" Opacity="0.7" Margin="0,0,0,4"/>
+                                        <views:TagEditorView DataContext="{Binding SeriesTagEditor}"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
