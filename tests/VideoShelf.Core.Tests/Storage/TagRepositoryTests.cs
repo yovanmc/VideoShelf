@@ -220,6 +220,47 @@ public sealed class TagRepositoryTests
         tags.GetEffectiveVideoTags(videoId).ShouldBeEmpty();
     }
 
+    [Fact]
+    public void GetEffectiveVideoTags_does_not_leak_tags_from_other_series_or_section()
+    {
+        // Arrange: one source, one section, two series; target video is in series A only.
+        var db = new TempDb();
+        using var _d = db;
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+
+        var sourceId = lib.UpsertSource(@"C:\media", "Media");
+        var sectionId = lib.UpsertSection(sourceId, "Creator A");
+
+        // Series A — the one our target video belongs to.
+        var seriesAId = lib.UpsertSeries(sectionId, "Show A", isStandalone: false);
+        var targetVideoId = lib.UpsertVideo(seriesAId, @"C:\media\Creator A\Show A\ep01.mkv", 1, "mkv");
+
+        // Series B — a sibling series in the SAME section; must not bleed into target.
+        var seriesBId = lib.UpsertSeries(sectionId, "Show B", isStandalone: false);
+        // (no video in series B needed — tags are on the series row itself)
+
+        // Second section in the same source — its tags must not bleed in either.
+        var section2Id = lib.UpsertSection(sourceId, "Creator B");
+
+        // Legitimate tags: section-level on sectionId, series-level on seriesAId.
+        tags.AddTag(sectionId, "section-tag");
+        tags.AddSeriesTag(seriesAId, "series-a-tag");
+
+        // Noise tags that must NOT appear in the result.
+        tags.AddSeriesTag(seriesBId, "other-series-tag");
+        tags.AddTag(section2Id, "other-section-tag");
+
+        // Act
+        var effective = tags.GetEffectiveVideoTags(targetVideoId);
+
+        // Assert: legitimate tags present, noise tags absent.
+        effective.ShouldContain("section-tag");
+        effective.ShouldContain("series-a-tag");
+        effective.ShouldNotContain("other-series-tag");
+        effective.ShouldNotContain("other-section-tag");
+    }
+
     // ── GetAllTagsAcrossLevels ────────────────────────────────────────────────
 
     [Fact]
