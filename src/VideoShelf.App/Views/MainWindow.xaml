@@ -47,6 +47,7 @@
                 <Grid Margin="16,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}"
@@ -66,7 +67,7 @@
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Home}" />
                     </Grid>
-                    <Grid Grid.Column="2">
+                    <Grid Grid.Column="2" Margin="0,0,4,0">
                         <ui:Button Command="{Binding ShowBrowseCommand}"
                                    Style="{StaticResource TertiaryButton}">
                             <StackPanel Orientation="Horizontal">
@@ -77,10 +78,32 @@
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Browse,SectionDetail,RenameTool'}" />
                     </Grid>
-                    <ui:TextBox Grid.Column="3" PlaceholderText="Search creators and videos…" Margin="24,0"
+                    <!-- Library menu: links to SmartViews, Playlists, Watchlist, Favorites, History, SurpriseMe -->
+                    <Grid Grid.Column="3" Margin="0,0,4,0">
+                        <Menu Background="Transparent" VerticalAlignment="Center">
+                            <MenuItem Padding="8,6">
+                                <MenuItem.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Library24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Library" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </MenuItem.Header>
+                                <MenuItem Header="Smart Views" Command="{Binding ShowSmartViewsCommand}" />
+                                <MenuItem Header="Playlists"   Command="{Binding ShowPlaylistsCommand}" />
+                                <MenuItem Header="Watch later" Command="{Binding ShowWatchlistCommand}" />
+                                <MenuItem Header="Favorites"   Command="{Binding ShowFavoritesCommand}" />
+                                <MenuItem Header="History"     Command="{Binding ShowHistoryCommand}" />
+                                <Separator />
+                                <MenuItem Header="Surprise me 🎲" Command="{Binding SurpriseMeCommand}" />
+                            </MenuItem>
+                        </Menu>
+                        <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='SmartViews,Playlists,Watchlist,Favorites,History'}" />
+                    </Grid>
+                    <ui:TextBox Grid.Column="4" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
                     <!-- Up next nav button: visible when a queue is active -->
-                    <Grid Grid.Column="4" Margin="0,0,4,0">
+                    <Grid Grid.Column="5" Margin="0,0,4,0">
                         <ui:Button Command="{Binding ShowQueueCommand}"
                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
                                    Style="{StaticResource TertiaryButton}">
@@ -92,7 +115,7 @@
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Queue}"/>
                     </Grid>
-                    <Grid Grid.Column="5">
+                    <Grid Grid.Column="6">
                         <ui:Button Command="{Binding ShowSettingsCommand}" ToolTip="Settings"
                                    Style="{StaticResource TertiaryButton}">
                             <ui:SymbolIcon Symbol="Settings24" />
