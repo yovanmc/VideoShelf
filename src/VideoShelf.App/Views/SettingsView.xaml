@@ -65,12 +65,6 @@
                       Content="Auto-play next episode"
                       IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
 
-            <!-- APPEARANCE section -->
-            <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
-            <TextBlock Margin="0,8,0,0"
-                       Opacity="0.6"
-                       Text="Light/dark theme options are coming in a later update." />
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

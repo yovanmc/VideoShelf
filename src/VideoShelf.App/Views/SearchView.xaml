@@ -6,7 +6,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="16">
 
-            <TextBlock Text="Creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"
+            <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"
                        Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding CreatorResults}"
                           Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}">
@@ -16,7 +16,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Text="Videos" FontSize="18" FontWeight="SemiBold" Margin="0,16,0,8"
+            <TextBlock Text="Videos" Style="{StaticResource TypeRailHeader}" Margin="0,16,0,8"
                        Visibility="{Binding HasVideoResults, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding VideoResults}"
                           Visibility="{Binding HasVideoResults, Converter={StaticResource BoolToVisibility}}">

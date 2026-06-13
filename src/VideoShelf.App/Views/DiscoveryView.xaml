@@ -38,7 +38,7 @@
 
             <!-- Continue watching rail -->
             <StackPanel Visibility="{Binding HasContinueWatching, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Continue watching" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Continue watching" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding ContinueWatching}">
                         <ItemsControl.ItemsPanel>
@@ -70,7 +70,7 @@
             <!-- Recommended creators rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedCreators}">
                         <ItemsControl.ItemsPanel>
@@ -88,7 +88,7 @@
             <!-- Recommended videos rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="More to watch" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="More to watch" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedVideos}">
                         <ItemsControl.ItemsPanel>
@@ -120,7 +120,7 @@
             <!-- Recently added rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecentlyAdded, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recently added" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Recently added" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecentlyAdded}">
                         <ItemsControl.ItemsPanel>
@@ -148,7 +148,7 @@
             <!-- Recently watched rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecentlyWatched, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recently watched" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Recently watched" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecentlyWatched}">
                         <ItemsControl.ItemsPanel>
@@ -176,7 +176,7 @@
             <!-- Pick-a-tag section -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasTags, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Pick a tag" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Pick a tag" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ItemsControl ItemsSource="{Binding AvailableTags}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
