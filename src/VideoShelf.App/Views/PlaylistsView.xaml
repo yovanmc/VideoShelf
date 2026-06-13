@@ -115,8 +115,7 @@
             <!-- No-selection empty state -->
             <TextBlock DockPanel.Dock="Top"
                        Text="Select a playlist to view its items."
-                       Opacity="0.7" Margin="0,40,0,0"
-                       Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                       Opacity="0.7" Margin="0,40,0,0">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Visible" />
@@ -135,15 +134,18 @@
                 <StackPanel>
                     <!-- Empty-items state -->
                     <TextBlock Text="This playlist is empty."
-                               Opacity="0.7" Margin="0,16,0,0"
-                               Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                               Opacity="0.7" Margin="0,16,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Items.Count}" Value="0">
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding HasSelected}" Value="True" />
+                                            <Condition Binding="{Binding Items.Count}" Value="0" />
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>

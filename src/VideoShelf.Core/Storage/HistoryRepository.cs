@@ -24,7 +24,7 @@ public sealed class HistoryRepository(VideoShelfDb db)
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT v.id, s.id, s.base_title, v.episode_no, s.is_standalone,
-                   we.watched_at, v.file_path
+                   we.watched_at, v.thumbnail_path
             FROM watch_events we
             JOIN videos v ON v.id = we.video_id
             JOIN series s ON s.id = v.series_id

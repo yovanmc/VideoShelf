@@ -45,7 +45,7 @@ public sealed class HistoryRepositoryTests
         rows[0].EpisodeNo.ShouldBe(1);
         rows[0].IsStandalone.ShouldBeFalse();
         rows[0].WatchedAt.ShouldNotBeNullOrEmpty();
-        rows[0].ThumbnailSeedPath.ShouldNotBeNull(); // path seeded above
+        rows[0].ThumbnailSeedPath.ShouldBeNull(); // thumbnail_path not set by UpsertVideo fixture
     }
 
     [Fact]
