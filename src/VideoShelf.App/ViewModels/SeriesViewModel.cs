@@ -51,6 +51,8 @@ public sealed partial class SeriesViewModel(
     public event System.EventHandler? PlayAllRequested;
     public event System.EventHandler? EnqueueRequested;
     public event System.EventHandler? PlayNextRequested;
+    public event System.EventHandler? MarkWatchedRequested;
+    public event System.EventHandler? MarkUnwatchedRequested;
 
     [RelayCommand]
     private void RequestRename() => RenameRequested?.Invoke(this, this);
@@ -63,6 +65,12 @@ public sealed partial class SeriesViewModel(
 
     [RelayCommand]
     private void PlaySeriesNext() => PlayNextRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void MarkSeriesWatched() => MarkWatchedRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void MarkSeriesUnwatched() => MarkUnwatchedRequested?.Invoke(this, System.EventArgs.Empty);
 
     [RelayCommand]
     private async Task Activate()

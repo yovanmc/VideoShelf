@@ -36,6 +36,20 @@ public sealed partial class SectionDetailViewModel(
     [RelayCommand]
     private void PlayAll() => playQueue.PlayAll(library.GetEpisodesForSection(SectionId));
 
+    [RelayCommand]
+    private void MarkCreatorWatched()
+    {
+        watch.SetWatchedForSection(SectionId, true);
+        foreach (var s in SeriesList) s.Refresh();
+    }
+
+    [RelayCommand]
+    private void MarkCreatorUnwatched()
+    {
+        watch.SetWatchedForSection(SectionId, false);
+        foreach (var s in SeriesList) s.Refresh();
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
     private string? _creatorArtPath;
@@ -91,6 +105,8 @@ public sealed partial class SectionDetailViewModel(
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));
             svm.EnqueueRequested += (_, _) => playQueue.EnqueueRange(library.GetEpisodes(svm.SeriesId));
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
+            svm.MarkWatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, true); svm.Refresh(); };
+            svm.MarkUnwatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, false); svm.Refresh(); };
             SeriesList.Add(svm);
             _ = svm.LoadThumbnailAsync(CancellationToken.None);   // eager tile art (cached + fail-safe)
         }

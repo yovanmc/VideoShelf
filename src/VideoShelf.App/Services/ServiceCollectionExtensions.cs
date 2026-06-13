@@ -96,6 +96,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<FavoritesViewModel>();
         services.AddSingleton<WatchlistViewModel>();
         services.AddSingleton<PlaylistsViewModel>();
+        services.AddSingleton<HistoryRepository>();
+        services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

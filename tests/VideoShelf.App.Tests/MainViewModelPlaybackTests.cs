@@ -59,10 +59,11 @@ public class MainViewModelPlaybackTests
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
         var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
+        var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
-            playlistsVm);
+            playlistsVm, historyVm);
     }
 
     [Fact]
@@ -131,10 +132,11 @@ public class MainViewModelPlaybackTests
         var favoritesVm2 = new FavoritesViewModel(curation2, lib);
         var watchlistVm2 = new WatchlistViewModel(curation2, lib);
         var playlistsVm2 = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
+        var historyVm2 = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2, watchlistVm2,
-            playlistsVm2);
+            playlistsVm2, historyVm2);
 
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);

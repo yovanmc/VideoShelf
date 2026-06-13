@@ -60,15 +60,33 @@
                     <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
                         <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
                     </TextBlock>
-                    <ui:Button Command="{Binding PlayAllCommand}"
-                               Style="{StaticResource PrimaryButton}"
-                               Margin="0,8,0,8"
-                               HorizontalAlignment="Left">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
-                            <TextBlock Text="Play all" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </ui:Button>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
+                        <ui:Button Command="{Binding PlayAllCommand}"
+                                   Style="{StaticResource PrimaryButton}"
+                                   HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
+                                <TextBlock Text="Play all" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
+                        <!-- Mark all watched / unwatched: only visible in edit mode -->
+                        <ui:Button Command="{Binding MarkCreatorWatchedCommand}" Margin="8,0,0,0"
+                                   Style="{StaticResource SecondaryButton}"
+                                   Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Eye24" Margin="0,0,4,0" />
+                                <TextBlock Text="Mark all watched" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Command="{Binding MarkCreatorUnwatchedCommand}" Margin="8,0,0,0"
+                                   Style="{StaticResource SecondaryButton}"
+                                   Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="EyeOff24" Margin="0,0,4,0" />
+                                <TextBlock Text="Mark all unwatched" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -145,6 +163,9 @@
                                     <MenuItem Header="Play all" Command="{Binding PlayAllSeriesCommand}"/>
                                     <MenuItem Header="Play next" Command="{Binding PlaySeriesNextCommand}"/>
                                     <MenuItem Header="Add to queue" Command="{Binding AddSeriesToQueueCommand}"/>
+                                    <Separator/>
+                                    <MenuItem Header="Mark watched" Command="{Binding MarkSeriesWatchedCommand}"/>
+                                    <MenuItem Header="Mark unwatched" Command="{Binding MarkSeriesUnwatchedCommand}"/>
                                     <Separator/>
                                     <MenuItem Header="Rename files…" Command="{Binding RequestRenameCommand}"/>
                                 </ContextMenu>
