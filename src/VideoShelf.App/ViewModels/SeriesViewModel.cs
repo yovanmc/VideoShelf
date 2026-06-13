@@ -14,8 +14,11 @@ public sealed partial class SeriesViewModel(
     SeriesSummary summary,
     LibraryRepository library,
     WatchRepository watch,
-    IThumbnailService thumbnails) : ObservableObject
+    IThumbnailService thumbnails,
+    TagRepository? tags = null) : ObservableObject
 {
+    public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
+
     public long SeriesId => summary.SeriesId;
     public string BaseTitle => summary.BaseTitle;
     public bool IsStandalone => summary.IsStandalone;
@@ -75,6 +78,11 @@ public sealed partial class SeriesViewModel(
         if (_episodesLoaded) return;
         await LoadEpisodesAsync(CancellationToken.None);
         _episodesLoaded = true;
+        // Load tag editors on the UI thread (post-await, NOT inside Task.Run).
+        if (SeriesTagEditor != null)
+            SeriesTagEditor.Load(TagLevel.Series, SeriesId);
+        foreach (var ep in Episodes)
+            ep.VideoTagEditor?.Load(TagLevel.Video, ep.VideoId);
     }
 
     partial void OnUnwatchedCountChanged(int value)
@@ -98,7 +106,7 @@ public sealed partial class SeriesViewModel(
         Episodes.Clear();
         foreach (var row in rows)
         {
-            var ep = new EpisodeViewModel(row, watch);
+            var ep = new EpisodeViewModel(row, watch, tags);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);

@@ -75,7 +75,7 @@ public sealed partial class SectionDetailViewModel(
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));

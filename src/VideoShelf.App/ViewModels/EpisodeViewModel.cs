@@ -5,8 +5,10 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class EpisodeViewModel(EpisodeView model, WatchRepository watch) : ObservableObject
+public sealed partial class EpisodeViewModel(EpisodeView model, WatchRepository watch, TagRepository? tags = null) : ObservableObject
 {
+    public TagEditorViewModel? VideoTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
+
     public long VideoId => model.VideoId;
     public string Title => model.Title;
     public int EpisodeNo => model.EpisodeNo;

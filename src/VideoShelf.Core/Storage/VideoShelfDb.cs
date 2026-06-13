@@ -145,5 +145,17 @@ public sealed class VideoShelfDb : IDisposable
             PRIMARY KEY (video_id, idx),
             FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
         );
+        CREATE TABLE IF NOT EXISTS series_tags (
+            series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+            tag TEXT NOT NULL,
+            PRIMARY KEY(series_id, tag)
+        );
+        CREATE TABLE IF NOT EXISTS video_tags (
+            video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+            tag TEXT NOT NULL,
+            PRIMARY KEY(video_id, tag)
+        );
+        CREATE INDEX IF NOT EXISTS ix_series_tags_tag ON series_tags(tag);
+        CREATE INDEX IF NOT EXISTS ix_video_tags_tag ON video_tags(tag);
         """;
 }
