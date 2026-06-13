@@ -51,6 +51,7 @@
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -139,8 +140,43 @@
                 </Grid>
             </Border>
 
+            <!-- G2 — Breadcrumb row: visible only on SectionDetail (and deeper).
+                 Each segment navigates up: Home→ShowHome, Browse→ShowBrowse,
+                 Creator→stay (already on page).  Additive only — does not touch
+                 the active-underline nav above. -->
+            <Border Grid.Row="1"
+                    Padding="16,4,16,4"
+                    BorderBrush="{StaticResource DividerBrush}"
+                    BorderThickness="0,0,0,1"
+                    Visibility="{Binding CurrentView,
+                        Converter={StaticResource EnumSetToVis},
+                        ConverterParameter=SectionDetail}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Home"
+                            Command="{Binding ShowHomeCommand}"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="0" Cursor="Hand" FontSize="12"
+                            Foreground="{StaticResource AccentBrush}"
+                            AutomationProperties.Name="Navigate to Home" />
+                    <TextBlock Text=" / " FontSize="12" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <Button Content="Browse"
+                            Command="{Binding ShowBrowseCommand}"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="0" Cursor="Hand" FontSize="12"
+                            Foreground="{StaticResource AccentBrush}"
+                            AutomationProperties.Name="Navigate to Browse" />
+                    <TextBlock Text=" › " FontSize="12" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <!-- Creator segment: current page (not a nav link — stay here) -->
+                    <TextBlock Text="{Binding SectionDetail.DisplayName}"
+                               FontSize="12" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Border>
+
             <!-- Main content row (full-width; sidebar removed) -->
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="2">
 
                 <!-- Nav-gated content hosts -->
 
@@ -259,9 +295,15 @@
                         </Grid>
                     </StackPanel>
 
-                    <!-- Grid view: VirtualizingWrapPanel -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                                  Visibility="{Binding Creators.ViewMode, Converter={StaticResource ViewModeToVis}, ConverterParameter=Grid}">
+                    <!-- Grid view: VirtualizingWrapPanel + A–Z jump strip -->
+                    <Grid Grid.Row="1"
+                          Visibility="{Binding Creators.ViewMode, Converter={StaticResource ViewModeToVis}, ConverterParameter=Grid}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                         <ListBox x:Name="CreatorsGridListBox"
                                  ItemsSource="{Binding Creators.Creators}"
                                  SelectionMode="Extended"
@@ -305,6 +347,37 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </ScrollViewer>
+
+                        <!-- A–Z jump strip (G1): vertical index beside the grid.
+                             Plain WPF Button per letter — no ui:* retemplate.
+                             Disabled (greyed) when the letter has no matching creator.
+                             Clicking fires JumpToLetterCommand; code-behind calls ScrollIntoView. -->
+                        <Border Grid.Column="1"
+                                Width="24" Margin="0,4,8,16"
+                                VerticalAlignment="Stretch">
+                            <ItemsControl x:Name="JumpStripItems"
+                                          ItemsSource="{Binding Creators.JumpLetters}"
+                                          AutomationProperties.Name="A to Z jump list">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:JumpLetterItem}">
+                                        <Button Content="{Binding Letter}"
+                                                IsEnabled="{Binding IsAvailable}"
+                                                Command="{Binding DataContext.Creators.JumpToLetterCommand,
+                                                    RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding Letter}"
+                                                Width="20" Height="20"
+                                                Padding="0"
+                                                Margin="0,1"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                FontSize="11"
+                                                Cursor="Hand"
+                                                AutomationProperties.Name="Jump to letter" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Grid>
 
                     <!-- List view: VirtualizingStackPanel -->
                     <ListBox x:Name="CreatorsListListBox"

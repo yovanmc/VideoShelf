@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Wpf.Ui.Controls;
 using VideoShelf.App.ViewModels;
+using VideoShelf.Core.Search;
 
 namespace VideoShelf.App.Views;
 
@@ -54,11 +56,39 @@ public partial class MainWindow : FluentWindow
             };
         }
 
+        // G1 — A–Z jump strip: scroll the creator grid to the first matching creator.
+        _viewModel.Creators.JumpToLetterRequested += OnJumpToLetter;
+
         Loaded += async (_, _) =>
         {
             try { await _viewModel.InitializeAsync(); }
             catch { /* startup load is best-effort; surfaced via empty UI */ }
         };
+    }
+
+    /// <summary>
+    /// G1 — Handles a jump-strip letter click.
+    /// Finds the first creator whose name starts with the requested letter and
+    /// calls <see cref="ListBox.ScrollIntoView(object)"/> on the active grid ListBox.
+    /// ScrollIntoView is the recommended reliable path for VirtualizingWrapPanel;
+    /// BringIndexIntoView is a fallback in Group I's sweep if the visual scroll is absent.
+    /// </summary>
+    private void OnJumpToLetter(object? sender, JumpLetterArgs e)
+    {
+        // Collect the names that are currently visible (the collection view may filter them).
+        // We scroll based on the first matching item in Creators (the underlying collection),
+        // which mirrors what the ListBox renders (filter may hide some, but scroll still works
+        // for the unfiltered default case; filtered-list jump is acceptable best-effort).
+        var creators = _viewModel.Creators.Creators;
+        var names = new List<string>(creators.Count);
+        foreach (var c in creators) names.Add(c.Name);
+
+        var idx = JumpListIndex.FirstIndexForLetter(names, e.Letter);
+        if (idx < 0 || idx >= creators.Count) return;
+
+        // The active ListBox depends on the current view mode.
+        var listBox = CreatorsGridListBox;   // both grid and list views use the same creator collection
+        listBox.ScrollIntoView(creators[idx]);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
