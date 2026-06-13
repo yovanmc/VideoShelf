@@ -50,15 +50,15 @@ public static class MainViewModelTestFactory
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
         var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
-        var playQueue = new PlayQueueViewModel(lib, settings);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,

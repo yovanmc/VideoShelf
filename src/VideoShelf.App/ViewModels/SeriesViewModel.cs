@@ -41,9 +41,21 @@ public sealed partial class SeriesViewModel(
     public event System.EventHandler? UnwatchedChanged;
     public event System.EventHandler<EpisodeView>? PlayRequested;
     public event System.EventHandler<SeriesViewModel>? RenameRequested;
+    public event System.EventHandler? PlayAllRequested;
+    public event System.EventHandler? EnqueueRequested;
+    public event System.EventHandler? PlayNextRequested;
 
     [RelayCommand]
     private void RequestRename() => RenameRequested?.Invoke(this, this);
+
+    [RelayCommand]
+    private void PlayAllSeries() => PlayAllRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void AddSeriesToQueue() => EnqueueRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void PlaySeriesNext() => PlayNextRequested?.Invoke(this, System.EventArgs.Empty);
 
     [RelayCommand]
     private async Task Activate()

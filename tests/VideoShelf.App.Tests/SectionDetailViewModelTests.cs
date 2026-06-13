@@ -27,10 +27,12 @@ public sealed class SectionDetailViewModelTests
         var tags = new TagRepository(db.Db);
         var watch = new WatchRepository(db.Db);
         var art = new CreatorArtRepository(db.Db);
+        var settings = new SettingsRepository(db.Db);
         var src = lib.UpsertSource(@"C:\m", "M");
         var sec = lib.UpsertSection(src, "Creator A");
         lib.UpsertVideo(lib.UpsertSeries(sec, "Show", false), @"C:\m\Show\e01.mkv", 1, "mkv");
-        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null));
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null), playQueue);
         return new Fx(db, lib, tags, vm, sec);
     }
 
@@ -123,6 +125,33 @@ public sealed class SectionDetailViewModelTests
         f.Vm.Suggestions.ShouldContain("comic relief");
         f.Vm.Suggestions.ShouldNotContain("comedy"); // already applied -> excluded
     }
+
+    [Fact]
+    public async Task PlayAll_builds_queue_from_section_episodes()
+    {
+        var db = new AppTempDb(); using var _d = db;
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+        var watch = new WatchRepository(db.Db);
+        var art = new CreatorArtRepository(db.Db);
+        var settings = new SettingsRepository(db.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var src = lib.UpsertSource(@"C:\V", "V");
+        var sec = lib.UpsertSection(src, "Creator");
+        var s1 = lib.UpsertSeries(sec, "Alpha", false);
+        lib.UpsertVideo(s1, @"C:\V\Creator\Alpha 1.mp4", 1, ".mp4");
+        lib.UpsertVideo(s1, @"C:\V\Creator\Alpha 2.mp4", 2, ".mp4");
+        var s2 = lib.UpsertSeries(sec, "Beta", true);
+        lib.UpsertVideo(s2, @"C:\V\Creator\Beta.mp4", 1, ".mp4");
+
+        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null), playQueue);
+        await vm.LoadAsync(sec);
+
+        vm.PlayAllCommand.Execute(null);
+
+        playQueue.HasQueue.ShouldBeTrue();
+        playQueue.Items.Count.ShouldBe(3);
+    }
 }
 
 public sealed class SectionDetailCreatorArtTests
@@ -137,7 +166,9 @@ public sealed class SectionDetailCreatorArtTests
         var lib = new LibraryRepository(temp.Db);
         var tags = new TagRepository(temp.Db);
         var watch = new WatchRepository(temp.Db);
-        return new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, picker);
+        var settings = new SettingsRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        return new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, picker, playQueue);
     }
 
     private sealed class NullThumbs : IThumbnailService

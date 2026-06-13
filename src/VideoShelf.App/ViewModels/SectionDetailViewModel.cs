@@ -18,7 +18,8 @@ public sealed partial class SectionDetailViewModel(
     WatchRepository watch,
     IThumbnailService thumbnails,
     CreatorArtRepository art,
-    IImagePicker imagePicker) : ObservableObject
+    IImagePicker imagePicker,
+    PlayQueueViewModel playQueue) : ObservableObject
 {
     public long SectionId { get; private set; }
 
@@ -27,6 +28,9 @@ public sealed partial class SectionDetailViewModel(
 
     [RelayCommand]
     private void ToggleEdit() => IsEditing = !IsEditing;
+
+    [RelayCommand]
+    private void PlayAll() => playQueue.PlayAll(library.GetEpisodesForSection(SectionId));
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
@@ -74,6 +78,9 @@ public sealed partial class SectionDetailViewModel(
             var svm = new SeriesViewModel(s, library, watch, thumbnails);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
+            svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));
+            svm.EnqueueRequested += (_, _) => playQueue.EnqueueRange(library.GetEpisodes(svm.SeriesId));
+            svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
             SeriesList.Add(svm);
             _ = svm.LoadThumbnailAsync(CancellationToken.None);   // eager tile art (cached + fail-safe)
         }

@@ -43,15 +43,15 @@ public class MainViewModelPlaybackTests
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
         var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
-        var playQueue = new PlayQueueViewModel(lib, settings);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
@@ -109,14 +109,14 @@ public class MainViewModelPlaybackTests
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
         var tags = new TagRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
         var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
-        var playQueue = new PlayQueueViewModel(lib, settings);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);

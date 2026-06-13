@@ -43,6 +43,11 @@
                     <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
                         <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
                     </TextBlock>
+                    <ui:Button Content="▶ Play all"
+                               Command="{Binding PlayAllCommand}"
+                               Appearance="Primary"
+                               Margin="0,8,0,8"
+                               HorizontalAlignment="Left"/>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -99,6 +104,10 @@
                                 CornerRadius="{StaticResource CardRadius}" VerticalAlignment="Top">
                             <Border.ContextMenu>
                                 <ContextMenu>
+                                    <MenuItem Header="Play all" Command="{Binding PlayAllSeriesCommand}"/>
+                                    <MenuItem Header="Play next" Command="{Binding PlaySeriesNextCommand}"/>
+                                    <MenuItem Header="Add to queue" Command="{Binding AddSeriesToQueueCommand}"/>
+                                    <Separator/>
                                     <MenuItem Header="Rename files…" Command="{Binding RequestRenameCommand}"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
