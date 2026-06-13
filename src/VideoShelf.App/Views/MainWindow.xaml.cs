@@ -41,33 +41,6 @@ public partial class MainWindow : FluentWindow
                 }
             };
 
-            // Each time the active source's selection changes (SelectionChanged event),
-            // forward the updated video ids to the bar.
-            _viewModel.ActiveSelectionSource?.SelectionChanged += (_, _) =>
-            {
-                _viewModel.BulkBar.SetVideoIds(
-                    _viewModel.ActiveSelectionSource?.GetSelectedVideoIds() ?? System.Array.Empty<long>());
-            };
-
-            // When CurrentView changes, re-subscribe SelectionChanged on the NEW active source.
-            _viewModel.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(MainViewModel.ActiveSelectionSource))
-                {
-                    // Re-wire the SelectionChanged listener to the new source.
-                    // (Old source is already detached in MainViewModel.OnCurrentViewChanged.)
-                    if (_viewModel.ActiveSelectionSource is { } src)
-                    {
-                        src.SelectionChanged += (_, _) =>
-                        {
-                            _viewModel.BulkBar.SetVideoIds(
-                                _viewModel.ActiveSelectionSource?.GetSelectedVideoIds()
-                                    ?? System.Array.Empty<long>());
-                        };
-                    }
-                }
-            };
-
             // When a bulk action completes, exit selection mode on the active page.
             _viewModel.BulkBar.Completed += (_, _) =>
             {
