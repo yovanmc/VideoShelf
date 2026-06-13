@@ -57,12 +57,28 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
         {
             var media = new Media(_libVlc, new Uri(filePath));
             _player.Media = media;
+            try
+            {
+                var dir = System.IO.Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && System.IO.Directory.Exists(dir))
+                {
+                    foreach (var sub in VideoShelf.Core.Playback.SubtitleSidecars.Find(filePath, System.IO.Directory.GetFiles(dir)))
+                        media.AddSlave(MediaSlaveType.Subtitle, 4, new Uri(sub).AbsoluteUri);
+                }
+            }
+            catch { /* sidecar attach is best-effort; never block playback */ }
             media.Dispose(); // MediaPlayer retains its own reference
         }
         catch
         {
             EncounteredError?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    public void AddSubtitle(string subtitlePath)
+    {
+        try { _player.AddSlave(MediaSlaveType.Subtitle, new Uri(subtitlePath).AbsoluteUri, true); }
+        catch { }
     }
 
     public void Play() { try { _player.Play(); } catch { EncounteredError?.Invoke(this, EventArgs.Empty); } }

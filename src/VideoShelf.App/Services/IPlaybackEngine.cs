@@ -47,6 +47,8 @@ public interface IPlaybackEngine : IDisposable
     IReadOnlyList<TrackOption> GetSubtitleTracks();
     int GetCurrentSubtitleTrack();
     void SetSubtitleTrack(int id);
+    /// <summary>Attaches an external subtitle file to the currently-loaded media and selects it.</summary>
+    void AddSubtitle(string subtitlePath);
 
     // ----- chapters -----
     IReadOnlyList<ChapterOption> GetChapters();
