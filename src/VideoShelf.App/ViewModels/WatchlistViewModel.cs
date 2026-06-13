@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VideoShelf.App.ViewModels.Discovery;
@@ -8,17 +11,39 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class WatchlistViewModel(CurationRepository curation, LibraryRepository library) : ObservableObject
+public sealed partial class WatchlistViewModel(CurationRepository curation, LibraryRepository library) : ObservableObject, IBulkSelectionSource
 {
     public ObservableCollection<RecencyCardViewModel> Watchlist { get; } = [];
 
     public bool HasWatchlist => Watchlist.Count > 0;
+
+    private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
+
+    /// <summary>Per-page selection state for multi-select over the watchlist grid.</summary>
+    public SelectionViewModel<RecencyCardViewModel> Selection => _selection;
+
+    // ── IBulkSelectionSource ─────────────────────────────────────────────────
+    bool IBulkSelectionSource.HasSelection => Selection.HasSelection;
+    IReadOnlyList<long> IBulkSelectionSource.GetSelectedVideoIds() => GetSelectedVideoIds();
+    public event EventHandler? SelectionChanged;
+    void IBulkSelectionSource.ClearSelection() => Selection.ClearSelectionCommand.Execute(null);
+    void IBulkSelectionSource.ExitSelectionMode() => Selection.ExitSelectionModeCommand.Execute(null);
+
+    /// <summary>Returns video ids for all currently selected cards.</summary>
+    public IReadOnlyList<long> GetSelectedVideoIds()
+        => Selection.SelectedItems.Select(c => c.VideoId).ToList();
 
     /// <summary>Raised when a card's Play is invoked; carries the resolved EpisodeView.</summary>
     public event EventHandler<EpisodeView>? PlayRequested;
 
     public async Task LoadAsync()
     {
+        // Unsubscribe from existing cards before clearing.
+        foreach (var existing in Watchlist)
+            existing.PropertyChanged -= OnCardPropertyChanged;
+
+        Selection.ExitSelectionModeCommand.Execute(null);
+
         var items = await Task.Run(() => curation.GetWatchlist(48));
 
         Watchlist.Clear();
@@ -31,9 +56,20 @@ public sealed partial class WatchlistViewModel(CurationRepository curation, Libr
                 var ep = library.GetEpisode(capturedId);
                 if (ep is not null) PlayRequested?.Invoke(this, ep);
             };
+            card.PropertyChanged += OnCardPropertyChanged;
             Watchlist.Add(card);
         }
         OnPropertyChanged(nameof(HasWatchlist));
+    }
+
+    private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RecencyCardViewModel.IsSelected) &&
+            sender is RecencyCardViewModel card)
+        {
+            Selection.OnItemSelectionChanged(card);
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     /// <summary>Synchronous wrapper for use from MainViewModel RelayCommand.</summary>

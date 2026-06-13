@@ -117,6 +117,43 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private AppView _currentView = AppView.Home;
 
+    partial void OnCurrentViewChanged(AppView oldValue, AppView newValue)
+    {
+        // Detach from the old source (optionally exit its selection mode).
+        if (_activeSelectionSource is not null)
+        {
+            _activeSelectionSource.SelectionChanged -= OnActiveSourceSelectionChanged;
+            _activeSelectionSource.ExitSelectionMode();
+        }
+
+        _activeSelectionSource = newValue switch
+        {
+            AppView.Browse       => Creators,
+            AppView.SectionDetail => SectionDetail,
+            AppView.Favorites    => Favorites,
+            AppView.Watchlist    => Watchlist,
+            AppView.Search       => Search,
+            _                    => null
+        };
+
+        if (_activeSelectionSource is not null)
+            _activeSelectionSource.SelectionChanged += OnActiveSourceSelectionChanged;
+
+        OnPropertyChanged(nameof(ActiveSelectionSource));
+        OnPropertyChanged(nameof(BulkBarVisible));
+    }
+
+    private void OnActiveSourceSelectionChanged(object? sender, EventArgs e)
+        => OnPropertyChanged(nameof(BulkBarVisible));
+
+    private IBulkSelectionSource? _activeSelectionSource;
+
+    /// <summary>The selectable page VM that is currently active, or null for non-selectable pages.</summary>
+    public IBulkSelectionSource? ActiveSelectionSource => _activeSelectionSource;
+
+    /// <summary>True when the active page has a non-empty selection (drives bulk-bar visibility).</summary>
+    public bool BulkBarVisible => _activeSelectionSource?.HasSelection == true;
+
     [ObservableProperty]
     private bool _isScanning;
 

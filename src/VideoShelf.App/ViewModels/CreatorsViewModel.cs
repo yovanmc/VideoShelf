@@ -7,11 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VideoShelf.App.Services;
+using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public partial class CreatorsViewModel : ObservableObject
+public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
 {
     private readonly LibraryRepository _library;
     private readonly CreatorArtRepository _art;
@@ -22,6 +23,7 @@ public partial class CreatorsViewModel : ObservableObject
         _library = library;
         _art = art;
         _thumbnails = thumbnails;
+        Selection.SelectedItems.CollectionChanged += (_, _) => SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -44,6 +46,13 @@ public partial class CreatorsViewModel : ObservableObject
 
     /// <summary>Per-page selection state (enter/exit mode, selected set, commands).</summary>
     public SelectionViewModel<CreatorCardViewModel> Selection { get; } = new();
+
+    // ── IBulkSelectionSource ─────────────────────────────────────────────────
+    bool IBulkSelectionSource.HasSelection => Selection.HasSelection;
+    IReadOnlyList<long> IBulkSelectionSource.GetSelectedVideoIds() => GetSelectedVideoIds();
+    public event EventHandler? SelectionChanged;
+    void IBulkSelectionSource.ClearSelection() => Selection.ClearSelectionCommand.Execute(null);
+    void IBulkSelectionSource.ExitSelectionMode() => Selection.ExitSelectionModeCommand.Execute(null);
 
     /// <summary>Raised when a creator card is activated (forwarded to the host nav).</summary>
     public event Action<long>? OpenCreatorRequested;

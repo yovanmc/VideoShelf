@@ -12,7 +12,7 @@ public sealed partial class EpisodeViewModel(
     TagRepository? tags = null,
     CurationRepository? curation = null,
     PlaylistRepository? playlists = null,
-    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject, ISelectableCard
 {
     public TagEditorViewModel? VideoTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -23,6 +23,12 @@ public sealed partial class EpisodeViewModel(
     public bool IsMissing => model.Missing;
 
     public bool HasCuration => curation is not null;
+
+    /// <summary>True when this episode is selected in the multi-select list.
+    /// The hosting VM subscribes to PropertyChanged and routes changes to
+    /// <see cref="SelectionViewModel{T}.OnItemSelectionChanged"/> — no back-ref is stored here.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
 
     [ObservableProperty]
     private bool _watched = model.Watched;

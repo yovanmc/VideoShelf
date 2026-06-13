@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:views="clr-namespace:VideoShelf.App.Views"
-             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -12,41 +13,98 @@
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
         </ResourceDictionary>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="24">
-            <TextBlock Text="Favorites" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,16" FontSize="22"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <!-- Empty state: visible when HasFavorites is false -->
-            <TextBlock Text="No favorites yet — mark videos with the heart icon to save them here."
-                       Opacity="0.7" Margin="0,40">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasFavorites}" Value="False">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+        <!-- Page heading -->
+        <TextBlock Grid.Row="0" Text="Favorites" Style="{StaticResource TypeRailHeader}"
+                   Margin="24,16,24,0" FontSize="22"/>
 
-            <!-- Favorites grid -->
-            <ItemsControl ItemsSource="{Binding Favorites}"
-                          Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="{StaticResource CardGap}">
-                            <views:VideoCard />
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+        <!-- Selection header: Select toggle + Select all / Clear (selection mode only) -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="24,8,24,4">
+            <ToggleButton Content="Select"
+                          IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
+                          Style="{StaticResource ChipToggle}"
+                          Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}"
+                          AutomationProperties.Name="Toggle selection mode" />
+            <Button Content="Select all"
+                    Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                    Command="{Binding Selection.SelectAllCommand}"
+                    CommandParameter="{Binding Favorites}"
+                    Margin="8,0,0,0" Padding="10,4"
+                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                    AutomationProperties.Name="Select all favorites" />
+            <Button Content="Clear"
+                    Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                    Command="{Binding Selection.ClearSelectionCommand}"
+                    Margin="4,0,0,0" Padding="10,4"
+                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                    AutomationProperties.Name="Clear selection" />
         </StackPanel>
-    </ScrollViewer>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,0,24,24">
+
+                <!-- Empty state -->
+                <TextBlock Text="No favorites yet — mark videos with the heart icon to save them here."
+                           Opacity="0.7" Margin="0,40">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasFavorites}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Favorites grid: virtualized, selectable -->
+                <ListBox ItemsSource="{Binding Favorites}"
+                         SelectionMode="Extended"
+                         ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         Style="{StaticResource PlainListBox}"
+                         Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListBoxItem}">
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <views:VideoCard
+                                    IsHitTestVisible="{Binding DataContext.Selection.IsSelectionMode,
+                                        RelativeSource={RelativeSource AncestorType=ListBox},
+                                        Converter={StaticResource InverseBoolToBool}}" />
+                                <CheckBox Width="{StaticResource CheckboxSize}"
+                                          Height="{StaticResource CheckboxSize}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          HorizontalAlignment="Left"
+                                          VerticalAlignment="Top"
+                                          Margin="6,6,0,0"
+                                          IsHitTestVisible="False"
+                                          Visibility="{Binding DataContext.Selection.IsSelectionMode,
+                                              RelativeSource={RelativeSource AncestorType=ListBox},
+                                              Converter={StaticResource BoolToVisibility}}"
+                                          AutomationProperties.Name="Select this video" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </UserControl>
