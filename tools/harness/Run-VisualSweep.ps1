@@ -18,6 +18,16 @@ New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
 & (Join-Path $PSScriptRoot 'Generate-Fixtures.ps1') -OutDir $Fixtures
 $playClip = Join-Path $Fixtures 'Movies\Sintel (2010).mp4'
 
+# minimal valid SRT beside the play clip so the sidecar auto-loads in the sweep
+$srt = [System.IO.Path]::ChangeExtension($playClip, '.srt')
+if (-not (Test-Path $srt)) {
+@"
+1
+00:00:00,500 --> 00:00:04,000
+VideoShelf sidecar subtitle test.
+"@ | Set-Content -Path $srt -Encoding UTF8
+}
+
 # 2. Build Debug app
 Write-Host "Building VideoShelf.App (Debug)..."
 dotnet build (Join-Path $repo 'src\VideoShelf.App\VideoShelf.App.csproj') -c Debug --nologo -v q
