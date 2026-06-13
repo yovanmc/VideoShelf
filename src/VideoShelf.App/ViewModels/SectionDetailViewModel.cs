@@ -68,6 +68,32 @@ public sealed partial class SectionDetailViewModel(
         foreach (var s in SeriesList) s.Refresh();
     }
 
+    /// <summary>
+    /// Collapses all series tiles. Immediate — no lazy-load triggered.
+    /// </summary>
+    [RelayCommand]
+    private void CollapseAll()
+    {
+        foreach (var s in SeriesList)
+            s.IsExpanded = false;
+    }
+
+    /// <summary>
+    /// Expands all series tiles and triggers lazy episode loading for each.
+    /// All series are expanded concurrently: already-loaded series short-circuit
+    /// immediately (no DB round-trip); unloaded ones fan out as parallel
+    /// <c>Task.Run</c>-backed reads — all off the UI thread, so no stall.
+    /// Standalone series are skipped by <see cref="SeriesViewModel.ExpandAsync"/>.
+    /// </summary>
+    [RelayCommand]
+    private async Task ExpandAll()
+    {
+        // Fan out concurrently; each ExpandAsync uses Task.Run internally so
+        // the UI thread is not blocked even at 40+ series.
+        var tasks = SeriesList.Select(s => s.ExpandAsync());
+        await Task.WhenAll(tasks);
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
     private string? _creatorArtPath;
