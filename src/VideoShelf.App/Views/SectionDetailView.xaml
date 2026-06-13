@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:StarSymbolConverter x:Key="StarSymbolConv" />
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -128,7 +129,36 @@
                                 <TextBlock Text="Expand all" VerticalAlignment="Center" />
                             </StackPanel>
                         </ui:Button>
+                        <!-- Series filter toggle (ephemeral in-page filter) -->
+                        <ToggleButton IsChecked="{Binding IsSeriesFilterVisible, Mode=TwoWay}"
+                                      Margin="8,0,0,0"
+                                      Foreground="White"
+                                      Style="{StaticResource ChipToggle}"
+                                      ToolTip="Filter series"
+                                      AutomationProperties.Name="Toggle series filter">
+                            <ui:SymbolIcon Symbol="Filter24" />
+                        </ToggleButton>
                     </StackPanel>
+                    <!-- Series filter bar: visible only when filter is toggled on -->
+                    <Grid Margin="0,6,0,0"
+                          Visibility="{Binding IsSeriesFilterVisible, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0"
+                                 Text="{Binding SeriesFilterText, UpdateSourceTrigger=PropertyChanged}"
+                                 PlaceholderText="Filter series…"
+                                 AutomationProperties.Name="Filter series" />
+                        <Button Grid.Column="1"
+                                Content="✕"
+                                Margin="4,0,0,0" Padding="8,4"
+                                Foreground="White"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                Command="{Binding ClearSeriesFilterCommand}"
+                                ToolTip="Clear filter"
+                                AutomationProperties.Name="Clear series filter" />
+                    </Grid>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>

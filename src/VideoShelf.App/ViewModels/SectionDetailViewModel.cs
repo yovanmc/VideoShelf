@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
@@ -13,18 +14,55 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class SectionDetailViewModel(
-    LibraryRepository library,
-    TagRepository tags,
-    WatchRepository watch,
-    IThumbnailService thumbnails,
-    CreatorArtRepository art,
-    IImagePicker imagePicker,
-    PlayQueueViewModel playQueue,
-    CurationRepository? curation = null,
-    PlaylistRepository? playlists = null,
-    ItemArtRepository? itemArt = null) : ObservableObject, IBulkSelectionSource
+public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSelectionSource
 {
+    private readonly LibraryRepository library;
+    private readonly TagRepository tags;
+    private readonly WatchRepository watch;
+    private readonly IThumbnailService thumbnails;
+    private readonly CreatorArtRepository art;
+    private readonly IImagePicker imagePicker;
+    private readonly PlayQueueViewModel playQueue;
+    private readonly CurationRepository? curation;
+    private readonly PlaylistRepository? playlists;
+    private readonly ItemArtRepository? itemArt;
+
+    // ── ICollectionView for live series filtering ─────────────────────────────
+    // Null in test environments (no WPF Dispatcher).
+    private readonly ICollectionView? _seriesView;
+
+    public SectionDetailViewModel(
+        LibraryRepository library,
+        TagRepository tags,
+        WatchRepository watch,
+        IThumbnailService thumbnails,
+        CreatorArtRepository art,
+        IImagePicker imagePicker,
+        PlayQueueViewModel playQueue,
+        CurationRepository? curation = null,
+        PlaylistRepository? playlists = null,
+        ItemArtRepository? itemArt = null)
+    {
+        this.library      = library;
+        this.tags         = tags;
+        this.watch        = watch;
+        this.thumbnails   = thumbnails;
+        this.art          = art;
+        this.imagePicker  = imagePicker;
+        this.playQueue    = playQueue;
+        this.curation     = curation;
+        this.playlists    = playlists;
+        this.itemArt      = itemArt;
+
+        // Only attach the ICollectionView when a WPF Dispatcher is available.
+        // In unit tests there is no Application/Dispatcher, and SeriesList is
+        // mutated from background threads in LoadAsync, which would crash the view.
+        if (System.Windows.Application.Current is not null)
+        {
+            _seriesView = CollectionViewSource.GetDefaultView(SeriesList);
+            _seriesView.Filter = SeriesFilterPredicate;
+        }
+    }
     /// <summary>Shared playlist references for "add to playlist" menus on episode rows.</summary>
     public ObservableCollection<PlaylistRef> AvailablePlaylists { get; } = [];
     public long SectionId { get; private set; }
@@ -50,6 +88,40 @@ public sealed partial class SectionDetailViewModel(
 
     [RelayCommand]
     private void ToggleEdit() => IsEditing = !IsEditing;
+
+    // ── Series filter bar (F1) ────────────────────────────────────────────────
+
+    [ObservableProperty]
+    private string _seriesFilterText = "";
+
+    [ObservableProperty]
+    private bool _isSeriesFilterVisible;
+
+    [RelayCommand]
+    private void ToggleSeriesFilter()
+    {
+        IsSeriesFilterVisible = !IsSeriesFilterVisible;
+        if (!IsSeriesFilterVisible)
+            SeriesFilterText = "";
+    }
+
+    [RelayCommand]
+    private void ClearSeriesFilter() => SeriesFilterText = "";
+
+    partial void OnSeriesFilterTextChanged(string value) => _seriesView?.Refresh();
+
+    /// <summary>
+    /// Pure filter predicate — unit-testable directly.
+    /// Matches series base title case-insensitively against the filter text.
+    /// </summary>
+    public static bool SeriesMatchesPredicate(SeriesViewModel series, string filterText)
+    {
+        if (string.IsNullOrWhiteSpace(filterText)) return true;
+        return series.BaseTitle.Contains(filterText, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool SeriesFilterPredicate(object item)
+        => item is SeriesViewModel s && SeriesMatchesPredicate(s, SeriesFilterText);
 
     [RelayCommand]
     private void PlayAll() => playQueue.PlayAll(library.GetEpisodesForSection(SectionId));
@@ -120,6 +192,9 @@ public sealed partial class SectionDetailViewModel(
     {
         SectionId = sectionId;
         IsEditing = false;
+        // Clear ephemeral filter when navigating to a new creator page.
+        SeriesFilterText = "";
+        IsSeriesFilterVisible = false;
 
         // GetSection(long) returns a lean Section without VideoCount/ThumbnailSeedPath;
         // use GetSectionSummaries().First(...) to get the full SectionSummary.
