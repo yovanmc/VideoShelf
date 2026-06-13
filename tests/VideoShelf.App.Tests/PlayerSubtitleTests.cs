@@ -42,6 +42,8 @@ public class PlayerSubtitleTests
         engine.AddedSubtitles.ShouldContain(@"C:\m\movie.en.srt");
         vm.SubtitleTracks.ShouldContain(t => t.Label == "movie.en.srt");
         vm.HasSubtitleTracks.ShouldBeTrue();
+        vm.SelectedSubtitleTrack.ShouldNotBeNull();
+        vm.SelectedSubtitleTrack!.Label.ShouldBe("movie.en.srt");
     }
 
     [Fact]
