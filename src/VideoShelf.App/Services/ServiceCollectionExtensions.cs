@@ -112,7 +112,50 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<BulkActionBarViewModel>();
-        services.AddSingleton<MainViewModel>();
+        services.AddSingleton<MainViewModel>(sp =>
+        {
+            var lib = sp.GetRequiredService<LibraryRepository>();
+
+            // Deferred holder: lets the palette reference mainVm before it exists.
+            // The delegates capture this box; by the time they execute mainVm is set.
+            MainViewModel? mainVmBox = null;
+
+            var palette = new CommandPaletteViewModel(
+                lib,
+                // Action registry built lazily on first call — mainVmBox is set before palette executes anything.
+                actionRegistryFactory: () => mainVmBox!.BuildActionRegistry(),
+                openSection: id => mainVmBox!.OpenSectionAsync(id),
+                playVideo: videoId =>
+                {
+                    var ep = lib.GetEpisode(videoId);
+                    if (ep is not null) mainVmBox!.PlayEpisode(ep);
+                });
+
+            var mainVm = new MainViewModel(
+                sp.GetRequiredService<SourcesViewModel>(),
+                sp.GetRequiredService<LibraryViewModel>(),
+                sp.GetRequiredService<IScanCoordinator>(),
+                sp.GetRequiredService<PlayerViewModel>(),
+                sp.GetRequiredService<SettingsViewModel>(),
+                sp.GetRequiredService<DiscoveryViewModel>(),
+                sp.GetRequiredService<SectionDetailViewModel>(),
+                sp.GetRequiredService<RenameToolViewModel>(),
+                sp.GetRequiredService<CreatorsViewModel>(),
+                sp.GetRequiredService<SearchViewModel>(),
+                sp.GetRequiredService<MediaBackfillService>(),
+                sp.GetRequiredService<PlayQueueViewModel>(),
+                sp.GetRequiredService<SmartViewsViewModel>(),
+                sp.GetRequiredService<FavoritesViewModel>(),
+                sp.GetRequiredService<WatchlistViewModel>(),
+                sp.GetRequiredService<PlaylistsViewModel>(),
+                sp.GetRequiredService<HistoryViewModel>(),
+                lib,
+                sp.GetRequiredService<BulkActionBarViewModel>(),
+                palette);
+
+            mainVmBox = mainVm;
+            return mainVm;
+        });
         services.AddSingleton<MainWindow>();
         return services;
     }

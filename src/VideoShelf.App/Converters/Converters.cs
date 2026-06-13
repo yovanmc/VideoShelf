@@ -77,6 +77,31 @@ public sealed class StarSymbolConverter : IValueConverter
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
 
+/// <summary>Returns Collapsed when the bound string is null or empty; Visible otherwise.</summary>
+public sealed class NotNullOrEmptyToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => string.IsNullOrEmpty(value as string) ? Visibility.Collapsed : Visibility.Visible;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Converts a string like "Home24" to the corresponding <see cref="SymbolRegular"/> enum value.
+/// Falls back to SymbolRegular.Circle24 when the string is unknown.
+/// Used by the command palette to show dynamic icons for each action/result row.
+/// </summary>
+public sealed class StringToSymbolConverter : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+    {
+        if (value is string s &&
+            Enum.TryParse<SymbolRegular>(s, out var sym))
+            return sym;
+        return SymbolRegular.Circle24;
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
 /// <summary>Maps a 0..1 fraction to a pixel width = fraction * ConverterParameter (a track width in DIPs).
 /// Used to render a continue-watching progress fill inside a fixed-width card.</summary>
 public sealed class FractionToWidth : IValueConverter

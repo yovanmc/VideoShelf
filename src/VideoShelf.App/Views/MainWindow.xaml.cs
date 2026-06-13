@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Wpf.Ui.Controls;
 using VideoShelf.App.ViewModels;
 
@@ -19,6 +20,11 @@ public partial class MainWindow : FluentWindow
         DataContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
+
+        // PreviewKeyDown fallback: fires even when a TextBox (persistent search box) has focus.
+        // The Window.InputBindings Ctrl+K binding may be absorbed by focussed controls —
+        // this guarantees Ctrl+K always reaches the palette open command.
+        PreviewKeyDown += OnWindowPreviewKeyDown;
 
         // C — generalized active-page bulk bar wiring.
         if (_viewModel.BulkBar is not null)
@@ -59,6 +65,43 @@ public partial class MainWindow : FluentWindow
     {
         if (e.PropertyName == nameof(MainViewModel.IsPlayerVisible))
             UpdatePlayerHost(_viewModel.IsPlayerVisible);
+
+        // Focus the palette search TextBox whenever the palette opens.
+        if (e.PropertyName == nameof(MainViewModel.IsCommandPaletteOpen) &&
+            _viewModel.IsCommandPaletteOpen)
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, () =>
+            {
+                PaletteSearchBox?.Focus();
+            });
+        }
+    }
+
+    /// <summary>
+    /// PreviewKeyDown fallback for Ctrl+K: fires at the window level BEFORE any focused control
+    /// (including the persistent search TextBox) processes the key. This guarantees Ctrl+K opens
+    /// the palette even when a TextBox has keyboard focus (which would suppress Window.InputBindings).
+    /// </summary>
+    private void OnWindowPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.K && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            if (_viewModel.OpenCommandPaletteCommand.CanExecute(null))
+            {
+                _viewModel.OpenCommandPaletteCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+    }
+
+    /// <summary>Double-clicking a palette row executes it.</summary>
+    internal void PaletteItem_DoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListBoxItem { DataContext: PaletteItemViewModel item } &&
+            _viewModel.CommandPalette is { } palette)
+        {
+            palette.ExecuteItemCommand.Execute(item);
+        }
     }
 
     private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
