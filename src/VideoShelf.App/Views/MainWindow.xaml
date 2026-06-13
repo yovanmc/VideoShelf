@@ -281,6 +281,16 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=History}" />
 
+                <!-- Bulk-action bar: docked at the bottom of the content area.
+                     Visible when the Browse creator selection is non-empty.
+                     Overlays the bottom of content (not the nav bar). -->
+                <views:BulkActionBar x:Name="BulkActionBarHost"
+                                     DataContext="{Binding BulkBar}"
+                                     VerticalAlignment="Bottom"
+                                     Visibility="{Binding DataContext.Creators.Selection.HasSelection,
+                                         RelativeSource={RelativeSource AncestorType=Window},
+                                         Converter={StaticResource BoolToVisibility}}" />
+
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
                      ordering is safe — overlay is last content-host child, before PlayerHost. -->
