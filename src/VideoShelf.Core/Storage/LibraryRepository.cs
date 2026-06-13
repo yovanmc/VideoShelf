@@ -267,6 +267,59 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return list;
     }
 
+    /// <summary>
+    /// All playable (non-missing) episodes across every series in a section,
+    /// in deterministic play order: series by sort_key, then episode_no.
+    /// Used to build a "Play all" queue for a creator.
+    /// </summary>
+    public IReadOnlyList<EpisodeView> GetEpisodesForSection(long sectionId)
+    {
+        using var conn = db.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            WHERE se.section_id = $sid AND v.missing = 0
+            ORDER BY se.sort_key, v.episode_no;
+            """;
+        cmd.Parameters.AddWithValue("$sid", sectionId);
+        var list = new List<EpisodeView>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+        {
+            var episodeNo = r.GetInt32(3);
+            var baseTitle = r.GetString(4);
+            var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
+            list.Add(new EpisodeView(
+                r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
+                r.GetInt64(5) != 0, r.GetInt64(6) != 0));
+        }
+        return list;
+    }
+
+    /// <summary>Single episode by video id (for enqueue from Home cards that only carry a VideoId).</summary>
+    public EpisodeView? GetEpisode(long videoId)
+    {
+        using var conn = db.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            WHERE v.id = $vid;
+            """;
+        cmd.Parameters.AddWithValue("$vid", videoId);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        var episodeNo = r.GetInt32(3);
+        var baseTitle = r.GetString(4);
+        var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
+        return new EpisodeView(
+            r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
+            r.GetInt64(5) != 0, r.GetInt64(6) != 0);
+    }
+
     public IReadOnlyList<SearchHit> Search(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
