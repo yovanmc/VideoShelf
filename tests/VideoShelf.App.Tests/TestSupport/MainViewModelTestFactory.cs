@@ -58,10 +58,11 @@ public static class MainViewModelTestFactory
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
+        var playQueue = new PlayQueueViewModel(lib, settings);
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()));
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

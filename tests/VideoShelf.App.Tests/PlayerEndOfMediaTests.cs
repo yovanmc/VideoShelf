@@ -54,60 +54,43 @@ public class PlayerEndOfMediaTests
     }
 
     [Fact]
-    public void Ended_requests_next_episode_when_auto_advance_on()
+    public void Ended_raises_PlaybackEnded_with_the_finished_episode()
     {
         using var temp = new AppTempDb();
         var (lib, watch, settings, seriesId) = SeedSeries(temp, episodes: 2);
-        settings.SetAutoAdvanceEpisodes(true);
         var ep1 = Ep(lib, seriesId, 1);
         var engine = new FakePlaybackEngine();
         var vm = NewVm(engine, lib, watch, settings);
-        EpisodeView? requested = null;
-        vm.NextEpisodeRequested += (_, e) => requested = e;
+        EpisodeView? ended = null;
+        vm.PlaybackEnded += (_, e) => ended = e;
         vm.Open(ep1);
         engine.RaiseLength(100.0);
 
         engine.RaiseEnded();
 
-        requested.ShouldNotBeNull();
-        requested!.EpisodeNo.ShouldBe(2);
+        ended.ShouldNotBeNull();
+        ended!.EpisodeNo.ShouldBe(1);
     }
 
     [Fact]
-    public void Ended_does_not_request_next_when_auto_advance_off()
+    public void Ended_raises_PlaybackEnded_regardless_of_auto_advance_setting()
     {
+        // Auto-advance is no longer the player's concern — PlaybackEnded is always raised so
+        // the host (MainViewModel via PlayQueueViewModel) can decide what plays next.
         using var temp = new AppTempDb();
         var (lib, watch, settings, seriesId) = SeedSeries(temp, episodes: 2);
         settings.SetAutoAdvanceEpisodes(false);
         var ep1 = Ep(lib, seriesId, 1);
         var engine = new FakePlaybackEngine();
         var vm = NewVm(engine, lib, watch, settings);
-        var fired = false;
-        vm.NextEpisodeRequested += (_, _) => fired = true;
+        EpisodeView? ended = null;
+        vm.PlaybackEnded += (_, e) => ended = e;
         vm.Open(ep1);
         engine.RaiseLength(100.0);
 
         engine.RaiseEnded();
 
-        fired.ShouldBeFalse();
-    }
-
-    [Fact]
-    public void Ended_on_last_episode_does_not_request_next()
-    {
-        using var temp = new AppTempDb();
-        var (lib, watch, settings, seriesId) = SeedSeries(temp, episodes: 2);
-        settings.SetAutoAdvanceEpisodes(true);
-        var ep2 = Ep(lib, seriesId, 2);
-        var engine = new FakePlaybackEngine();
-        var vm = NewVm(engine, lib, watch, settings);
-        var fired = false;
-        vm.NextEpisodeRequested += (_, _) => fired = true;
-        vm.Open(ep2);
-        engine.RaiseLength(100.0);
-
-        engine.RaiseEnded();
-
-        fired.ShouldBeFalse();
+        ended.ShouldNotBeNull();
+        ended!.VideoId.ShouldBe(ep1.VideoId);
     }
 }

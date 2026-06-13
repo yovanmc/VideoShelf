@@ -235,11 +235,11 @@ public sealed partial class PlayerViewModel(
     [RelayCommand]
     private void ToggleFullscreen() => IsFullscreen = !IsFullscreen;
 
-    /// <summary>Raised when end-of-media should advance to the next in-series episode (auto-advance only).</summary>
-    public event EventHandler<EpisodeView>? NextEpisodeRequested;
+    /// <summary>Raised after the finished video is marked watched. The host decides what (if anything) plays next.</summary>
+    public event EventHandler<EpisodeView>? PlaybackEnded;
 
-    /// <summary>Test hook: simulates the engine reaching the end and requesting the given next episode.</summary>
-    public void RaiseNextEpisodeForTest(EpisodeView next) => NextEpisodeRequested?.Invoke(this, next);
+    /// <summary>Test hook: simulates the engine reaching the end of the current episode.</summary>
+    public void RaisePlaybackEndedForTest(EpisodeView finished) => PlaybackEnded?.Invoke(this, finished);
 
     /// <summary>Loads an episode, starts playback, and prepares a resume offer if one applies.</summary>
     public void Open(EpisodeView episode)
@@ -333,18 +333,9 @@ public sealed partial class PlayerViewModel(
     private void OnEnded(object? sender, EventArgs e)
     {
         IsPlaying = false;
-        if (_current is not { } cur)
-            return;
-
-        // Finishing a video marks it watched, which also clears its resume position.
+        if (_current is not { } cur) return;
         watch.SetWatched(cur.VideoId, true);
-
-        if (settings.GetAutoAdvanceEpisodes())
-        {
-            var next = library.GetNextEpisode(cur.SeriesId, cur.EpisodeNo);
-            if (next is not null)
-                NextEpisodeRequested?.Invoke(this, next);
-        }
+        PlaybackEnded?.Invoke(this, cur);
     }
 
     private void OnEngineError(object? sender, EventArgs e)

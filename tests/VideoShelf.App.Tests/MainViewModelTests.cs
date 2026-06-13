@@ -80,9 +80,10 @@ public class MainViewModelTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
+        var playQueue = new PlayQueueViewModel(lib, settings);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()));
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();
