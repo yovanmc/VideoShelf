@@ -130,15 +130,19 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
-                                        Background="Transparent" BorderThickness="0" Width="200">
-                                    <StackPanel>
-                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
-                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard/>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -158,15 +162,19 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
-                                        Background="Transparent" BorderThickness="0" Width="200">
-                                    <StackPanel>
-                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
-                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard/>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
