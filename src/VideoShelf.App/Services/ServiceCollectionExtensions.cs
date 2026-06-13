@@ -7,6 +7,7 @@ using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Scanning;
 using VideoShelf.Core.Storage;
+#pragma warning disable CA1506
 
 namespace VideoShelf.App.Services;
 
@@ -74,6 +75,8 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<TagRepository>();
         services.AddSingleton<SmartViewRepository>();
+        services.AddSingleton<CurationRepository>();
+        services.AddSingleton<PlaylistRepository>();
         services.AddSingleton<DiscoveryRepository>();
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
@@ -90,6 +93,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CreatorCardFactory>();
         services.AddSingleton<SearchViewModel>();
         services.AddSingleton<SmartViewsViewModel>();
+        services.AddSingleton<FavoritesViewModel>();
+        services.AddSingleton<WatchlistViewModel>();
+        services.AddSingleton<PlaylistsViewModel>();
+        services.AddSingleton<HistoryRepository>();
+        services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

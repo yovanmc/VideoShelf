@@ -44,6 +44,12 @@ public sealed class VideoShelfDb : IDisposable
         EnsureColumn(conn, "videos", "resume_updated_at", "TEXT");
         // duration: pre-schema DBs may lack this column even though it is in base CREATE TABLE
         EnsureColumn(conn, "videos", "duration", "REAL");
+        // M16-C: favorites + star ratings
+        EnsureColumn(conn, "videos", "is_favorite", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "videos", "rating", "INTEGER NOT NULL DEFAULT 0");
+        // M16-E: watchlist / watch-later
+        EnsureColumn(conn, "videos", "in_watchlist", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "videos", "watchlist_at", "TEXT");
         CreateAddedAtIndex(conn);
     }
 
@@ -164,6 +170,15 @@ public sealed class VideoShelfDb : IDisposable
             sort_order INTEGER NOT NULL DEFAULT 0,
             show_on_home INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS playlists (
+            id INTEGER PRIMARY KEY, name TEXT NOT NULL,
+            created_at TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS playlist_items (
+            playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+            video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL, PRIMARY KEY(playlist_id, video_id)
         );
         """;
 }

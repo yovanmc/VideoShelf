@@ -169,6 +169,26 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=SmartViews}" />
 
+                <!-- Favorites page -->
+                <views:FavoritesView DataContext="{Binding Favorites}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Favorites}" />
+
+                <!-- Watchlist (Watch later) page -->
+                <views:WatchlistView DataContext="{Binding Watchlist}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Watchlist}" />
+
+                <!-- Playlists page -->
+                <views:PlaylistsView DataContext="{Binding Playlists}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Playlists}" />
+
+                <!-- History page -->
+                <views:HistoryView DataContext="{Binding History}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=History}" />
+
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
                      ordering is safe — overlay is last content-host child, before PlayerHost. -->

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -15,7 +16,10 @@ public sealed partial class SeriesViewModel(
     LibraryRepository library,
     WatchRepository watch,
     IThumbnailService thumbnails,
-    TagRepository? tags = null) : ObservableObject
+    TagRepository? tags = null,
+    CurationRepository? curation = null,
+    PlaylistRepository? playlists = null,
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -47,6 +51,8 @@ public sealed partial class SeriesViewModel(
     public event System.EventHandler? PlayAllRequested;
     public event System.EventHandler? EnqueueRequested;
     public event System.EventHandler? PlayNextRequested;
+    public event System.EventHandler? MarkWatchedRequested;
+    public event System.EventHandler? MarkUnwatchedRequested;
 
     [RelayCommand]
     private void RequestRename() => RenameRequested?.Invoke(this, this);
@@ -59,6 +65,12 @@ public sealed partial class SeriesViewModel(
 
     [RelayCommand]
     private void PlaySeriesNext() => PlayNextRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void MarkSeriesWatched() => MarkWatchedRequested?.Invoke(this, System.EventArgs.Empty);
+
+    [RelayCommand]
+    private void MarkSeriesUnwatched() => MarkUnwatchedRequested?.Invoke(this, System.EventArgs.Empty);
 
     [RelayCommand]
     private async Task Activate()
@@ -106,7 +118,7 @@ public sealed partial class SeriesViewModel(
         Episodes.Clear();
         foreach (var row in rows)
         {
-            var ep = new EpisodeViewModel(row, watch, tags);
+            var ep = new EpisodeViewModel(row, watch, tags, curation, playlists, availablePlaylists);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);

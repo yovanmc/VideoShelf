@@ -59,4 +59,13 @@ public class SchemaMigrationTests
         reader.Read().ShouldBeTrue("video_chapters table should exist");
         reader.GetString(0).ShouldBe("video_chapters");
     }
+
+    [Fact]
+    public void Migrate_adds_is_favorite_and_rating_columns()
+    {
+        using var temp = new TempDb();
+        var cols = VideoColumns(temp);
+        cols.ShouldContain("is_favorite");
+        cols.ShouldContain("rating");
+    }
 }

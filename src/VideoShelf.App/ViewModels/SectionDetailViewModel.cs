@@ -19,8 +19,12 @@ public sealed partial class SectionDetailViewModel(
     IThumbnailService thumbnails,
     CreatorArtRepository art,
     IImagePicker imagePicker,
-    PlayQueueViewModel playQueue) : ObservableObject
+    PlayQueueViewModel playQueue,
+    CurationRepository? curation = null,
+    PlaylistRepository? playlists = null) : ObservableObject
 {
+    /// <summary>Shared playlist references for "add to playlist" menus on episode rows.</summary>
+    public ObservableCollection<PlaylistRef> AvailablePlaylists { get; } = [];
     public long SectionId { get; private set; }
 
     [ObservableProperty]
@@ -31,6 +35,20 @@ public sealed partial class SectionDetailViewModel(
 
     [RelayCommand]
     private void PlayAll() => playQueue.PlayAll(library.GetEpisodesForSection(SectionId));
+
+    [RelayCommand]
+    private void MarkCreatorWatched()
+    {
+        watch.SetWatchedForSection(SectionId, true);
+        foreach (var s in SeriesList) s.Refresh();
+    }
+
+    [RelayCommand]
+    private void MarkCreatorUnwatched()
+    {
+        watch.SetWatchedForSection(SectionId, false);
+        foreach (var s in SeriesList) s.Refresh();
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCreatorArt))]
@@ -72,15 +90,23 @@ public sealed partial class SectionDetailViewModel(
             tags.GetAllTags()));
         _allTags = allTags;
 
+        // Refresh shared playlist list for "add to playlist" menus.
+        AvailablePlaylists.Clear();
+        if (playlists is not null)
+            foreach (var p in playlists.GetAll())
+                AvailablePlaylists.Add(new PlaylistRef(p.Id, p.Name));
+
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));
             svm.EnqueueRequested += (_, _) => playQueue.EnqueueRange(library.GetEpisodes(svm.SeriesId));
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
+            svm.MarkWatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, true); svm.Refresh(); };
+            svm.MarkUnwatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, false); svm.Refresh(); };
             SeriesList.Add(svm);
             _ = svm.LoadThumbnailAsync(CancellationToken.None);   // eager tile art (cached + fail-safe)
         }

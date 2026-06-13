@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -33,7 +33,11 @@ public sealed partial class MainViewModel : ObservableObject
         SearchViewModel search,
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
-        SmartViewsViewModel smartViews)
+        SmartViewsViewModel smartViews,
+        FavoritesViewModel favorites,
+        WatchlistViewModel watchlist,
+        PlaylistsViewModel playlists,
+        HistoryViewModel history)
     {
         _sources = sources;
         _library = library;
@@ -43,6 +47,10 @@ public sealed partial class MainViewModel : ObservableObject
         _backfill = backfill;
         _playQueue = playQueue;
         SmartViews = smartViews;
+        Favorites = favorites;
+        Watchlist = watchlist;
+        Playlists = playlists;
+        History = history;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -74,12 +82,19 @@ public sealed partial class MainViewModel : ObservableObject
                 CurrentView = AppView.Search;
             }
         };
+        Favorites.PlayRequested += (_, e) => PlayEpisode(e);
+        Watchlist.PlayRequested += (_, e) => PlayEpisode(e);
+        History.PlayRequested += (_, e) => PlayEpisode(e);
         Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
     }
 
     public string Title => "VideoShelf";
 
     public SmartViewsViewModel SmartViews { get; }
+    public FavoritesViewModel Favorites { get; }
+    public WatchlistViewModel Watchlist { get; }
+    public PlaylistsViewModel Playlists { get; }
+    public HistoryViewModel History { get; }
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
@@ -171,6 +186,38 @@ public sealed partial class MainViewModel : ObservableObject
         SmartViews.Load();
         PushNav(CurrentView);
         CurrentView = AppView.SmartViews;
+    }
+
+    [RelayCommand]
+    private void ShowFavorites()
+    {
+        Favorites.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Favorites;
+    }
+
+    [RelayCommand]
+    private void ShowWatchlist()
+    {
+        Watchlist.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Watchlist;
+    }
+
+    [RelayCommand]
+    private void ShowPlaylists()
+    {
+        Playlists.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Playlists;
+    }
+
+    [RelayCommand]
+    private void ShowHistory()
+    {
+        History.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.History;
     }
 
     public async Task OpenSectionAsync(long sectionId)

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using VideoShelf.Core.Models;
+using Wpf.Ui.Controls;
 
 namespace VideoShelf.App.Converters;
 
@@ -59,6 +60,21 @@ public sealed class InvertBool : IValueConverter
     public static readonly InvertBool Instance = new();
     public object Convert(object? value, Type t, object? p, CultureInfo c) => value is not true;
     public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => value is not true;
+}
+
+/// <summary>
+/// Returns Star24 when the bound int rating >= the int ConverterParameter (star position 1..5),
+/// otherwise StarOff24. Used in the 5-star episode-row rating control.
+/// </summary>
+public sealed class StarSymbolConverter : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+    {
+        var rating = value is int i ? i : 0;
+        var pos = p is int pi ? pi : (p is string s && int.TryParse(s, out var parsed) ? parsed : 0);
+        return rating >= pos ? SymbolRegular.Star24 : SymbolRegular.StarOff24;
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
 
 /// <summary>Maps a 0..1 fraction to a pixel width = fraction * ConverterParameter (a track width in DIPs).

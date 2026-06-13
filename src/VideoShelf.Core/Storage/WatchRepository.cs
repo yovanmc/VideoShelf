@@ -39,6 +39,102 @@ public sealed class WatchRepository(VideoShelfDb db)
         tx.Commit();
     }
 
+    public void SetWatchedForSeries(long seriesId, bool watched)
+    {
+        using var conn = db.Open();
+        using var tx = conn.BeginTransaction();
+
+        if (watched)
+        {
+            // Collect affected ids first so we can insert per-video events.
+            var ids = new System.Collections.Generic.List<long>();
+            using (var sel = conn.CreateCommand())
+            {
+                sel.CommandText = "SELECT id FROM videos WHERE series_id=$s AND missing=0";
+                sel.Parameters.AddWithValue("$s", seriesId);
+                using var r = sel.ExecuteReader();
+                while (r.Read()) ids.Add(r.GetInt64(0));
+            }
+
+            var at = DateTimeOffset.UtcNow.ToString("o");
+            foreach (var vid in ids)
+            {
+                using var upd = conn.CreateCommand();
+                upd.CommandText = "UPDATE videos SET watched=1 WHERE id=$id";
+                upd.Parameters.AddWithValue("$id", vid);
+                upd.ExecuteNonQuery();
+
+                using var ins = conn.CreateCommand();
+                ins.CommandText = "INSERT INTO watch_events(video_id, watched_at) VALUES($id, $at)";
+                ins.Parameters.AddWithValue("$id", vid);
+                ins.Parameters.AddWithValue("$at", at);
+                ins.ExecuteNonQuery();
+
+                using var clr = conn.CreateCommand();
+                clr.CommandText = "UPDATE videos SET resume_position=NULL, resume_updated_at=NULL WHERE id=$id";
+                clr.Parameters.AddWithValue("$id", vid);
+                clr.ExecuteNonQuery();
+            }
+        }
+        else
+        {
+            using var upd = conn.CreateCommand();
+            upd.CommandText = "UPDATE videos SET watched=0 WHERE series_id=$s AND missing=0";
+            upd.Parameters.AddWithValue("$s", seriesId);
+            upd.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+
+    public void SetWatchedForSection(long sectionId, bool watched)
+    {
+        using var conn = db.Open();
+        using var tx = conn.BeginTransaction();
+
+        if (watched)
+        {
+            // Collect affected ids via series join.
+            var ids = new System.Collections.Generic.List<long>();
+            using (var sel = conn.CreateCommand())
+            {
+                sel.CommandText = "SELECT v.id FROM videos v JOIN series s ON s.id=v.series_id WHERE s.section_id=$sec AND v.missing=0";
+                sel.Parameters.AddWithValue("$sec", sectionId);
+                using var r = sel.ExecuteReader();
+                while (r.Read()) ids.Add(r.GetInt64(0));
+            }
+
+            var at = DateTimeOffset.UtcNow.ToString("o");
+            foreach (var vid in ids)
+            {
+                using var upd = conn.CreateCommand();
+                upd.CommandText = "UPDATE videos SET watched=1 WHERE id=$id";
+                upd.Parameters.AddWithValue("$id", vid);
+                upd.ExecuteNonQuery();
+
+                using var ins = conn.CreateCommand();
+                ins.CommandText = "INSERT INTO watch_events(video_id, watched_at) VALUES($id, $at)";
+                ins.Parameters.AddWithValue("$id", vid);
+                ins.Parameters.AddWithValue("$at", at);
+                ins.ExecuteNonQuery();
+
+                using var clr = conn.CreateCommand();
+                clr.CommandText = "UPDATE videos SET resume_position=NULL, resume_updated_at=NULL WHERE id=$id";
+                clr.Parameters.AddWithValue("$id", vid);
+                clr.ExecuteNonQuery();
+            }
+        }
+        else
+        {
+            using var upd = conn.CreateCommand();
+            upd.CommandText = "UPDATE videos SET watched=0 WHERE id IN (SELECT v.id FROM videos v JOIN series s ON s.id=v.series_id WHERE s.section_id=$sec AND v.missing=0)";
+            upd.Parameters.AddWithValue("$sec", sectionId);
+            upd.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+
     public bool IsWatched(long videoId)
     {
         using var conn = db.Open();
