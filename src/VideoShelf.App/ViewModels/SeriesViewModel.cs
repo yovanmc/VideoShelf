@@ -99,6 +99,20 @@ public sealed partial class SeriesViewModel(
             ep.VideoTagEditor?.Load(TagLevel.Video, ep.VideoId);
     }
 
+    /// <summary>
+    /// Expands this series tile and triggers lazy episode load.
+    /// Safe to call on multiple series concurrently: each call checks
+    /// <c>_episodesLoaded</c> early so already-loaded series return immediately,
+    /// and DB reads run off the UI thread via <c>Task.Run</c>.
+    /// Standalone series are skipped (they have no accordion to expand).
+    /// </summary>
+    public async Task ExpandAsync()
+    {
+        if (IsStandalone) return;
+        IsExpanded = true;
+        await EnsureEpisodesLoadedAsync();
+    }
+
     partial void OnUnwatchedCountChanged(int value)
     {
         OnPropertyChanged(nameof(HasUnwatched));

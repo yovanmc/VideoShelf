@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
@@ -151,6 +152,123 @@ public sealed class SectionDetailViewModelTests
 
         playQueue.HasQueue.ShouldBeTrue();
         playQueue.Items.Count.ShouldBe(3);
+    }
+
+    // ── E3: CollapseAll / ExpandAll ──────────────────────────────────────────
+
+    private static async Task<(AppTempDb Db, SectionDetailViewModel Vm)> NewMultiSeriesFx()
+    {
+        var db = new AppTempDb();
+        var lib = new LibraryRepository(db.Db);
+        var tags = new TagRepository(db.Db);
+        var watch = new WatchRepository(db.Db);
+        var art = new CreatorArtRepository(db.Db);
+        var settings = new SettingsRepository(db.Db);
+        var src = lib.UpsertSource(@"C:\V", "V");
+        var sec = lib.UpsertSection(src, "Creator Multi");
+        // Three non-standalone series with one episode each
+        var s1 = lib.UpsertSeries(sec, "Series A", false);
+        lib.UpsertVideo(s1, @"C:\V\Creator\A\e01.mkv", 1, "mkv");
+        var s2 = lib.UpsertSeries(sec, "Series B", false);
+        lib.UpsertVideo(s2, @"C:\V\Creator\B\e01.mkv", 1, "mkv");
+        var s3 = lib.UpsertSeries(sec, "Series C", false);
+        lib.UpsertVideo(s3, @"C:\V\Creator\C\e01.mkv", 1, "mkv");
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null), playQueue);
+        await vm.LoadAsync(sec);
+        return (db, vm);
+    }
+
+    [Fact]
+    public async Task CollapseAll_sets_all_series_IsExpanded_to_false()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+        // Manually expand two of three
+        vm.SeriesList[0].IsExpanded = true;
+        vm.SeriesList[1].IsExpanded = true;
+        vm.SeriesList[0].IsExpanded.ShouldBeTrue();
+
+        vm.CollapseAllCommand.Execute(null);
+
+        foreach (var s in vm.SeriesList)
+            s.IsExpanded.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ExpandAll_sets_all_non_standalone_series_IsExpanded_to_true()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+        // All start collapsed
+        foreach (var s in vm.SeriesList)
+            s.IsExpanded.ShouldBeFalse();
+
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+
+        // All non-standalone series should be expanded
+        foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
+            s.IsExpanded.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ExpandAll_triggers_episode_load_for_all_non_standalone_series()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+        // Before expand: no episodes loaded (lazy)
+        foreach (var s in vm.SeriesList)
+            s.Episodes.ShouldBeEmpty();
+
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+
+        // After expand: each non-standalone series has episodes loaded
+        foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
+            s.Episodes.ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public async Task CollapseAll_after_ExpandAll_collapses_all()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+        foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
+            s.IsExpanded.ShouldBeTrue();
+
+        vm.CollapseAllCommand.Execute(null);
+
+        foreach (var s in vm.SeriesList)
+            s.IsExpanded.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ExpandAll_on_already_expanded_is_idempotent()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+
+        // Expand once to load episodes
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+        var episodeCounts = vm.SeriesList.Select(s => s.Episodes.Count).ToArray();
+
+        // Expand again — should not duplicate episodes or throw
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+
+        var episodeCountsAfter = vm.SeriesList.Select(s => s.Episodes.Count).ToArray();
+        episodeCountsAfter.ShouldBe(episodeCounts);
+    }
+
+    [Fact]
+    public async Task CollapseAll_does_not_unload_episodes()
+    {
+        var (db, vm) = await NewMultiSeriesFx(); using var _d = db;
+
+        // Expand to load episodes
+        await vm.ExpandAllCommand.ExecuteAsync(null);
+        foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
+            s.Episodes.ShouldNotBeEmpty();
+
+        // Collapse: episodes remain in memory (just visually hidden)
+        vm.CollapseAllCommand.Execute(null);
+        foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
+            s.Episodes.ShouldNotBeEmpty();
     }
 }
 

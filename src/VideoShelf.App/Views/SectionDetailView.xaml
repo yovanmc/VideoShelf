@@ -111,6 +111,23 @@
                                 Foreground="White"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 AutomationProperties.Name="Clear episode selection" />
+                        <!-- Collapse / Expand all series accordion tiles -->
+                        <ui:Button Command="{Binding CollapseAllCommand}" Margin="8,0,0,0"
+                                   Style="{StaticResource SecondaryButton}"
+                                   AutomationProperties.Name="Collapse all series">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="ChevronUp24" Margin="0,0,4,0" />
+                                <TextBlock Text="Collapse all" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Command="{Binding ExpandAllCommand}" Margin="8,0,0,0"
+                                   Style="{StaticResource SecondaryButton}"
+                                   AutomationProperties.Name="Expand all series">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="ChevronDown24" Margin="0,0,4,0" />
+                                <TextBlock Text="Expand all" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
