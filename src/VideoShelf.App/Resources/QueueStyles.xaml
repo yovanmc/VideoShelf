@@ -31,22 +31,38 @@
 
                 <!-- Action buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <ui:Button Content="▲" Padding="4"
+                    <ui:Button Padding="4"
                                Style="{StaticResource TertiaryButton}"
+                               ToolTip="Move up"
+                               AutomationProperties.Name="Move up"
                                Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                               CommandParameter="{Binding}"/>
-                    <ui:Button Content="▼" Padding="4"
+                               CommandParameter="{Binding}">
+                        <ui:SymbolIcon Symbol="ChevronUp24" />
+                    </ui:Button>
+                    <ui:Button Padding="4"
                                Style="{StaticResource TertiaryButton}"
+                               ToolTip="Move down"
+                               AutomationProperties.Name="Move down"
                                Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                               CommandParameter="{Binding}"/>
-                    <ui:Button Content="▶" Padding="4"
+                               CommandParameter="{Binding}">
+                        <ui:SymbolIcon Symbol="ChevronDown24" />
+                    </ui:Button>
+                    <ui:Button Padding="4"
                                Style="{StaticResource TertiaryButton}"
+                               ToolTip="Play"
+                               AutomationProperties.Name="Play"
                                Command="{Binding DataContext.JumpToCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                               CommandParameter="{Binding}"/>
-                    <ui:Button Content="✕" Padding="4"
+                               CommandParameter="{Binding}">
+                        <ui:SymbolIcon Symbol="Play24" />
+                    </ui:Button>
+                    <ui:Button Padding="4"
                                Style="{StaticResource TertiaryButton}"
+                               ToolTip="Remove from queue"
+                               AutomationProperties.Name="Remove from queue"
                                Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                               CommandParameter="{Binding}"/>
+                               CommandParameter="{Binding}">
+                        <ui:SymbolIcon Symbol="Dismiss24" />
+                    </ui:Button>
                 </StackPanel>
             </Grid>
         </Border>

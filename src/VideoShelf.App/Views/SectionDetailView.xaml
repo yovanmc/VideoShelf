@@ -29,10 +29,24 @@
                            Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
                     <ui:Button.Style>
                         <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
-                            <Setter Property="Content" Value="Edit" />
+                            <Setter Property="Content">
+                                <Setter.Value>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Edit24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Edit" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Setter.Value>
+                            </Setter>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsEditing}" Value="True">
-                                    <Setter Property="Content" Value="Done" />
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
+                                                <TextBlock Text="Done" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Setter.Value>
+                                    </Setter>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -43,11 +57,15 @@
                     <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
                         <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
                     </TextBlock>
-                    <ui:Button Content="▶ Play all"
-                               Command="{Binding PlayAllCommand}"
+                    <ui:Button Command="{Binding PlayAllCommand}"
                                Style="{StaticResource PrimaryButton}"
                                Margin="0,8,0,8"
-                               HorizontalAlignment="Left"/>
+                               HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
+                            <TextBlock Text="Play all" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ui:Button>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -56,11 +74,14 @@
                                     <Border Style="{StaticResource Chip}" Margin="0,0,6,0">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding}" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <ui:Button Content="✕"
-                                                    Style="{StaticResource TertiaryButton}"
+                                            <ui:Button Style="{StaticResource TertiaryButton}"
                                                     Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
-                                                    Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
+                                                    ToolTip="Remove tag"
+                                                    AutomationProperties.Name="Remove tag"
+                                                    Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                                <ui:SymbolIcon Symbol="Dismiss24" />
+                                            </ui:Button>
                                         </StackPanel>
                                     </Border>
                                 </DataTemplate>
@@ -69,11 +90,21 @@
                         <!-- Art-action buttons: only visible in edit mode -->
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                            <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
-                                       Style="{StaticResource SecondaryButton}"/>
-                            <ui:Button Content="Use default" Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
+                            <ui:Button Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
                                        Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
-                                       Style="{StaticResource SecondaryButton}"/>
+                                       Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Use default" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -149,9 +180,12 @@
                                                            Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
                                                     <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                               Command="{Binding ToggleWatchedCommand}"/>
-                                                    <ui:Button DockPanel.Dock="Left" Content="&#9654;" Padding="6,2" Margin="0,0,6,0"
+                                                    <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
                                                                ToolTip="Play" Command="{Binding PlayCommand}"
-                                                               Style="{StaticResource TertiaryButton}"/>
+                                                               AutomationProperties.Name="Play"
+                                                               Style="{StaticResource TertiaryButton}">
+                                                        <ui:SymbolIcon Symbol="Play24" />
+                                                    </ui:Button>
                                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </DockPanel>

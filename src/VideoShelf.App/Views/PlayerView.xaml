@@ -53,12 +53,20 @@
                                            VerticalAlignment="Center" FontSize="14"
                                            TextTrimming="CharacterEllipsis" Margin="0,0,160,0" />
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <ui:Button x:Name="BackToWindowButton" Content="Back to window"
+                                    <ui:Button x:Name="BackToWindowButton"
                                                Command="{Binding TogglePictureInPictureCommand}"
                                                Visibility="Collapsed" Margin="0,0,8,0"
-                                               Style="{StaticResource TertiaryButton}" />
-                                    <ui:Button Content="Close" Command="{Binding ClosePlayerCommand}"
-                                               Style="{StaticResource TertiaryButton}" />
+                                               Style="{StaticResource TertiaryButton}"
+                                               ToolTip="Back to window"
+                                               AutomationProperties.Name="Back to window">
+                                        <ui:SymbolIcon Symbol="ArrowLeft24" />
+                                    </ui:Button>
+                                    <ui:Button Command="{Binding ClosePlayerCommand}"
+                                               Style="{StaticResource TertiaryButton}"
+                                               ToolTip="Close player"
+                                               AutomationProperties.Name="Close player">
+                                        <ui:SymbolIcon Symbol="Dismiss24" />
+                                    </ui:Button>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -95,8 +103,25 @@
                                 </Grid>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <ui:Button Content="Play/Pause" Command="{Binding Player.TogglePlayPauseCommand}"
-                                               Style="{StaticResource TertiaryButton}" />
+                                    <ui:Button Command="{Binding Player.TogglePlayPauseCommand}"
+                                               Style="{StaticResource TertiaryButton}"
+                                               ToolTip="Play / Pause"
+                                               AutomationProperties.Name="Play / Pause">
+                                        <ui:Button.Content>
+                                            <ui:SymbolIcon x:Name="PlayPauseIcon" Symbol="Play24">
+                                                <ui:SymbolIcon.Style>
+                                                    <Style TargetType="ui:SymbolIcon">
+                                                        <Setter Property="Symbol" Value="Play24" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Player.IsPlaying}" Value="True">
+                                                                <Setter Property="Symbol" Value="Pause24" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ui:SymbolIcon.Style>
+                                            </ui:SymbolIcon>
+                                        </ui:Button.Content>
+                                    </ui:Button>
                                     <!-- Secondary controls: collapsed in PiP mode -->
                                     <StackPanel Orientation="Horizontal">
                                         <StackPanel.Style>
@@ -108,14 +133,22 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-                                        <ui:Button Content="&#9664; Chapter" Margin="8,0,0,0"
+                                        <ui:Button Margin="8,0,0,0"
                                                    Command="{Binding Player.PreviousChapterCommand}"
                                                    Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}" />
-                                        <ui:Button Content="Chapter &#9654;" Margin="4,0,0,0"
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Previous chapter"
+                                                   AutomationProperties.Name="Previous chapter">
+                                            <ui:SymbolIcon Symbol="Previous24" />
+                                        </ui:Button>
+                                        <ui:Button Margin="4,0,0,0"
                                                    Command="{Binding Player.NextChapterCommand}"
                                                    Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}" />
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Next chapter"
+                                                   AutomationProperties.Name="Next chapter">
+                                            <ui:SymbolIcon Symbol="Next24" />
+                                        </ui:Button>
                                         <ComboBox Margin="8,0,0,0" Width="140"
                                                   ItemsSource="{Binding Player.AudioTracks}"
                                                   SelectedItem="{Binding Player.SelectedAudioTrack}"
@@ -127,26 +160,49 @@
                                                   DisplayMemberPath="Label"
                                                   Visibility="{Binding Player.HasSubtitleTracks, Converter={StaticResource BoolToVisibility}}" />
                                         <ui:Button Margin="6,0,0,0" Command="{Binding Player.AddSubtitleFileCommand}"
-                                                   ToolTip="Add subtitle file…" Content="+ Sub"
-                                                   Style="{StaticResource TertiaryButton}" />
+                                                   ToolTip="Add subtitle file…"
+                                                   AutomationProperties.Name="Add subtitle file"
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <ui:SymbolIcon Symbol="ClosedCaption24" />
+                                        </ui:Button>
                                         <Slider Margin="12,0,0,0" Width="100" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="100" Value="{Binding Player.Volume}" />
-                                        <ui:Button Content="Screenshot" Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}"
-                                                   Style="{StaticResource TertiaryButton}" />
-                                        <ui:Button Content="Fullscreen" Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}"
-                                                   Style="{StaticResource TertiaryButton}" />
-                                        <ui:Button Content="Mini-player" Margin="8,0,0,0" Command="{Binding TogglePictureInPictureCommand}"
-                                                   Style="{StaticResource TertiaryButton}" />
+                                        <ui:Button Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}"
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Screenshot"
+                                                   AutomationProperties.Name="Screenshot">
+                                            <ui:SymbolIcon Symbol="Camera24" />
+                                        </ui:Button>
+                                        <ui:Button Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}"
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Fullscreen"
+                                                   AutomationProperties.Name="Fullscreen">
+                                            <ui:SymbolIcon Symbol="FullScreenMaximize24" />
+                                        </ui:Button>
+                                        <ui:Button Margin="8,0,0,0" Command="{Binding TogglePictureInPictureCommand}"
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Mini-player"
+                                                   AutomationProperties.Name="Mini-player">
+                                            <ui:SymbolIcon Symbol="PictureInPicture24" />
+                                        </ui:Button>
                                         <!-- Queue transport buttons: skip and toggle drawer -->
-                                        <ui:Button Content="⏭" Margin="8,0,0,0"
+                                        <ui:Button Margin="8,0,0,0"
                                                    ToolTip="Skip to next"
+                                                   AutomationProperties.Name="Skip to next"
                                                    Command="{Binding PlayQueue.SkipNextCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}"/>
-                                        <ui:Button Content="☰ Up next" Margin="4,0,0,0"
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <ui:SymbolIcon Symbol="Next24" />
+                                        </ui:Button>
+                                        <ui:Button Margin="4,0,0,0"
                                                    Command="{Binding PlayQueue.ToggleDrawerCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}"/>
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
+                                                <TextBlock Text="Up next" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </ui:Button>
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
@@ -175,9 +231,16 @@
                         <DockPanel Margin="12">
                             <Grid DockPanel.Dock="Top">
                                 <TextBlock Text="UP NEXT" Style="{StaticResource SectionHeader}"/>
-                                <ui:Button Content="Clear" HorizontalAlignment="Right"
+                                <ui:Button HorizontalAlignment="Right"
                                            Command="{Binding PlayQueue.ClearCommand}"
-                                           Style="{StaticResource TertiaryButton}"/>
+                                           Style="{StaticResource TertiaryButton}"
+                                           ToolTip="Clear queue"
+                                           AutomationProperties.Name="Clear queue">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Delete24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Clear" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ui:Button>
                             </Grid>
                             <ItemsControl DataContext="{Binding PlayQueue}"
                                           ItemsSource="{Binding Items}"
