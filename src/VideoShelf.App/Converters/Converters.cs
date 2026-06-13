@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using VideoShelf.Core.Models;
+using VideoShelf.Core.Storage;
 using Wpf.Ui.Controls;
 
 namespace VideoShelf.App.Converters;
@@ -98,6 +99,54 @@ public sealed class StringToSymbolConverter : IValueConverter
             Enum.TryParse<SymbolRegular>(s, out var sym))
             return sym;
         return SymbolRegular.Circle24;
+    }
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps a <see cref="BrowseDensity"/> value to a card width (double).
+/// Compact = 160, Normal = 200, Spacious = 240.
+/// ConverterParameter is ignored.
+/// </summary>
+public sealed class DensityToCardWidth : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => value is BrowseDensity d ? d switch
+        {
+            BrowseDensity.Compact  => 160.0,
+            BrowseDensity.Spacious => 240.0,
+            _                      => 200.0,
+        } : 200.0;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps a <see cref="BrowseDensity"/> value to a card thumbnail height (double).
+/// Compact = 90, Normal = 112, Spacious = 135.
+/// </summary>
+public sealed class DensityToCardThumbHeight : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => value is BrowseDensity d ? d switch
+        {
+            BrowseDensity.Compact  => 90.0,
+            BrowseDensity.Spacious => 135.0,
+            _                      => 112.0,
+        } : 112.0;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
+/// <summary>
+/// Maps <see cref="BrowseViewMode"/> to a Visibility.
+/// Pass ConverterParameter="Grid" to show only in grid mode; "List" for list mode.
+/// </summary>
+public sealed class ViewModeToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+    {
+        var mode = value?.ToString();
+        var param = p?.ToString();
+        return mode == param ? Visibility.Visible : Visibility.Collapsed;
     }
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }

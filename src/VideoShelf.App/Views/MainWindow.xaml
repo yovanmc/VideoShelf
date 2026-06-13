@@ -34,6 +34,9 @@
             <conv:InvertBool x:Key="InverseBoolToBool" />
             <conv:StringToSymbolConverter x:Key="StringToSymbol" />
             <conv:NotNullOrEmptyToVisibility x:Key="NotNullOrEmptyToVis" />
+            <conv:DensityToCardWidth x:Key="DensityToCardWidth" />
+            <conv:DensityToCardThumbHeight x:Key="DensityToCardThumbHeight" />
+            <conv:ViewModeToVisibility x:Key="ViewModeToVis" />
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
@@ -158,32 +161,109 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <!-- Browse page header: Select toggle + Select All / Clear (selection mode only) -->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,12,16,4">
-                        <ToggleButton Content="Select"
-                                      IsChecked="{Binding Creators.Selection.IsSelectionMode, Mode=TwoWay}"
-                                      Style="{StaticResource ChipToggle}"
-                                      AutomationProperties.Name="Toggle selection mode" />
-                        <Button Content="Select all"
-                                Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
-                                Command="{Binding Creators.Selection.SelectAllCommand}"
-                                CommandParameter="{Binding Creators.Creators}"
-                                Margin="8,0,0,0"
-                                Padding="10,4"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                AutomationProperties.Name="Select all creators" />
-                        <Button Content="Clear"
-                                Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
-                                Command="{Binding Creators.Selection.ClearSelectionCommand}"
-                                Margin="4,0,0,0"
-                                Padding="10,4"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                AutomationProperties.Name="Clear selection" />
+                    <!-- Browse page header: Select + filter + density + view-mode toggles -->
+                    <StackPanel Grid.Row="0" Margin="16,12,16,4">
+                        <!-- Row 1: selection controls + density/view toggles -->
+                        <StackPanel Orientation="Horizontal">
+                            <ToggleButton Content="Select"
+                                          IsChecked="{Binding Creators.Selection.IsSelectionMode, Mode=TwoWay}"
+                                          Style="{StaticResource ChipToggle}"
+                                          AutomationProperties.Name="Toggle selection mode" />
+                            <Button Content="Select all"
+                                    Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding Creators.Selection.SelectAllCommand}"
+                                    CommandParameter="{Binding Creators.Creators}"
+                                    Margin="8,0,0,0" Padding="10,4"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    AutomationProperties.Name="Select all creators" />
+                            <Button Content="Clear"
+                                    Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding Creators.Selection.ClearSelectionCommand}"
+                                    Margin="4,0,0,0" Padding="10,4"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    AutomationProperties.Name="Clear selection" />
+                            <!-- Spacer -->
+                            <Border Width="16" />
+                            <!-- Filter toggle -->
+                            <ToggleButton IsChecked="{Binding Creators.IsFilterVisible, Mode=TwoWay}"
+                                          Style="{StaticResource ChipToggle}"
+                                          ToolTip="Filter creators"
+                                          AutomationProperties.Name="Toggle filter bar">
+                                <ui:SymbolIcon Symbol="Filter24" />
+                            </ToggleButton>
+                            <!-- Density group: Compact / Normal / Spacious -->
+                            <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                                <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,4,0"
+                                              ToolTip="Compact" AutomationProperties.Name="Compact density"
+                                              IsChecked="{Binding Creators.Density,
+                                                  Converter={StaticResource EnumToVis},
+                                                  ConverterParameter=Compact, Mode=OneWay}"
+                                              Command="{Binding Creators.SetDensityCompactCommand}">
+                                    <ui:SymbolIcon Symbol="TextGrammarArrowLeft24" />
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,4,0"
+                                              ToolTip="Normal" AutomationProperties.Name="Normal density"
+                                              IsChecked="{Binding Creators.Density,
+                                                  Converter={StaticResource EnumToVis},
+                                                  ConverterParameter=Normal, Mode=OneWay}"
+                                              Command="{Binding Creators.SetDensityNormalCommand}">
+                                    <ui:SymbolIcon Symbol="Grid24" />
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource ChipToggle}"
+                                              ToolTip="Spacious" AutomationProperties.Name="Spacious density"
+                                              IsChecked="{Binding Creators.Density,
+                                                  Converter={StaticResource EnumToVis},
+                                                  ConverterParameter=Spacious, Mode=OneWay}"
+                                              Command="{Binding Creators.SetDensitySpaciousCommand}">
+                                    <ui:SymbolIcon Symbol="TextGrammarArrowRight24" />
+                                </ToggleButton>
+                            </StackPanel>
+                            <!-- View-mode: Grid / List -->
+                            <StackPanel Orientation="Horizontal" Margin="8,0,0,0">
+                                <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,4,0"
+                                              ToolTip="Grid view" AutomationProperties.Name="Grid view"
+                                              IsChecked="{Binding Creators.ViewMode,
+                                                  Converter={StaticResource EnumToVis},
+                                                  ConverterParameter=Grid, Mode=OneWay}"
+                                              Command="{Binding Creators.SetViewModeGridCommand}">
+                                    <ui:SymbolIcon Symbol="AppsList24" />
+                                </ToggleButton>
+                                <ToggleButton Style="{StaticResource ChipToggle}"
+                                              ToolTip="List view" AutomationProperties.Name="List view"
+                                              IsChecked="{Binding Creators.ViewMode,
+                                                  Converter={StaticResource EnumToVis},
+                                                  ConverterParameter=List, Mode=OneWay}"
+                                              Command="{Binding Creators.SetViewModeListCommand}">
+                                    <ui:SymbolIcon Symbol="List24" />
+                                </ToggleButton>
+                            </StackPanel>
+                        </StackPanel>
+                        <!-- Row 2: ephemeral filter bar (collapsed by default) -->
+                        <Grid Margin="0,6,0,0"
+                              Visibility="{Binding Creators.IsFilterVisible, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0"
+                                        Text="{Binding Creators.FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="Filter creators…"
+                                        AutomationProperties.Name="Filter creators" />
+                            <Button Grid.Column="1"
+                                    Content="✕"
+                                    Margin="4,0,0,0" Padding="8,4"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding Creators.ClearFilterCommand}"
+                                    ToolTip="Clear filter"
+                                    AutomationProperties.Name="Clear filter" />
+                        </Grid>
                     </StackPanel>
 
-                    <!-- Virtualized creator grid using VirtualizingWrapPanel -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ListBox ItemsSource="{Binding Creators.Creators}"
+                    <!-- Grid view: VirtualizingWrapPanel -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding Creators.ViewMode, Converter={StaticResource ViewModeToVis}, ConverterParameter=Grid}">
+                        <ListBox x:Name="CreatorsGridListBox"
+                                 ItemsSource="{Binding Creators.Creators}"
                                  SelectionMode="Extended"
                                  ScrollViewer.CanContentScroll="True"
                                  VirtualizingPanel.IsVirtualizing="True"
@@ -197,31 +277,25 @@
                             </ListBox.ItemsPanel>
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListBoxItem}">
-                                    <!-- Two-way bind ListBoxItem.IsSelected to card VM's IsSelected.
-                                         Native Shift-range and Ctrl-multi select drive this property. -->
                                     <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                    <!-- Density: bind card container width from the ListBox DataContext -->
+                                    <Setter Property="Width" Value="{Binding DataContext.Creators.Density,
+                                        RelativeSource={RelativeSource AncestorType=ListBox},
+                                        Converter={StaticResource DensityToCardWidth}}" />
                                 </Style>
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <!-- Grid wraps the card so the checkbox overlay can be positioned absolutely. -->
                                     <Grid>
-                                        <!-- Inner card: IsHitTestVisible is suppressed in selection mode
-                                             so clicks land on the ListBoxItem (native toggle), not the Button.
-                                             When NOT in selection mode, the Button's OpenCommand fires normally. -->
                                         <views:CreatorCard
                                             IsHitTestVisible="{Binding DataContext.Creators.Selection.IsSelectionMode,
                                                 RelativeSource={RelativeSource AncestorType=ListBox},
                                                 Converter={StaticResource InverseBoolToBool}}" />
-
-                                        <!-- Checkbox overlay: top-left, visible only in selection mode. -->
                                         <CheckBox Width="{StaticResource CheckboxSize}"
                                                   Height="{StaticResource CheckboxSize}"
                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                  HorizontalAlignment="Left"
-                                                  VerticalAlignment="Top"
-                                                  Margin="6,6,0,0"
-                                                  IsHitTestVisible="False"
+                                                  HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                  Margin="6,6,0,0" IsHitTestVisible="False"
                                                   Visibility="{Binding DataContext.Creators.Selection.IsSelectionMode,
                                                       RelativeSource={RelativeSource AncestorType=ListBox},
                                                       Converter={StaticResource BoolToVisibility}}"
@@ -231,6 +305,76 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </ScrollViewer>
+
+                    <!-- List view: VirtualizingStackPanel -->
+                    <ListBox x:Name="CreatorsListListBox"
+                             Grid.Row="1"
+                             ItemsSource="{Binding Creators.Creators}"
+                             SelectionMode="Extended"
+                             VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Style="{StaticResource PlainListBox}"
+                             Margin="16,0,16,16"
+                             Visibility="{Binding Creators.ViewMode, Converter={StaticResource ViewModeToVis}, ConverterParameter=List}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListBoxItem}">
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                <!-- Override margin for list rows (no card gap) -->
+                                <Setter Property="Margin" Value="0,0,0,2" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Compact list row: thumbnail + name + count + context menu -->
+                                <Grid Height="48">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="72" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Thumbnail slot -->
+                                    <Border Grid.Column="0" CornerRadius="{StaticResource ControlRadius}"
+                                            Background="{StaticResource ThumbPlaceholderBrush}"
+                                            Margin="0,2,8,2" ClipToBounds="True">
+                                        <Image Source="{Binding ImagePath, IsAsync=True}"
+                                               Style="{StaticResource ThumbnailImage}" />
+                                    </Border>
+                                    <!-- Name + count -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource TypeBody}" />
+                                        <TextBlock Text="{Binding VideoCountLabel}"
+                                                   Style="{StaticResource Caption}" />
+                                    </StackPanel>
+                                    <!-- Open button -->
+                                    <Button Grid.Column="2" Command="{Binding OpenCommand}"
+                                            IsHitTestVisible="{Binding DataContext.Creators.Selection.IsSelectionMode,
+                                                RelativeSource={RelativeSource AncestorType=ListBox},
+                                                Converter={StaticResource InverseBoolToBool}}"
+                                            Background="Transparent" BorderThickness="0"
+                                            Padding="8,4" Cursor="Hand"
+                                            AutomationProperties.Name="Open creator">
+                                        <ui:SymbolIcon Symbol="ChevronRight24" />
+                                    </Button>
+                                    <!-- Selection checkbox overlay -->
+                                    <CheckBox Grid.Column="0" Width="{StaticResource CheckboxSize}"
+                                              Height="{StaticResource CheckboxSize}"
+                                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              HorizontalAlignment="Left" VerticalAlignment="Center"
+                                              Margin="4,0,0,0" IsHitTestVisible="False"
+                                              Visibility="{Binding DataContext.Creators.Selection.IsSelectionMode,
+                                                  RelativeSource={RelativeSource AncestorType=ListBox},
+                                                  Converter={StaticResource BoolToVisibility}}"
+                                              AutomationProperties.Name="Select this creator" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
 
                 <!-- Section detail view -->

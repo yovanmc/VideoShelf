@@ -42,7 +42,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
         services.AddSingleton<CreatorArtRepository>();
         services.AddSingleton<ItemArtRepository>();
-        services.AddSingleton<CreatorsViewModel>();
+        services.AddSingleton<CreatorsViewModel>(sp => new CreatorsViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<CreatorArtRepository>(),
+            sp.GetRequiredService<IThumbnailService>(),
+            sp.GetRequiredService<SettingsRepository>()));
 
         services.AddSingleton<ScanService>();
         services.AddSingleton<IScanCoordinator, ScanCoordinator>();

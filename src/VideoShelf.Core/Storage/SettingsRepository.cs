@@ -1,5 +1,11 @@
 namespace VideoShelf.Core.Storage;
 
+/// <summary>Density level for the Browse creator grid.</summary>
+public enum BrowseDensity { Compact, Normal, Spacious }
+
+/// <summary>View mode for the Browse creator grid.</summary>
+public enum BrowseViewMode { Grid, List }
+
 /// <summary>Typed access to the app's key/value <c>settings</c> table.</summary>
 public sealed class SettingsRepository(VideoShelfDb db)
 {
@@ -46,4 +52,30 @@ public sealed class SettingsRepository(VideoShelfDb db)
 
     public void SetLastScanUtc(DateTime utc)
         => SetString(LastScanUtcKey, utc.ToString("o"));
+
+    // ── Browse density ────────────────────────────────────────────────────────
+    public const string BrowseDensityKey = "browse_density";
+
+    /// <summary>The density level for the Browse creator grid. Defaults to <see cref="BrowseDensity.Normal"/>.</summary>
+    public BrowseDensity GetBrowseDensity()
+    {
+        var raw = GetString(BrowseDensityKey, "");
+        return Enum.TryParse<BrowseDensity>(raw, out var v) ? v : BrowseDensity.Normal;
+    }
+
+    public void SetBrowseDensity(BrowseDensity value)
+        => SetString(BrowseDensityKey, value.ToString());
+
+    // ── Browse view mode ──────────────────────────────────────────────────────
+    public const string BrowseViewModeKey = "browse_view_mode";
+
+    /// <summary>The view mode for the Browse creator grid. Defaults to <see cref="BrowseViewMode.Grid"/>.</summary>
+    public BrowseViewMode GetBrowseViewMode()
+    {
+        var raw = GetString(BrowseViewModeKey, "");
+        return Enum.TryParse<BrowseViewMode>(raw, out var v) ? v : BrowseViewMode.Grid;
+    }
+
+    public void SetBrowseViewMode(BrowseViewMode value)
+        => SetString(BrowseViewModeKey, value.ToString());
 }
