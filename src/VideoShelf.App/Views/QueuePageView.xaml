@@ -15,8 +15,9 @@
                 <TextBlock Text="{Binding PlayQueue.CountLabel}" Style="{StaticResource Caption}"
                            Margin="12,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
-            <ui:Button Content="Clear all" Appearance="Secondary" HorizontalAlignment="Right"
-                       Command="{Binding PlayQueue.ClearCommand}"/>
+            <ui:Button Content="Clear all" HorizontalAlignment="Right"
+                       Command="{Binding PlayQueue.ClearCommand}"
+                       Style="{StaticResource SecondaryButton}"/>
         </Grid>
 
         <!-- Queue item list -->

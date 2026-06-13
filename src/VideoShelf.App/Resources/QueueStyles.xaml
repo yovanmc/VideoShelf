@@ -31,16 +31,20 @@
 
                 <!-- Action buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <ui:Button Content="▲" Appearance="Transparent" Padding="4"
+                    <ui:Button Content="▲" Padding="4"
+                               Style="{StaticResource TertiaryButton}"
                                Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}"/>
-                    <ui:Button Content="▼" Appearance="Transparent" Padding="4"
+                    <ui:Button Content="▼" Padding="4"
+                               Style="{StaticResource TertiaryButton}"
                                Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}"/>
-                    <ui:Button Content="▶" Appearance="Transparent" Padding="4"
+                    <ui:Button Content="▶" Padding="4"
+                               Style="{StaticResource TertiaryButton}"
                                Command="{Binding DataContext.JumpToCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}"/>
-                    <ui:Button Content="✕" Appearance="Transparent" Padding="4"
+                    <ui:Button Content="✕" Padding="4"
+                               Style="{StaticResource TertiaryButton}"
                                Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}"/>
                 </StackPanel>

@@ -25,10 +25,10 @@
                     </Border.Background>
                 </Border>
                 <!-- Edit/Done toggle button (top-right of hero) -->
-                <ui:Button Command="{Binding ToggleEditCommand}" Appearance="Transparent"
+                <ui:Button Command="{Binding ToggleEditCommand}"
                            Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
                     <ui:Button.Style>
-                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                        <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
                             <Setter Property="Content" Value="Edit" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsEditing}" Value="True">
@@ -45,7 +45,7 @@
                     </TextBlock>
                     <ui:Button Content="▶ Play all"
                                Command="{Binding PlayAllCommand}"
-                               Appearance="Primary"
+                               Style="{StaticResource PrimaryButton}"
                                Margin="0,8,0,8"
                                HorizontalAlignment="Left"/>
                     <StackPanel Orientation="Horizontal">
@@ -68,9 +68,11 @@
                         <!-- Art-action buttons: only visible in edit mode -->
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                            <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"/>
+                            <ui:Button Content="Set image…" Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}"/>
                             <ui:Button Content="Use default" Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
-                                       Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"/>
+                                       Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
+                                       Style="{StaticResource SecondaryButton}"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -80,7 +82,8 @@
             <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Orientation="Horizontal" Margin="24,12,24,0">
                     <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add tag…" Width="220"/>
-                    <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"/>
+                    <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"
+                               Style="{StaticResource SecondaryButton}"/>
                 </StackPanel>
                 <ItemsControl ItemsSource="{Binding Suggestions}" Margin="24,8,24,0">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -146,7 +149,8 @@
                                                     <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                               Command="{Binding ToggleWatchedCommand}"/>
                                                     <ui:Button DockPanel.Dock="Left" Content="&#9654;" Padding="6,2" Margin="0,0,6,0"
-                                                               ToolTip="Play" Command="{Binding PlayCommand}"/>
+                                                               ToolTip="Play" Command="{Binding PlayCommand}"
+                                                               Style="{StaticResource TertiaryButton}"/>
                                                     <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis"/>
                                                 </DockPanel>
@@ -155,7 +159,8 @@
                                     </ItemsControl>
                                     <ui:Button Content="Rename files…" Command="{Binding RequestRenameCommand}"
                                                Margin="0,6,0,0" HorizontalAlignment="Left"
-                                               Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
+                                               Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
+                                               Style="{StaticResource SecondaryButton}"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
