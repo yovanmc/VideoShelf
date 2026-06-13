@@ -230,7 +230,8 @@
                                                                    ToolTip="Add to playlist"
                                                                    AutomationProperties.Name="Add to playlist"
                                                                    Style="{StaticResource TertiaryButton}"
-                                                                   Tag="{Binding}">
+                                                                   Tag="{Binding}"
+                                                                   Click="AddToPlaylist_Click">
                                                             <ui:Button.ContextMenu>
                                                                 <ContextMenu ItemsSource="{Binding PlacementTarget.Tag.AvailablePlaylists, RelativeSource={RelativeSource Self}}">
                                                                     <ContextMenu.ItemContainerStyle>
