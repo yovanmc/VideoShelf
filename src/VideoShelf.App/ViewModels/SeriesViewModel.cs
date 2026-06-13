@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -16,7 +17,9 @@ public sealed partial class SeriesViewModel(
     WatchRepository watch,
     IThumbnailService thumbnails,
     TagRepository? tags = null,
-    CurationRepository? curation = null) : ObservableObject
+    CurationRepository? curation = null,
+    PlaylistRepository? playlists = null,
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -107,7 +110,7 @@ public sealed partial class SeriesViewModel(
         Episodes.Clear();
         foreach (var row in rows)
         {
-            var ep = new EpisodeViewModel(row, watch, tags, curation);
+            var ep = new EpisodeViewModel(row, watch, tags, curation, playlists, availablePlaylists);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);

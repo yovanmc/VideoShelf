@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites, Watchlist }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -35,7 +35,8 @@ public sealed partial class MainViewModel : ObservableObject
         PlayQueueViewModel playQueue,
         SmartViewsViewModel smartViews,
         FavoritesViewModel favorites,
-        WatchlistViewModel watchlist)
+        WatchlistViewModel watchlist,
+        PlaylistsViewModel playlists)
     {
         _sources = sources;
         _library = library;
@@ -47,6 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
         SmartViews = smartViews;
         Favorites = favorites;
         Watchlist = watchlist;
+        Playlists = playlists;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -88,6 +90,7 @@ public sealed partial class MainViewModel : ObservableObject
     public SmartViewsViewModel SmartViews { get; }
     public FavoritesViewModel Favorites { get; }
     public WatchlistViewModel Watchlist { get; }
+    public PlaylistsViewModel Playlists { get; }
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
@@ -195,6 +198,14 @@ public sealed partial class MainViewModel : ObservableObject
         Watchlist.Load();
         PushNav(CurrentView);
         CurrentView = AppView.Watchlist;
+    }
+
+    [RelayCommand]
+    private void ShowPlaylists()
+    {
+        Playlists.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Playlists;
     }
 
     public async Task OpenSectionAsync(long sectionId)

@@ -58,9 +58,11 @@ public class MainViewModelPlaybackTests
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
+        var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
+            playlistsVm);
     }
 
     [Fact]
@@ -128,9 +130,11 @@ public class MainViewModelPlaybackTests
         var curation2 = new CurationRepository(temp.Db);
         var favoritesVm2 = new FavoritesViewModel(curation2, lib);
         var watchlistVm2 = new WatchlistViewModel(curation2, lib);
+        var playlistsVm2 = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2, watchlistVm2);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2, watchlistVm2,
+            playlistsVm2);
 
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);

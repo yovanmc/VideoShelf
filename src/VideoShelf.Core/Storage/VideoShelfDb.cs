@@ -171,5 +171,14 @@ public sealed class VideoShelfDb : IDisposable
             show_on_home INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS playlists (
+            id INTEGER PRIMARY KEY, name TEXT NOT NULL,
+            created_at TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS playlist_items (
+            playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+            video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL, PRIMARY KEY(playlist_id, video_id)
+        );
         """;
 }

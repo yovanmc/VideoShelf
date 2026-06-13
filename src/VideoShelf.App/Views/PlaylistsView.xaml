@@ -1,0 +1,195 @@
+<UserControl x:Class="VideoShelf.App.Views.PlaylistsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:VideoShelf.App.ViewModels"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <!-- Left: playlist list -->
+            <ColumnDefinition Width="260" />
+            <!-- Right: playlist items -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ── LEFT: Playlists ──────────────────────────────────────────── -->
+        <DockPanel Grid.Column="0" Margin="0,0,16,0">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBlock Text="Playlists" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <ui:Button Content="New" Margin="12,0,0,0"
+                           Command="{Binding CreatePlaylistCommand}"
+                           Style="{StaticResource SecondaryButton}" />
+            </StackPanel>
+
+            <!-- Empty state -->
+            <TextBlock DockPanel.Dock="Top"
+                       Text="No playlists yet. Click New to create one."
+                       Opacity="0.7" TextWrapping="Wrap" Margin="0,16,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Playlists.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Playlists}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PlaylistListItemViewModel}">
+                            <Border BorderBrush="{StaticResource DividerBrush}"
+                                    BorderThickness="0,0,0,1" Padding="0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Name + count: click to open -->
+                                    <ui:Button Grid.Column="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                               Command="{Binding DataContext.OpenPlaylistCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"
+                                               Style="{StaticResource TertiaryButton}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                            <TextBlock Opacity="0.6" FontSize="12">
+                                                <Run Text="{Binding ItemCount, Mode=OneWay}" /><Run Text=" items" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </ui:Button>
+
+                                    <!-- Delete -->
+                                    <ui:Button Grid.Column="1" ToolTip="Delete playlist"
+                                               Command="{Binding DataContext.DeletePlaylistCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"
+                                               Style="{StaticResource TertiaryButton}">
+                                        <ui:SymbolIcon Symbol="Delete24" />
+                                    </ui:Button>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+
+        <!-- ── RIGHT: Playlist Items ────────────────────────────────────── -->
+        <DockPanel Grid.Column="1">
+
+            <!-- Header + actions (visible when a playlist is selected) -->
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12"
+                        Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="{Binding Selected.Name}" FontSize="20" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <ui:Button Content="Play all" Margin="16,0,0,0"
+                               Command="{Binding PlayAllCommand}"
+                               Style="{StaticResource PrimaryButton}" />
+                </StackPanel>
+                <!-- Rename field -->
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBox x:Name="RenameBox"
+                                PlaceholderText="Rename playlist…"
+                                Width="200"
+                                Text="{Binding Selected.Name, UpdateSourceTrigger=PropertyChanged}" />
+                    <ui:Button Content="Rename" Margin="8,0,0,0"
+                               Command="{Binding RenameSelectedCommand}"
+                               CommandParameter="{Binding ElementName=RenameBox, Path=Text}"
+                               Style="{StaticResource SecondaryButton}" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- No-selection empty state -->
+            <TextBlock DockPanel.Dock="Top"
+                       Text="Select a playlist to view its items."
+                       Opacity="0.7" Margin="0,40,0,0"
+                       Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasSelected}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Items list -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <!-- Empty-items state -->
+                    <TextBlock Text="This playlist is empty."
+                               Opacity="0.7" Margin="0,16,0,0"
+                               Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Items.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <ItemsControl ItemsSource="{Binding Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:PlaylistItemRowViewModel}">
+                                <Border BorderBrush="{StaticResource DividerBrush}"
+                                        BorderThickness="0,0,0,1" Padding="4,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="{Binding Title}"
+                                                   VerticalAlignment="Center" />
+
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <ui:Button ToolTip="Move up"
+                                                       Command="{Binding DataContext.MoveItemUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       Style="{StaticResource TertiaryButton}">
+                                                <ui:SymbolIcon Symbol="ChevronUp24" />
+                                            </ui:Button>
+                                            <ui:Button ToolTip="Move down" Margin="4,0,0,0"
+                                                       Command="{Binding DataContext.MoveItemDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       Style="{StaticResource TertiaryButton}">
+                                                <ui:SymbolIcon Symbol="ChevronDown24" />
+                                            </ui:Button>
+                                            <ui:Button ToolTip="Remove" Margin="4,0,0,0"
+                                                       Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       Style="{StaticResource TertiaryButton}">
+                                                <ui:SymbolIcon Symbol="Dismiss24" />
+                                            </ui:Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</UserControl>

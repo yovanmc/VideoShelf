@@ -76,6 +76,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TagRepository>();
         services.AddSingleton<SmartViewRepository>();
         services.AddSingleton<CurationRepository>();
+        services.AddSingleton<PlaylistRepository>();
         services.AddSingleton<DiscoveryRepository>();
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
@@ -94,6 +95,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SmartViewsViewModel>();
         services.AddSingleton<FavoritesViewModel>();
         services.AddSingleton<WatchlistViewModel>();
+        services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

@@ -86,9 +86,11 @@ public class MainViewModelTests
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
+        var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
+            playlistsVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

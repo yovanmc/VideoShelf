@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.Core.Models;
@@ -9,7 +10,9 @@ public sealed partial class EpisodeViewModel(
     EpisodeView model,
     WatchRepository watch,
     TagRepository? tags = null,
-    CurationRepository? curation = null) : ObservableObject
+    CurationRepository? curation = null,
+    PlaylistRepository? playlists = null,
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject
 {
     public TagEditorViewModel? VideoTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -72,6 +75,24 @@ public sealed partial class EpisodeViewModel(
         var clamped = System.Math.Max(0, System.Math.Min(5, r));
         Rating = clamped;
         curation.SetRating(model.VideoId, clamped);
+    }
+
+    /// <summary>The shared list of available playlists to add this episode to (empty if no PlaylistRepository).</summary>
+    public IReadOnlyList<PlaylistRef> AvailablePlaylists => availablePlaylists ?? [];
+
+    [RelayCommand]
+    private void AddToPlaylist(object? param)
+    {
+        if (playlists is null) return;
+        var playlistId = param switch
+        {
+            long l => l,
+            int i => (long)i,
+            string s when long.TryParse(s, out var parsed) => parsed,
+            _ => -1L,
+        };
+        if (playlistId < 0) return;
+        playlists.AddItem(playlistId, model.VideoId);
     }
 
     /// <summary>Raised when the user asks to play this episode; the shell routes it to the player.</summary>
