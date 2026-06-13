@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
+using VideoShelf.Core.Search;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
@@ -156,6 +157,52 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
     /// <summary>Raised when a creator card is activated (forwarded to the host nav).</summary>
     public event Action<long>? OpenCreatorRequested;
 
+    // ── A–Z jump-list (G1) ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// All 26 letters A–Z, each tagged with whether at least one creator name
+    /// starts with that letter.  Updated whenever the Creators collection is rebuilt
+    /// in LoadAsync.  The jump strip ItemsControl binds to this list so disabled
+    /// letters are visually greyed out.
+    /// </summary>
+    [ObservableProperty]
+    private IReadOnlyList<JumpLetterItem> _jumpLetters = BuildAllLetters(new HashSet<char>());
+
+    /// <summary>
+    /// Raised by the VM when the View should scroll the creator ListBox to the first
+    /// item whose name starts with <see cref="JumpLetterArgs.Letter"/>.
+    /// The View resolves the target item via <see cref="JumpListIndex.FirstIndexForLetter"/>
+    /// and calls <c>ListBox.ScrollIntoView(item)</c>.
+    /// </summary>
+    public event EventHandler<JumpLetterArgs>? JumpToLetterRequested;
+
+    /// <summary>Scrolls the creator grid to the first creator starting with <paramref name="letter"/>.</summary>
+    [RelayCommand]
+    private void JumpToLetter(char letter)
+    {
+        // Only raise the event; the View owns the ListBox ref (no WPF dep in VM).
+        JumpToLetterRequested?.Invoke(this, new JumpLetterArgs(letter));
+    }
+
+    private void RefreshAvailableLetters()
+    {
+        var names = Creators.Select(c => c.Name).ToList();
+        var available = JumpListIndex.AvailableLetters(names);
+        var availSet = new HashSet<char>(available);
+        JumpLetters = BuildAllLetters(availSet);
+    }
+
+    private static IReadOnlyList<JumpLetterItem> BuildAllLetters(ISet<char> available)
+    {
+        var items = new JumpLetterItem[26];
+        for (var i = 0; i < 26; i++)
+        {
+            var letter = (char)('A' + i);
+            items[i] = new JumpLetterItem(letter, available.Contains(letter));
+        }
+        return items;
+    }
+
     public async Task LoadAsync(CancellationToken ct)
     {
         // Heavy work off the UI thread; resume on the captured context to mutate the UI-bound collection.
@@ -185,6 +232,8 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
             Creators.Add(card);
             await card.LoadImageAsync(ct);
         }
+
+        RefreshAvailableLetters();
     }
 
     private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
