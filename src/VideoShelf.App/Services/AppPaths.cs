@@ -21,5 +21,6 @@ public sealed class AppPaths
     public string ThumbnailDirectory => Path.Combine(Root, "thumbs");
     public string CaptureDirectory => Path.Combine(Root, "captures");
     public string SeekPreviewDirectory => Path.Combine(Root, "seek-preview");
+    public string CoversDirectory => Path.Combine(Root, "covers");
     public string RenameManifestDirectory => Path.Combine(Root, "rename-manifests");
 }

@@ -289,6 +289,24 @@
                                                Margin="0,6,0,0" HorizontalAlignment="Left"
                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
                                                Style="{StaticResource SecondaryButton}"/>
+                                    <!-- Series cover art actions: only visible in edit mode -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
+                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                        <ui:Button Command="{Binding SetSeriesArtCommand}"
+                                                   Style="{StaticResource SecondaryButton}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
+                                                <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </ui:Button>
+                                        <ui:Button Command="{Binding ClearSeriesArtCommand}" Margin="8,0,0,0"
+                                                   Style="{StaticResource SecondaryButton}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                                <TextBlock Text="Use default" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </ui:Button>
+                                    </StackPanel>
                                     <!-- Series tag editor: only in edit mode, only when wired with tags -->
                                     <StackPanel Margin="0,8,0,0"
                                                 Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">

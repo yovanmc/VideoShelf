@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IImagePicker, ImagePicker>();
         services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
         services.AddSingleton<CreatorArtRepository>();
+        services.AddSingleton<ItemArtRepository>();
         services.AddSingleton<CreatorsViewModel>();
 
         services.AddSingleton<ScanService>();
@@ -65,10 +66,12 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<WatchRepository>(),
                 sp.GetRequiredService<SettingsRepository>(),
                 sp.GetRequiredService<ResumePolicy>(),
-                sp.GetRequiredService<ISubtitleFilePicker>())
+                sp.GetRequiredService<ISubtitleFilePicker>(),
+                sp.GetRequiredService<ItemArtRepository>())
             {
                 CaptureDirectory = paths.CaptureDirectory,
                 SeekPreviewDirectory = paths.SeekPreviewDirectory,
+                CoversDirectory = paths.CoversDirectory,
             };
             return vm;
         });
@@ -80,7 +83,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DiscoveryRepository>();
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
-        services.AddSingleton<SectionDetailViewModel>();
+        services.AddSingleton<SectionDetailViewModel>(sp => new SectionDetailViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<TagRepository>(),
+            sp.GetRequiredService<WatchRepository>(),
+            sp.GetRequiredService<IThumbnailService>(),
+            sp.GetRequiredService<CreatorArtRepository>(),
+            sp.GetRequiredService<IImagePicker>(),
+            sp.GetRequiredService<PlayQueueViewModel>(),
+            sp.GetRequiredService<CurationRepository>(),
+            sp.GetRequiredService<PlaylistRepository>(),
+            sp.GetRequiredService<ItemArtRepository>()));
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();
