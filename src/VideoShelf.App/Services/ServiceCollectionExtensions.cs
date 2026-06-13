@@ -63,7 +63,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<LibraryRepository>(),
                 sp.GetRequiredService<WatchRepository>(),
                 sp.GetRequiredService<SettingsRepository>(),
-                sp.GetRequiredService<ResumePolicy>())
+                sp.GetRequiredService<ResumePolicy>(),
+                sp.GetRequiredService<ISubtitleFilePicker>())
             {
                 CaptureDirectory = paths.CaptureDirectory,
                 SeekPreviewDirectory = paths.SeekPreviewDirectory,

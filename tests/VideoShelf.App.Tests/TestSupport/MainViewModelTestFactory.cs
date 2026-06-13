@@ -45,7 +45,7 @@ public static class MainViewModelTestFactory
         var sources = new SourcesViewModel(lib, new FakeFolderPicker());
         var libraryVm = new LibraryViewModel(lib, watch, thumbs);
         var engine = new FakePlaybackEngine();
-        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
+        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy(), new FakeSubtitleFilePicker());
         var settingsVm = new SettingsViewModel(settings);
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);

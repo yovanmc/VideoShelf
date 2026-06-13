@@ -17,7 +17,7 @@ public class PlayerMissingFileTests
         var videoId = lib.UpsertVideo(seriesId, path, 1, ".mp4");
         ep = new EpisodeView(videoId, seriesId, path, 1, "Base", Watched: false, Missing: missingFlag);
         return new PlayerViewModel(engine, lib, new WatchRepository(temp.Db),
-            new SettingsRepository(temp.Db), new ResumePolicy());
+            new SettingsRepository(temp.Db), new ResumePolicy(), new FakeSubtitleFilePicker());
     }
 
     [Fact]

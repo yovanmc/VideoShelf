@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,7 +21,8 @@ public sealed partial class PlayerViewModel(
     LibraryRepository library,
     WatchRepository watch,
     SettingsRepository settings,
-    ResumePolicy resumePolicy) : ObservableObject
+    ResumePolicy resumePolicy,
+    ISubtitleFilePicker subtitlePicker) : ObservableObject
 {
     private EpisodeView? _current;
     private double _lastSavedAt;
@@ -62,6 +64,9 @@ public sealed partial class PlayerViewModel(
     public bool HasMultipleAudioTracks => AudioTracks.Count > 1;
     public bool HasSubtitleTracks => SubtitleTracks.Count > 1;
     public bool HasChapters => Chapters.Count > 0;
+
+    public string? CurrentFilePath => _current?.FilePath;
+    public bool CanAddSubtitle => _current is not null;
 
     [ObservableProperty]
     private TrackOption? _selectedAudioTrack;
@@ -209,6 +214,19 @@ public sealed partial class PlayerViewModel(
     }
 
     [RelayCommand]
+    private void AddSubtitleFile()
+    {
+        if (_current is not { } cur) return;
+        var folder = Path.GetDirectoryName(cur.FilePath);
+        var path = subtitlePicker.PickSubtitle(folder);
+        if (string.IsNullOrEmpty(path)) return;
+        engine.AddSubtitle(path);
+        RefreshTracks();
+        SelectedSubtitleTrack = SubtitleTracks.LastOrDefault(t => t.Id != TrackOption.SubtitlesOffId)
+                                ?? SelectedSubtitleTrack;
+    }
+
+    [RelayCommand]
     private void NextChapter() => engine.NextChapter();
 
     [RelayCommand]
@@ -242,6 +260,8 @@ public sealed partial class PlayerViewModel(
         }
 
         _current = episode;
+        OnPropertyChanged(nameof(CurrentFilePath));
+        OnPropertyChanged(nameof(CanAddSubtitle));
         _lastSavedAt = 0;
         _length = 0;
         ScrubPosition = 0;

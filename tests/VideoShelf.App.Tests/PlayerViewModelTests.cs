@@ -25,7 +25,7 @@ public class PlayerViewModelTests
 
     private static PlayerViewModel NewVm(AppTempDb temp, FakePlaybackEngine engine,
         LibraryRepository lib, WatchRepository watch, SettingsRepository settings)
-        => new(engine, lib, watch, settings, new ResumePolicy());
+        => new(engine, lib, watch, settings, new ResumePolicy(), new FakeSubtitleFilePicker());
 
     [Fact]
     public void Open_loads_path_into_engine_and_plays()

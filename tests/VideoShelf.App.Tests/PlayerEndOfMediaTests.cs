@@ -33,7 +33,7 @@ public class PlayerEndOfMediaTests
 
     private static PlayerViewModel NewVm(FakePlaybackEngine engine,
         LibraryRepository lib, WatchRepository watch, SettingsRepository settings)
-        => new(engine, lib, watch, settings, new ResumePolicy());
+        => new(engine, lib, watch, settings, new ResumePolicy(), new FakeSubtitleFilePicker());
 
     [Fact]
     public void Ended_marks_watched_and_clears_resume()

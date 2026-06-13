@@ -19,7 +19,7 @@ public class PlayerCaptureTests
         var ep = new EpisodeView(videoId, seriesId, @"C:\V\S\a.mp4", 1, "Base", false, false);
         var engine = new FakePlaybackEngine();
         var vm = new PlayerViewModel(engine, lib, new WatchRepository(temp.Db),
-            new SettingsRepository(temp.Db), new ResumePolicy())
+            new SettingsRepository(temp.Db), new ResumePolicy(), new FakeSubtitleFilePicker())
         {
             CaptureDirectory = captureDir,
         };

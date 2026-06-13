@@ -37,7 +37,7 @@ public class MainViewModelPlaybackTests
         var thumbs = new NullThumbs();
         var library = new LibraryViewModel(lib, watch, thumbs);
         var sources = new SourcesViewModel(lib, new FakeFolderPicker());
-        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy());
+        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy(), new FakeSubtitleFilePicker());
         var settingsVm = new SettingsViewModel(settings);
         var disc = new DiscoveryRepository(temp.Db, lib, tags);
         var art = new CreatorArtRepository(temp.Db);
