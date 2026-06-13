@@ -19,7 +19,7 @@ public class PlayerTracksAndChaptersTests
         var ep = new EpisodeView(videoId, seriesId, path, 1, "Base", false, false);
         var engine = new FakePlaybackEngine();
         var vm = new PlayerViewModel(engine, lib, new WatchRepository(temp.Db),
-            new SettingsRepository(temp.Db), new ResumePolicy());
+            new SettingsRepository(temp.Db), new ResumePolicy(), new FakeSubtitleFilePicker());
         return (vm, engine, ep);
     }
 

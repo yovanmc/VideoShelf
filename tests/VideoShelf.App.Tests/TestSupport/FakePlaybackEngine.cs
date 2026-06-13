@@ -44,6 +44,14 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
     public int GetCurrentSubtitleTrack() => _currentSubtitle;
     public void SetSubtitleTrack(int id) => _currentSubtitle = id;
 
+    public List<string> AddedSubtitles { get; } = new();
+    public void AddSubtitle(string subtitlePath)
+    {
+        AddedSubtitles.Add(subtitlePath);
+        // simulate the new track surfacing in the picker:
+        SubtitleTracks.Add(new TrackOption(SubtitleTracks.Count, System.IO.Path.GetFileName(subtitlePath)));
+    }
+
     public IReadOnlyList<ChapterOption> GetChapters() => Chapters;
     public void NextChapter() => NextChapterCalls++;
     public void PreviousChapter() => PreviousChapterCalls++;

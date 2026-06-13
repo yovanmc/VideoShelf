@@ -119,6 +119,8 @@
                                                   SelectedItem="{Binding Player.SelectedSubtitleTrack}"
                                                   DisplayMemberPath="Label"
                                                   Visibility="{Binding Player.HasSubtitleTracks, Converter={StaticResource BoolToVisibility}}" />
+                                        <ui:Button Margin="6,0,0,0" Command="{Binding Player.AddSubtitleFileCommand}"
+                                                   ToolTip="Add subtitle file…" Appearance="Transparent" Content="+ Sub" />
                                         <Slider Margin="12,0,0,0" Width="100" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="100" Value="{Binding Player.Volume}" />
                                         <ui:Button Content="Screenshot" Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}" />

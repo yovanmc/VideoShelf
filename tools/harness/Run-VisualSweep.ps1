@@ -18,6 +18,23 @@ New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
 & (Join-Path $PSScriptRoot 'Generate-Fixtures.ps1') -OutDir $Fixtures
 $playClip = Join-Path $Fixtures 'Movies\Sintel (2010).mp4'
 
+# Seed a matching .srt next to EVERY .mp4 fixture so whichever clip the player
+# view opens (currently the first episode of the richest series, i.e.
+# "Shows\Big Buck Bunny 1.mp4", determined by HarnessRunner.PlayAsync ->
+# FindRichestSeriesAsync) always has a sidecar present to auto-load.
+# Seeding is idempotent: skips any .srt that already exists.
+$srtContent = @"
+1
+00:00:00,500 --> 00:00:04,000
+VideoShelf sidecar subtitle test.
+"@
+Get-ChildItem -Path $Fixtures -Recurse -Filter '*.mp4' | ForEach-Object {
+    $srt = [System.IO.Path]::ChangeExtension($_.FullName, '.srt')
+    if (-not (Test-Path $srt)) {
+        $srtContent | Set-Content -Path $srt -Encoding UTF8
+    }
+}
+
 # 2. Build Debug app
 Write-Host "Building VideoShelf.App (Debug)..."
 dotnet build (Join-Path $repo 'src\VideoShelf.App\VideoShelf.App.csproj') -c Debug --nologo -v q
