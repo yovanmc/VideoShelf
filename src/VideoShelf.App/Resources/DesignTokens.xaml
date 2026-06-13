@@ -1,61 +1,269 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <!-- ============================================================
-         DESIGN TOKENS — single source of truth for color, surface,
-         radius, spacing and type. Merged into App.xaml and into each
-         view so every view parses self-contained (no reliance on a
-         running Application).
+         VideoShelf design system — owned (no longer borrowed from VideoTriage).
+         Dark-only. Additive; never retemplate WPF-UI controls.
+
+         Sections:
+           COLORS
+           BRUSHES (semantic)
+           SURFACES / TEXT
+           PLAYER SCRIM
+           RADII & SPACING
+           CARD SIZING
+           TYPE RAMP
+           BUTTONS
+           CHIPS
+           FOCUS
+           IMAGE
          ============================================================ -->
 
-    <!-- Semantic colors (one per meaning) -->
+    <!-- ============================================================
+         COLORS — one named color per semantic meaning
+         ============================================================ -->
     <Color x:Key="AccentColor">#5CC8FF</Color>
     <Color x:Key="SuccessColor">#36C98F</Color>
     <Color x:Key="WarningColor">#F5A524</Color>
     <Color x:Key="DangerColor">#F05252</Color>
     <Color x:Key="NeutralColor">#8B93A7</Color>
 
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <!-- ============================================================
+         BRUSHES (semantic) — solid-color brushes keyed from colors above
+         ============================================================ -->
+    <SolidColorBrush x:Key="AccentBrush"  Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
-    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="DangerBrush"  Color="{StaticResource DangerColor}" />
     <SolidColorBrush x:Key="NeutralBrush" Color="{StaticResource NeutralColor}" />
 
-    <!-- Faint semantic tints (~20% alpha) for banners/status fills -->
+    <!-- Faint semantic tints (~20% alpha) for banners / status fills -->
+    <!-- SuccessTintBrush: #33 alpha over SuccessColor #36C98F -->
     <SolidColorBrush x:Key="SuccessTintBrush" Color="#3336C98F" />
+    <!-- WarningTintBrush: #33 alpha over WarningColor #F5A524 -->
     <SolidColorBrush x:Key="WarningTintBrush" Color="#33F5A524" />
 
-    <!-- Surface tokens: stroke, subtle fill, thumbnail placeholder -->
-    <SolidColorBrush x:Key="DividerBrush" Color="#22000000" />
-    <SolidColorBrush x:Key="SubtleFillBrush" Color="#0F7F7F7F" />
-    <SolidColorBrush x:Key="ThumbPlaceholderBrush" Color="#247F7F7F" />
+    <!-- ============================================================
+         SURFACES / TEXT — semantic brushes bridging to WPF-UI dark theme.
+         DynamicResource keys confirmed present in WPF-UI 4.3.0 DLL.
+         Fallback literals are used by views that load the dictionary
+         outside a running Application (e.g., XAML designer, unit tests).
+         ============================================================ -->
 
-    <!-- Corner radii: cards vs. controls/chips -->
+    <!-- App background — matches WPF-UI dark window canvas.
+         StaticResource alias: DesignTokens.xaml is merged after ui:ThemesDictionary
+         and ui:ControlsDictionary in App.xaml, so WPF-UI brush keys are already
+         defined when we alias them here. Views consume these as {DynamicResource SurfaceBrush}
+         or {StaticResource SurfaceBrush} depending on whether theme switching is needed
+         (dark-only app, so StaticResource is fine in views).
+         Confirmed present in WPF-UI 4.3.0 DLL: ApplicationBackgroundBrush,
+         ControlFillColorDefaultBrush, TextFillColorPrimaryBrush, TextFillColorSecondaryBrush. -->
+    <StaticResource x:Key="SurfaceBrush"      ResourceKey="ApplicationBackgroundBrush" />
+    <!-- Card / panel fill — WPF-UI ControlFillColorDefaultBrush (dark: ~#14FFFFFF) -->
+    <StaticResource x:Key="CardSurfaceBrush"  ResourceKey="ControlFillColorDefaultBrush" />
+    <!-- Primary text — WPF-UI TextFillColorPrimaryBrush (dark: white #FFFFFFFF) -->
+    <StaticResource x:Key="TextPrimaryBrush"  ResourceKey="TextFillColorPrimaryBrush" />
+    <!-- Secondary / muted text — WPF-UI TextFillColorSecondaryBrush (dark: ~#B0FFFFFF) -->
+    <StaticResource x:Key="TextSecondaryBrush" ResourceKey="TextFillColorSecondaryBrush" />
+
+    <!-- Divider: deliberate visibility fix — was #22000000 (near-black, invisible on
+         dark canvas); now #22FFFFFF (low-opacity white, visible on dark). -->
+    <SolidColorBrush x:Key="DividerBrush" Color="#22FFFFFF" />
+
+    <!-- Subtle overlay fill for interactive surfaces (chips, queue rows, etc.) -->
+    <SolidColorBrush x:Key="SubtleFillBrush"       Color="#0F7F7F7F" />
+    <!-- Placeholder fill for thumbnail slots before image loads -->
+    <SolidColorBrush x:Key="ThumbPlaceholderBrush" Color="#247F7F7F" />
+    <!-- Caption text overlaid directly on card artwork -->
+    <SolidColorBrush x:Key="CardCaptionBrush"       Color="#B0FFFFFF" />
+
+    <!-- ============================================================
+         PLAYER SCRIM — named versions of the player overlay literals
+         ============================================================ -->
+    <!-- Main video overlay / bottom gradient base -->
+    <SolidColorBrush x:Key="PlayerScrimBrush"        Color="#B0101010" />
+    <!-- Top gradient / title bar scrim (lighter) -->
+    <SolidColorBrush x:Key="PlayerTopScrimBrush"     Color="#80101010" />
+    <!-- Side / info panel background -->
+    <SolidColorBrush x:Key="PlayerPanelBrush"        Color="#CC202020" />
+    <!-- Popup / context-menu surface (nearly opaque) -->
+    <SolidColorBrush x:Key="PlayerPopupBrush"        Color="#E0101010" />
+    <!-- Popup border — low-opacity white outline -->
+    <SolidColorBrush x:Key="PlayerPopupBorderBrush"  Color="#60FFFFFF" />
+
+    <!-- ============================================================
+         RADII & SPACING
+         ============================================================ -->
+    <!-- Corner radii: large for cards, small for controls / chips -->
     <CornerRadius x:Key="CardRadius">8</CornerRadius>
     <CornerRadius x:Key="ControlRadius">4</CornerRadius>
+    <!-- Larger radius applied to card artwork images -->
+    <CornerRadius x:Key="CardImageRadius">10</CornerRadius>
 
-    <!-- Spacing scale (4px base) for the repeated layout roles -->
+    <!-- Spacing scale (4 px base) for repeated layout roles -->
     <Thickness x:Key="SectionGap">0,24,0,8</Thickness>
     <Thickness x:Key="FieldLabelMargin">0,12,0,4</Thickness>
+    <!-- Gap between card cells in WrapPanel / UniformGrid layouts -->
+    <Thickness x:Key="CardGap">0,0,16,16</Thickness>
 
-    <!-- Typography ramp -->
-    <Style x:Key="SectionHeader" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="11" />
+    <!-- ============================================================
+         CARD SIZING — doubles consumed by ItemsControl ItemWidth / Height
+         ============================================================ -->
+    <sys:Double x:Key="CardWidth">200</sys:Double>
+    <sys:Double x:Key="CardThumbHeight">112</sys:Double>
+
+    <!-- ============================================================
+         TYPE RAMP — keyed TextBlock styles
+         ============================================================ -->
+    <!-- Page / view title -->
+    <Style x:Key="TypePageTitle" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="24" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- Rail / section header (large) -->
+    <Style x:Key="TypeRailHeader" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="18" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- Default body copy -->
+    <Style x:Key="TypeBody" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+
+    <!-- Eyebrow label (small, accented, slightly transparent) -->
+    <Style x:Key="TypeEyebrow" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-        <Setter Property="Opacity" Value="0.85" />
-    </Style>
-    <Style x:Key="StatValue" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="24" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-    <Style x:Key="Caption" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Opacity" Value="0.6" />
+        <Setter Property="Opacity"    Value="0.85" />
     </Style>
 
-    <!-- Thumbnail image: shared fade-in. Opacity defaults to 1 so a
-         thumbnail is never stuck hidden if TargetUpdated doesn't fire;
-         the From=0 animation only adds a fade when a source arrives. -->
+    <!-- SectionHeader — alias for TypeEyebrow; kept for backward compat.
+         All existing usages of SectionHeader continue to work unchanged. -->
+    <Style x:Key="SectionHeader" TargetType="TextBlock"
+           BasedOn="{StaticResource TypeEyebrow}">
+    </Style>
+
+    <!-- StatValue — large number display (unchanged) -->
+    <Style x:Key="StatValue" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="24" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <!-- Caption — small muted label (unchanged) -->
+    <Style x:Key="Caption" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Opacity"  Value="0.6" />
+    </Style>
+
+    <!-- ============================================================
+         BUTTONS — additive styles; set only Appearance DP + sizing,
+         never override ControlTemplate (theming-rule-safe)
+         ============================================================ -->
+
+    <!-- Focus visual shared by all three button styles (see FOCUS section) -->
+
+    <!-- Primary action button -->
+    <Style x:Key="PrimaryButton" TargetType="ui:Button"
+           BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Appearance" Value="Primary" />
+        <Setter Property="Padding"    Value="14,6" />
+        <Setter Property="MinHeight"  Value="32" />
+    </Style>
+
+    <!-- Secondary / ghost button -->
+    <Style x:Key="SecondaryButton" TargetType="ui:Button"
+           BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Appearance" Value="Secondary" />
+        <Setter Property="Padding"    Value="14,6" />
+        <Setter Property="MinHeight"  Value="32" />
+    </Style>
+
+    <!-- Tertiary / text-like button -->
+    <Style x:Key="TertiaryButton" TargetType="ui:Button"
+           BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Appearance" Value="Transparent" />
+        <Setter Property="Padding"    Value="14,6" />
+        <Setter Property="MinHeight"  Value="32" />
+    </Style>
+
+    <!-- ============================================================
+         CHIPS — pill-shaped labels and toggles
+         ============================================================ -->
+
+    <!-- Read-only chip (Border wrapper) -->
+    <Style x:Key="Chip" TargetType="Border">
+        <Setter Property="Background"    Value="{StaticResource SubtleFillBrush}" />
+        <Setter Property="CornerRadius"  Value="12" />
+        <Setter Property="Padding"       Value="10,4" />
+    </Style>
+
+    <!-- Toggle chip (plain WPF ToggleButton — NOT ui:ToggleButton, additive only).
+         Uses triggers on IsChecked to flip background to accent; no ControlTemplate
+         override — theming-rule-safe. -->
+    <Style x:Key="ChipToggle" TargetType="ToggleButton">
+        <Setter Property="Background"  Value="{StaticResource SubtleFillBrush}" />
+        <Setter Property="Padding"     Value="10,4" />
+        <Setter Property="Cursor"      Value="Hand" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Style.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                <Setter Property="Foreground" Value="#FF000000" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="0.85" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ============================================================
+         FOCUS — FocusVisualStyle adorner overlay.
+         A FocusVisualStyle is an adorner, NOT a control template
+         override — theming-rule-safe.
+         ============================================================ -->
+    <Style x:Key="AppFocusVisual" TargetType="Control">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Control">
+                    <Rectangle Stroke="{StaticResource AccentBrush}"
+                               StrokeThickness="2"
+                               Margin="2"
+                               SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Apply focus visual to button styles (defined above) -->
+    <Style x:Key="PrimaryButtonFocused" TargetType="ui:Button"
+           BasedOn="{StaticResource PrimaryButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
+    </Style>
+
+    <Style x:Key="SecondaryButtonFocused" TargetType="ui:Button"
+           BasedOn="{StaticResource SecondaryButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
+    </Style>
+
+    <Style x:Key="TertiaryButtonFocused" TargetType="ui:Button"
+           BasedOn="{StaticResource TertiaryButton}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
+    </Style>
+
+    <Style x:Key="ChipToggleFocused" TargetType="ToggleButton"
+           BasedOn="{StaticResource ChipToggle}">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
+    </Style>
+
+    <!-- ============================================================
+         IMAGE — shared thumbnail fade-in animation
+         ============================================================ -->
+    <!-- ThumbnailImage: Opacity defaults to 1 so a thumbnail is never stuck
+         hidden if TargetUpdated doesn't fire; From=0 adds a fade on source arrival. -->
     <Style x:Key="ThumbnailImage" TargetType="Image">
         <Setter Property="Stretch" Value="UniformToFill" />
         <Style.Triggers>
@@ -70,8 +278,4 @@
         </Style.Triggers>
     </Style>
 
-    <!-- v2 card system (additive) -->
-    <CornerRadius x:Key="CardImageRadius">10</CornerRadius>
-    <Thickness x:Key="CardGap">0,0,16,16</Thickness>
-    <SolidColorBrush x:Key="CardCaptionBrush" Color="#B0FFFFFF" />
 </ResourceDictionary>
