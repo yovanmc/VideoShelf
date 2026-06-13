@@ -53,9 +53,10 @@ public class MainViewModelPlaybackTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
+        var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm);
     }
 
     [Fact]
@@ -119,9 +120,10 @@ public class MainViewModelPlaybackTests
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
+        var smartViewsVm2 = new SmartViewsViewModel(smartViews2, tags, lib);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2);
 
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);

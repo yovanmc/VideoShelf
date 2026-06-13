@@ -89,6 +89,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<CreatorCardFactory>();
         services.AddSingleton<SearchViewModel>();
+        services.AddSingleton<SmartViewsViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

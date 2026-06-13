@@ -82,9 +82,10 @@ public class MainViewModelTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
+        var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();
@@ -93,5 +94,35 @@ public class MainViewModelTests
 
         vm.Sources.Sources.Single().RootPath.ShouldBe(dir.Path);
         vm.Library.Sections.Single().DisplayName.ShouldBe("Creator A");
+    }
+
+    [Fact]
+    public void ShowSmartViewsCommand_sets_CurrentView_to_SmartViews_and_pushes_back_stack()
+    {
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _d = ctx.Db;
+
+        // Navigate somewhere first so there's something on the back stack.
+        vm.ShowSmartViewsCommand.Execute(null);
+
+        vm.CurrentView.ShouldBe(AppView.SmartViews);
+        vm.CanGoBack.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ShowSmartViewsCommand_GoBack_returns_to_previous_view()
+    {
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _d = ctx.Db;
+
+        // Start on Home.
+        vm.CurrentView.ShouldBe(AppView.Home);
+
+        vm.ShowSmartViewsCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.SmartViews);
+
+        vm.GoBackCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Home);
+        vm.CanGoBack.ShouldBeFalse();
     }
 }

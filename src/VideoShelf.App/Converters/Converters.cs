@@ -53,6 +53,14 @@ public sealed class SortModeToIndex : IValueConverter
         => value is int i ? (BrowseSort)i : BrowseSort.Name;
 }
 
+/// <summary>Inverts a boolean value.</summary>
+public sealed class InvertBool : IValueConverter
+{
+    public static readonly InvertBool Instance = new();
+    public object Convert(object? value, Type t, object? p, CultureInfo c) => value is not true;
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => value is not true;
+}
+
 /// <summary>Maps a 0..1 fraction to a pixel width = fraction * ConverterParameter (a track width in DIPs).
 /// Used to render a continue-watching progress fill inside a fixed-width card.</summary>
 public sealed class FractionToWidth : IValueConverter
