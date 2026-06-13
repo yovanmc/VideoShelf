@@ -106,6 +106,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<RenamePlanner>();
         services.AddSingleton<RenameExecutor>();
         services.AddSingleton<RenameToolViewModel>();
+        services.AddSingleton<MultiRenameViewModel>();
 
         services.AddSingleton<CreatorCardFactory>();
         services.AddSingleton<SearchViewModel>();
@@ -155,7 +156,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<HistoryViewModel>(),
                 lib,
                 sp.GetRequiredService<BulkActionBarViewModel>(),
-                palette);
+                palette,
+                sp.GetRequiredService<MultiRenameViewModel>());
 
             mainVmBox = mainVm;
             return mainVm;

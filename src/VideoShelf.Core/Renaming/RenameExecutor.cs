@@ -13,7 +13,23 @@ public sealed class RenameExecutor(IFileSystem fs, LibraryRepository library)
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
+    /// <summary>
+    /// Single-series convenience overload. Delegates to <see cref="Apply(RenamePlan,string)"/> with
+    /// the series id stored in the manifest for audit purposes. The old signature is preserved so
+    /// <c>RenameToolViewModel</c> and existing tests compile unchanged.
+    /// </summary>
     public RenameResult Apply(RenamePlan plan, long seriesId, string manifestDirectory)
+        => ApplyCore(plan, seriesId, manifestDirectory);
+
+    /// <summary>
+    /// Multi-series (batch) overload. Writes <b>one</b> undo manifest for the entire combined
+    /// <see cref="RenamePlan"/> — the manifest's <c>SeriesId</c> is null to indicate a batch.
+    /// Undo is atomic: the single manifest restores every file and DB path in the batch.
+    /// </summary>
+    public RenameResult Apply(RenamePlan plan, string manifestDirectory)
+        => ApplyCore(plan, null, manifestDirectory);
+
+    private RenameResult ApplyCore(RenamePlan plan, long? seriesId, string manifestDirectory)
     {
         var ready = new List<RenameItem>();
         foreach (var i in plan.Items) if (i.WillRename) ready.Add(i);
