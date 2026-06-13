@@ -63,7 +63,7 @@ public class MainViewModelPlaybackTests
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
-            playlistsVm, historyVm);
+            playlistsVm, historyVm, lib);
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class MainViewModelPlaybackTests
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2, watchlistVm2,
-            playlistsVm2, historyVm2);
+            playlistsVm2, historyVm2, lib);
 
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);

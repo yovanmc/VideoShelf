@@ -74,7 +74,7 @@ public static class MainViewModelTestFactory
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
-            playlistsVm, historyVm);
+            playlistsVm, historyVm, lib);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

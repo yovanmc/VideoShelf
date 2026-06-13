@@ -173,6 +173,12 @@
                                                    AutomationProperties.Name="Screenshot">
                                             <ui:SymbolIcon Symbol="Camera24" />
                                         </ui:Button>
+                                        <ui:Button Margin="4,0,0,0" Command="{Binding Player.SetCoverFromFrameCommand}"
+                                                   Style="{StaticResource TertiaryButton}"
+                                                   ToolTip="Set as cover"
+                                                   AutomationProperties.Name="Set as cover">
+                                            <ui:SymbolIcon Symbol="Image24" />
+                                        </ui:Button>
                                         <ui:Button Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}"
                                                    Style="{StaticResource TertiaryButton}"
                                                    ToolTip="Fullscreen"

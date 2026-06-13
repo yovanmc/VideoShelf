@@ -22,7 +22,8 @@ public sealed partial class PlayerViewModel(
     WatchRepository watch,
     SettingsRepository settings,
     ResumePolicy resumePolicy,
-    ISubtitleFilePicker subtitlePicker) : ObservableObject
+    ISubtitleFilePicker subtitlePicker,
+    ItemArtRepository? itemArt = null) : ObservableObject
 {
     private EpisodeView? _current;
     private double _lastSavedAt;
@@ -117,6 +118,12 @@ public sealed partial class PlayerViewModel(
     /// <summary>Folder seek-preview frames are cached in.</summary>
     public string SeekPreviewDirectory { get; set; } = System.IO.Path.GetTempPath();
 
+    /// <summary>Folder cover snapshots are written to. Set by DI from AppPaths.CoversDirectory; NEVER a library path.</summary>
+    public string CoversDirectory { get; set; } = System.IO.Path.GetTempPath();
+
+    /// <summary>The video id of the currently loaded episode, or null if nothing is open.</summary>
+    public long? CurrentVideoId => _current?.VideoId;
+
     [ObservableProperty]
     private string? _lastScreenshotPath;
 
@@ -133,6 +140,29 @@ public sealed partial class PlayerViewModel(
         catch
         {
             LastScreenshotPath = null; // fail-safe: a screenshot must never crash playback
+        }
+    }
+
+    /// <summary>True when a video is loaded and ItemArtRepository is available.</summary>
+    public bool CanSetCover => itemArt is not null && _current is not null;
+
+    /// <summary>Snapshots the current frame into CoversDirectory and stores it as the video's cover art.
+    /// Fail-safe: any error is swallowed so playback is never interrupted.</summary>
+    [RelayCommand]
+    private void SetCoverFromFrame()
+    {
+        try
+        {
+            if (itemArt is null || _current is null) return;
+            var videoId = _current.VideoId;
+            Directory.CreateDirectory(CoversDirectory);
+            var target = Path.Combine(CoversDirectory, $"cover_{videoId}.png");
+            if (engine.TrySnapshot(target))
+                itemArt.SetVideoArt(videoId, target);
+        }
+        catch
+        {
+            // fail-safe: must never crash playback
         }
     }
 

@@ -19,6 +19,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly SettingsViewModel _settings;
     private readonly MediaBackfillService _backfill;
     private readonly PlayQueueViewModel _playQueue;
+    private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -37,7 +38,8 @@ public sealed partial class MainViewModel : ObservableObject
         FavoritesViewModel favorites,
         WatchlistViewModel watchlist,
         PlaylistsViewModel playlists,
-        HistoryViewModel history)
+        HistoryViewModel history,
+        VideoShelf.Core.Storage.LibraryRepository libraryRepo)
     {
         _sources = sources;
         _library = library;
@@ -46,6 +48,7 @@ public sealed partial class MainViewModel : ObservableObject
         _settings = settings;
         _backfill = backfill;
         _playQueue = playQueue;
+        _libraryRepo = libraryRepo;
         SmartViews = smartViews;
         Favorites = favorites;
         Watchlist = watchlist;
@@ -232,6 +235,14 @@ public sealed partial class MainViewModel : ObservableObject
         await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
         PushNav(CurrentView);
         CurrentView = AppView.RenameTool;
+    }
+
+    /// <summary>Picks a random unwatched episode and plays it. No-op when nothing is unwatched.</summary>
+    [RelayCommand]
+    private void SurpriseMe()
+    {
+        var ep = _libraryRepo.GetRandomUnwatchedEpisode();
+        if (ep is not null) PlayEpisode(ep);
     }
 
     [RelayCommand]

@@ -91,7 +91,7 @@ public class MainViewModelTests
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
-            playlistsVm, historyVm);
+            playlistsVm, historyVm, lib);
 
         // Add a source via the sources VM, then scan + reload through the shell.
         sources.Load();

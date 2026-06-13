@@ -21,7 +21,8 @@ public sealed partial class SectionDetailViewModel(
     IImagePicker imagePicker,
     PlayQueueViewModel playQueue,
     CurationRepository? curation = null,
-    PlaylistRepository? playlists = null) : ObservableObject
+    PlaylistRepository? playlists = null,
+    ItemArtRepository? itemArt = null) : ObservableObject
 {
     /// <summary>Shared playlist references for "add to playlist" menus on episode rows.</summary>
     public ObservableCollection<PlaylistRef> AvailablePlaylists { get; } = [];
@@ -99,7 +100,7 @@ public sealed partial class SectionDetailViewModel(
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));

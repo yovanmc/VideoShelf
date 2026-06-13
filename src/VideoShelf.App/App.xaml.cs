@@ -39,7 +39,10 @@ public partial class App : Application
                     options,
                     _host.Services.GetRequiredService<LibraryRepository>(),
                     _host.Services.GetRequiredService<WatchRepository>(),
-                    _host.Services.GetRequiredService<TagRepository>());
+                    _host.Services.GetRequiredService<TagRepository>(),
+                    _host.Services.GetRequiredService<CurationRepository>(),
+                    _host.Services.GetRequiredService<SmartViewRepository>(),
+                    _host.Services.GetRequiredService<PlaylistRepository>());
                 _ = Dispatcher.InvokeAsync(async () => await runner.RunAsync(), DispatcherPriority.Background);
             }
         }

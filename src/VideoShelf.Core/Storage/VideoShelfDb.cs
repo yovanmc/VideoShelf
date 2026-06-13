@@ -180,5 +180,13 @@ public sealed class VideoShelfDb : IDisposable
             video_id INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
             position INTEGER NOT NULL, PRIMARY KEY(playlist_id, video_id)
         );
+        CREATE TABLE IF NOT EXISTS video_art (
+            video_id  INTEGER NOT NULL PRIMARY KEY REFERENCES videos(id)  ON DELETE CASCADE,
+            image_path TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS series_art (
+            series_id INTEGER NOT NULL PRIMARY KEY REFERENCES series(id)  ON DELETE CASCADE,
+            image_path TEXT NOT NULL
+        );
         """;
 }

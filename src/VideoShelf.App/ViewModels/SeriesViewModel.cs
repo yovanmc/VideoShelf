@@ -19,7 +19,9 @@ public sealed partial class SeriesViewModel(
     TagRepository? tags = null,
     CurationRepository? curation = null,
     PlaylistRepository? playlists = null,
-    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null,
+    ItemArtRepository? itemArt = null,
+    IImagePicker? imagePicker = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -127,8 +129,33 @@ public sealed partial class SeriesViewModel(
 
     public async Task LoadThumbnailAsync(CancellationToken cancellationToken)
     {
+        // series_art → seed-based thumbnail precedence
+        var overridePath = itemArt?.GetSeriesArt(summary.SeriesId);
+        if (!string.IsNullOrEmpty(overridePath))
+        {
+            ThumbnailPath = overridePath;
+            return;
+        }
         if (summary.ThumbnailSeedPath is null)
             return;
         ThumbnailPath = await thumbnails.GetThumbnailPathAsync(summary.ThumbnailSeedPath, cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task SetSeriesArt()
+    {
+        if (itemArt is null || imagePicker is null) return;
+        var picked = imagePicker.PickImage();
+        if (string.IsNullOrWhiteSpace(picked)) return;
+        itemArt.SetSeriesArt(summary.SeriesId, picked);
+        await LoadThumbnailAsync(CancellationToken.None);
+    }
+
+    [RelayCommand]
+    private async Task ClearSeriesArt()
+    {
+        if (itemArt is null) return;
+        itemArt.ClearSeriesArt(summary.SeriesId);
+        await LoadThumbnailAsync(CancellationToken.None);
     }
 }

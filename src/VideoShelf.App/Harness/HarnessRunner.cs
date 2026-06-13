@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using VideoShelf.App.ViewModels;
+using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
@@ -23,19 +24,28 @@ public sealed class HarnessRunner
     private readonly LibraryRepository _library;
     private readonly WatchRepository _watch;
     private readonly TagRepository _tags;
+    private readonly CurationRepository _curation;
+    private readonly SmartViewRepository _smartViews;
+    private readonly PlaylistRepository _playlists;
 
     public HarnessRunner(
         MainViewModel main,
         HarnessOptions options,
         LibraryRepository library,
         WatchRepository watch,
-        TagRepository tags)
+        TagRepository tags,
+        CurationRepository curation,
+        SmartViewRepository smartViews,
+        PlaylistRepository playlists)
     {
         _main = main;
         _options = options;
         _library = library;
         _watch = watch;
         _tags = tags;
+        _curation = curation;
+        _smartViews = smartViews;
+        _playlists = playlists;
     }
 
     public async Task RunAsync()
@@ -82,6 +92,11 @@ public sealed class HarnessRunner
             case "Search": await NavigateSearchAsync(); break;
             case "Queue": await ShowQueueAsync(); break;
             case "PlayerQueue": await PlayWithQueueDrawerAsync(); break;
+            case "SmartViews": _main.ShowSmartViewsCommand.Execute(null); break;
+            case "Playlists":  _main.ShowPlaylistsCommand.Execute(null); break;
+            case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
+            case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
+            case "History":    _main.ShowHistoryCommand.Execute(null); break;
             default: _main.CurrentView = AppView.Home; break;
         }
     }
@@ -186,6 +201,32 @@ public sealed class HarnessRunner
                 new ChapterRecord(0, "Intro", 0.0),
                 new ChapterRecord(1, "Main", 10.0),
             });
+
+            // ── M16 organize pages: seed so SmartViews/Playlists/Watchlist/Favorites/History
+            // all render non-empty in the screenshot sweep. Guard on having ≥1 video.
+
+            // Favorite + watchlist
+            _curation.SetFavorite(richest[0].VideoId, true);
+            var watchlistId = richest.Count > 1 ? richest[1].VideoId : richest[0].VideoId;
+            _curation.SetWatchlist(watchlistId, true, DateTimeOffset.UtcNow);
+
+            // Video + series tags (cascade chips on creator/series pages)
+            _tags.AddSeriesTag(richest[0].SeriesId, "demo-series");
+            _tags.AddVideoTag(richest[0].VideoId, "demo-video");
+
+            // Demo smart view (show on home) — uses dateAdded/withinDays so it matches any
+            // recently-scanned video, making the SmartViews page + Home smart-shelf non-empty
+            // regardless of whether the watched flag propagated before seeding.
+            _smartViews.Create(
+                "Demo · recent",
+                new SmartViewDefinition("all", new[] { new SmartRule("dateAdded", "withinDays", "3650") }),
+                showOnHome: true,
+                DateTimeOffset.UtcNow);
+
+            // Demo playlist with up to two items
+            var plId = _playlists.Create("Demo playlist", DateTimeOffset.UtcNow);
+            _playlists.AddItem(plId, richest[0].VideoId);
+            if (richest.Count > 1) _playlists.AddItem(plId, richest[1].VideoId);
 
             break; // seed one source is sufficient for demo
         }
