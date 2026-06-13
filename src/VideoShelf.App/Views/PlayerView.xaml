@@ -10,6 +10,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/QueueStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
         </ResourceDictionary>
@@ -126,11 +127,52 @@
                                         <ui:Button Content="Screenshot" Margin="8,0,0,0" Command="{Binding Player.ScreenshotCommand}" />
                                         <ui:Button Content="Fullscreen" Margin="8,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}" />
                                         <ui:Button Content="Mini-player" Margin="8,0,0,0" Command="{Binding TogglePictureInPictureCommand}" />
+                                        <!-- Queue transport buttons: skip and toggle drawer -->
+                                        <ui:Button Content="⏭" Appearance="Transparent" Margin="8,0,0,0"
+                                                   ToolTip="Skip to next"
+                                                   Command="{Binding PlayQueue.SkipNextCommand}"
+                                                   Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"/>
+                                        <ui:Button Content="☰ Up next" Appearance="Transparent" Margin="4,0,0,0"
+                                                   Command="{Binding PlayQueue.ToggleDrawerCommand}"
+                                                   Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"/>
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
                     </Grid>
+
+                    <!-- ===== Queue drawer: right-side overlay, collapsed in PiP ===== -->
+                    <Border x:Name="QueueDrawer"
+                            HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                            Width="320" Background="#E6101010"
+                            BorderBrush="{StaticResource DividerBrush}" BorderThickness="1,0,0,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding PlayQueue.IsQueueOpen}" Value="True"/>
+                                            <Condition Binding="{Binding IsPictureInPicture}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <DockPanel Margin="12">
+                            <Grid DockPanel.Dock="Top">
+                                <TextBlock Text="UP NEXT" Style="{StaticResource SectionHeader}"/>
+                                <ui:Button Content="Clear" Appearance="Transparent" HorizontalAlignment="Right"
+                                           Command="{Binding PlayQueue.ClearCommand}"/>
+                            </Grid>
+                            <ItemsControl DataContext="{Binding PlayQueue}"
+                                          ItemsSource="{Binding Items}"
+                                          ItemTemplate="{StaticResource QueueItemTemplate}"
+                                          Margin="0,8,0,0"/>
+                        </DockPanel>
+                    </Border>
+
                 </Grid>
             </vlc:VideoView>
         </Border>

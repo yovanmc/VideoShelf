@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -154,6 +154,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ShowBrowse() { ClearBack(); CurrentView = AppView.Browse; }
+
+    [RelayCommand]
+    private void ShowQueue()
+    {
+        PushNav(CurrentView);
+        CurrentView = AppView.Queue;
+    }
 
     public async Task OpenSectionAsync(long sectionId)
     {

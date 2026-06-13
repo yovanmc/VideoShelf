@@ -10,6 +10,8 @@
                 <ui:ControlsDictionary />
                 <!-- Shared design tokens (color/surface/radius/spacing/type). -->
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+                <!-- Queue item template + styles (declares xmlns:ui for WPF-UI buttons). -->
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/QueueStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- App-wide converters shared by all views. -->
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
