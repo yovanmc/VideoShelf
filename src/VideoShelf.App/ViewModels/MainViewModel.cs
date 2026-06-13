@@ -39,7 +39,8 @@ public sealed partial class MainViewModel : ObservableObject
         WatchlistViewModel watchlist,
         PlaylistsViewModel playlists,
         HistoryViewModel history,
-        VideoShelf.Core.Storage.LibraryRepository libraryRepo)
+        VideoShelf.Core.Storage.LibraryRepository libraryRepo,
+        BulkActionBarViewModel? bulkBar = null)
     {
         _sources = sources;
         _library = library;
@@ -54,6 +55,7 @@ public sealed partial class MainViewModel : ObservableObject
         Watchlist = watchlist;
         Playlists = playlists;
         History = history;
+        BulkBar = bulkBar;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -92,6 +94,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     public string Title => "VideoShelf";
+
+    /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
+    public BulkActionBarViewModel? BulkBar { get; }
 
     public SmartViewsViewModel SmartViews { get; }
     public FavoritesViewModel Favorites { get; }

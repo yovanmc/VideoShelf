@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,6 +22,22 @@ public partial class CreatorsViewModel : ObservableObject
         _library = library;
         _art = art;
         _thumbnails = thumbnails;
+    }
+
+    /// <summary>
+    /// B3 — Expands the currently selected creators into their constituent (non-missing) video ids.
+    /// Uses <see cref="LibraryRepository.GetEpisodesForSection"/> so no new query method is needed.
+    /// Call this each time the selection changes to feed <see cref="BulkActionBarViewModel.SetVideoIds"/>.
+    /// </summary>
+    public IReadOnlyList<long> GetSelectedVideoIds()
+    {
+        var ids = new List<long>();
+        foreach (var card in Selection.SelectedItems)
+        {
+            var episodes = _library.GetEpisodesForSection(card.SectionId);
+            ids.AddRange(episodes.Select(e => e.VideoId));
+        }
+        return ids;
     }
 
     public ObservableCollection<CreatorCardViewModel> Creators { get; } = new();

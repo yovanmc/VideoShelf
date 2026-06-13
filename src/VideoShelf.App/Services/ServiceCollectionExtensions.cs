@@ -111,6 +111,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>();
+        services.AddSingleton<BulkActionBarViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

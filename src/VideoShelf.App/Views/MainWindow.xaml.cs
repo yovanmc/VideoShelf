@@ -18,6 +18,29 @@ public partial class MainWindow : FluentWindow
         DataContext = viewModel;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
+
+        // B2/B3 — wire bulk-bar clear and selection fan-out.
+        if (_viewModel.BulkBar is not null)
+        {
+            // ClearButton dismisses selection (clears creators selection).
+            BulkActionBarHost.ClearRequested += (_, _) =>
+            {
+                _viewModel.Creators.Selection.ClearSelectionCommand.Execute(null);
+            };
+
+            // Each time the selection changes, push updated video ids to the bar.
+            _viewModel.Creators.Selection.SelectedItems.CollectionChanged += (_, _) =>
+            {
+                _viewModel.BulkBar.SetVideoIds(_viewModel.Creators.GetSelectedVideoIds());
+            };
+
+            // When a bulk action completes, exit selection mode.
+            _viewModel.BulkBar.Completed += (_, _) =>
+            {
+                _viewModel.Creators.Selection.ExitSelectionModeCommand.Execute(null);
+            };
+        }
+
         Loaded += async (_, _) =>
         {
             try { await _viewModel.InitializeAsync(); }
