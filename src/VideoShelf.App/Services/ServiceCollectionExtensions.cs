@@ -93,6 +93,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SearchViewModel>();
         services.AddSingleton<SmartViewsViewModel>();
         services.AddSingleton<FavoritesViewModel>();
+        services.AddSingleton<WatchlistViewModel>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainWindow>();
         return services;

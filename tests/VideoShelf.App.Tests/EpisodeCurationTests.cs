@@ -65,6 +65,25 @@ public class EpisodeCurationTests
     }
 
     [Fact]
+    public void ToggleWatchlist_flips_flag_and_persists()
+    {
+        using var temp = new AppTempDb();
+        var (vm, curation) = Make(temp);
+
+        vm.InWatchlist.ShouldBeFalse();
+        vm.ToggleWatchlistCommand.Execute(null);
+        vm.InWatchlist.ShouldBeTrue();
+
+        // Verify persisted via a fresh CurationRepository read
+        var fresh = new CurationRepository(temp.Db);
+        fresh.InWatchlist(vm.VideoId).ShouldBeTrue();
+
+        vm.ToggleWatchlistCommand.Execute(null);
+        vm.InWatchlist.ShouldBeFalse();
+        fresh.InWatchlist(vm.VideoId).ShouldBeFalse();
+    }
+
+    [Fact]
     public void HasCuration_is_false_when_no_curation_injected()
     {
         using var temp = new AppTempDb();

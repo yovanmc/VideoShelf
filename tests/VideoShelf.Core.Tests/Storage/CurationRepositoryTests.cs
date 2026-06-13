@@ -148,6 +148,134 @@ public class CurationRepositoryTests
         results.Count.ShouldBe(3);
     }
 
+    // ─── InWatchlist / SetWatchlist ─────────────────────────────────────────
+
+    [Fact]
+    public void InWatchlist_returns_false_by_default()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var curation = new CurationRepository(temp.Db);
+
+        curation.InWatchlist(videoId).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void SetWatchlist_true_stamps_watchlist_at_and_InWatchlist_returns_true()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var curation = new CurationRepository(temp.Db);
+        var now = DateTimeOffset.UtcNow;
+
+        curation.SetWatchlist(videoId, true, now);
+
+        curation.InWatchlist(videoId).ShouldBeTrue();
+
+        // Verify watchlist_at was actually written
+        using var conn = temp.Db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT watchlist_at FROM videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        var stored = cmd.ExecuteScalar() as string;
+        stored.ShouldNotBeNullOrEmpty();
+        DateTimeOffset.Parse(stored!).ShouldBe(now, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void SetWatchlist_false_clears_flag_and_nulls_watchlist_at()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var curation = new CurationRepository(temp.Db);
+
+        curation.SetWatchlist(videoId, true, DateTimeOffset.UtcNow);
+        curation.SetWatchlist(videoId, false, DateTimeOffset.UtcNow);
+
+        curation.InWatchlist(videoId).ShouldBeFalse();
+
+        // Verify watchlist_at was nulled
+        using var conn = temp.Db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT watchlist_at FROM videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteScalar().ShouldBe(DBNull.Value);
+    }
+
+    // ─── GetWatchlist ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void GetWatchlist_returns_only_in_watchlist_and_not_missing_videos()
+    {
+        using var temp = new TempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var ser = lib.UpsertSeries(lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S"), "Base", false);
+        var vid1 = lib.UpsertVideo(ser, @"C:\V\S\a.mp4", 1, ".mp4");
+        var vid2 = lib.UpsertVideo(ser, @"C:\V\S\b.mp4", 2, ".mp4");
+        var vid3 = lib.UpsertVideo(ser, @"C:\V\S\c.mp4", 3, ".mp4");
+        var curation = new CurationRepository(temp.Db);
+        var t = DateTimeOffset.UtcNow;
+
+        curation.SetWatchlist(vid1, true, t);
+        // vid2: not in watchlist
+        curation.SetWatchlist(vid3, true, t);
+        // Mark vid3 as missing
+        using (var conn = temp.Db.Open())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "UPDATE videos SET missing=1 WHERE id=$id";
+            cmd.Parameters.AddWithValue("$id", vid3);
+            cmd.ExecuteNonQuery();
+        }
+
+        var results = curation.GetWatchlist(50);
+
+        results.Count.ShouldBe(1);
+        results[0].VideoId.ShouldBe(vid1);
+    }
+
+    [Fact]
+    public void GetWatchlist_respects_limit()
+    {
+        using var temp = new TempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var ser = lib.UpsertSeries(lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S"), "Base", false);
+        var curation = new CurationRepository(temp.Db);
+        var t = DateTimeOffset.UtcNow;
+
+        for (var i = 1; i <= 5; i++)
+        {
+            var vid = lib.UpsertVideo(ser, $@"C:\V\S\ep{i:D2}.mp4", i, ".mp4");
+            curation.SetWatchlist(vid, true, t.AddSeconds(i));
+        }
+
+        var results = curation.GetWatchlist(3);
+
+        results.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public void GetWatchlist_orders_by_watchlist_at_desc()
+    {
+        using var temp = new TempDb();
+        var lib = new LibraryRepository(temp.Db);
+        var ser = lib.UpsertSeries(lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S"), "Base", false);
+        var vid1 = lib.UpsertVideo(ser, @"C:\V\S\a.mp4", 1, ".mp4");
+        var vid2 = lib.UpsertVideo(ser, @"C:\V\S\b.mp4", 2, ".mp4");
+        var curation = new CurationRepository(temp.Db);
+        var earlier = DateTimeOffset.UtcNow.AddHours(-1);
+        var later = DateTimeOffset.UtcNow;
+
+        // vid2 added later → should sort first
+        curation.SetWatchlist(vid1, true, earlier);
+        curation.SetWatchlist(vid2, true, later);
+
+        var results = curation.GetWatchlist(50);
+
+        results[0].VideoId.ShouldBe(vid2);
+        results[1].VideoId.ShouldBe(vid1);
+    }
+
     [Fact]
     public void GetFavorites_returns_items_in_recency_order()
     {

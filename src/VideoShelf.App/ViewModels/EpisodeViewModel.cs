@@ -28,6 +28,9 @@ public sealed partial class EpisodeViewModel(
     private bool _isFavorite = curation?.IsFavorite(model.VideoId) ?? false;
 
     [ObservableProperty]
+    private bool _inWatchlist = curation?.InWatchlist(model.VideoId) ?? false;
+
+    [ObservableProperty]
     private int _rating = curation?.GetRating(model.VideoId) ?? 0;
 
     public event System.EventHandler? WatchedChanged;
@@ -46,6 +49,14 @@ public sealed partial class EpisodeViewModel(
         if (curation is null) return;
         IsFavorite = !IsFavorite;
         curation.SetFavorite(model.VideoId, IsFavorite);
+    }
+
+    [RelayCommand]
+    private void ToggleWatchlist()
+    {
+        if (curation is null) return;
+        InWatchlist = !InWatchlist;
+        curation.SetWatchlist(model.VideoId, InWatchlist, System.DateTimeOffset.UtcNow);
     }
 
     [RelayCommand]

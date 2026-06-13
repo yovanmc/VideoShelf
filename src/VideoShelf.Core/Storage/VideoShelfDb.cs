@@ -47,6 +47,9 @@ public sealed class VideoShelfDb : IDisposable
         // M16-C: favorites + star ratings
         EnsureColumn(conn, "videos", "is_favorite", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "videos", "rating", "INTEGER NOT NULL DEFAULT 0");
+        // M16-E: watchlist / watch-later
+        EnsureColumn(conn, "videos", "in_watchlist", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumn(conn, "videos", "watchlist_at", "TEXT");
         CreateAddedAtIndex(conn);
     }
 

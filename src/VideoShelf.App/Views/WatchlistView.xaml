@@ -1,0 +1,52 @@
+<UserControl x:Class="VideoShelf.App.Views.WatchlistView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:views="clr-namespace:VideoShelf.App.Views"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+            <TextBlock Text="Watch later" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,16" FontSize="22"/>
+
+            <!-- Empty state: visible when HasWatchlist is false -->
+            <TextBlock Text="No videos in your watch list yet — use the bookmark icon on any episode to save it here."
+                       Opacity="0.7" Margin="0,40">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasWatchlist}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <!-- Watchlist grid -->
+            <ItemsControl ItemsSource="{Binding Watchlist}"
+                          Visibility="{Binding HasWatchlist, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="{StaticResource CardGap}">
+                            <views:VideoCard />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

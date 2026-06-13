@@ -29,6 +29,9 @@ public sealed partial class DiscoveryViewModel(
     public ObservableCollection<RecencyCardViewModel> Favorites { get; } = [];
     public bool HasFavorites => Favorites.Count > 0;
 
+    public ObservableCollection<RecencyCardViewModel> Watchlist { get; } = [];
+    public bool HasWatchlist => Watchlist.Count > 0;
+
     [ObservableProperty] private string _watchedSummary = "";
     [ObservableProperty] private string _inProgressSummary = "";
     [ObservableProperty] private bool _hasStats;
@@ -79,7 +82,8 @@ public sealed partial class DiscoveryViewModel(
                 summaries: library.GetSectionSummaries(),
                 libStats: stats.GetLibraryStats(),
                 topCreators: stats.GetTopCreatorsByWatched(5),
-                favItems: curation?.GetFavorites(RailLimit) ?? []);
+                favItems: curation?.GetFavorites(RailLimit) ?? [],
+                watchItems: curation?.GetWatchlist(RailLimit) ?? []);
         });
 
         var smartData = await Task.Run(() =>
@@ -95,6 +99,7 @@ public sealed partial class DiscoveryViewModel(
         Fill(RecentlyAdded, data.added, MakeRecencyCard);
         Fill(RecentlyWatched, data.watched, MakeRecencyCard);
         Fill(Favorites, data.favItems, MakeRecencyCard);
+        Fill(Watchlist, data.watchItems, MakeRecencyCard);
 
         AvailableTags.Clear();
         foreach (var tc in data.tagCounts) AvailableTags.Add(new TagChipViewModel(tc.Tag, tc.SectionCount));
@@ -204,6 +209,7 @@ public sealed partial class DiscoveryViewModel(
         OnPropertyChanged(nameof(HasTagResults));
         OnPropertyChanged(nameof(HasSmartShelves));
         OnPropertyChanged(nameof(HasFavorites));
+        OnPropertyChanged(nameof(HasWatchlist));
         OnPropertyChanged(nameof(IsEmpty));
     }
 

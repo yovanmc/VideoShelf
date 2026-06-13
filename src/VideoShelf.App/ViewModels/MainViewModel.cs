@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews, Favorites, Watchlist }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -34,7 +34,8 @@ public sealed partial class MainViewModel : ObservableObject
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
         SmartViewsViewModel smartViews,
-        FavoritesViewModel favorites)
+        FavoritesViewModel favorites,
+        WatchlistViewModel watchlist)
     {
         _sources = sources;
         _library = library;
@@ -45,6 +46,7 @@ public sealed partial class MainViewModel : ObservableObject
         _playQueue = playQueue;
         SmartViews = smartViews;
         Favorites = favorites;
+        Watchlist = watchlist;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -77,6 +79,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
         };
         Favorites.PlayRequested += (_, e) => PlayEpisode(e);
+        Watchlist.PlayRequested += (_, e) => PlayEpisode(e);
         Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
     }
 
@@ -84,6 +87,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public SmartViewsViewModel SmartViews { get; }
     public FavoritesViewModel Favorites { get; }
+    public WatchlistViewModel Watchlist { get; }
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
@@ -183,6 +187,14 @@ public sealed partial class MainViewModel : ObservableObject
         Favorites.Load();
         PushNav(CurrentView);
         CurrentView = AppView.Favorites;
+    }
+
+    [RelayCommand]
+    private void ShowWatchlist()
+    {
+        Watchlist.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Watchlist;
     }
 
     public async Task OpenSectionAsync(long sectionId)

@@ -184,6 +184,26 @@
                                                                Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
                                                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                                   Command="{Binding ToggleWatchedCommand}"/>
+                                                        <!-- Watch later toggle: always visible when curation wired -->
+                                                        <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
+                                                                   ToolTip="Watch later" Command="{Binding ToggleWatchlistCommand}"
+                                                                   AutomationProperties.Name="Toggle watch later"
+                                                                   Style="{StaticResource TertiaryButton}"
+                                                                   Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
+                                                            <ui:SymbolIcon>
+                                                                <ui:SymbolIcon.Style>
+                                                                    <Style TargetType="ui:SymbolIcon">
+                                                                        <Setter Property="Symbol" Value="BookmarkAdd24" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding InWatchlist}" Value="True">
+                                                                                <Setter Property="Symbol" Value="Bookmark24" />
+                                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </ui:SymbolIcon.Style>
+                                                            </ui:SymbolIcon>
+                                                        </ui:Button>
                                                         <!-- Heart (favorite) toggle: always visible when curation wired -->
                                                         <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
                                                                    ToolTip="Favorite" Command="{Binding ToggleFavoriteCommand}"
