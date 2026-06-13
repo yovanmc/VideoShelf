@@ -160,34 +160,54 @@
     </Style>
 
     <!-- ============================================================
+         FOCUS — FocusVisualStyle adorner overlay.
+         A FocusVisualStyle is an adorner, NOT a control template
+         override — theming-rule-safe.
+         Defined before BUTTONS so StaticResource references resolve cleanly.
+         ============================================================ -->
+    <Style x:Key="AppFocusVisual" TargetType="Control">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Control">
+                    <Rectangle Stroke="{StaticResource AccentBrush}"
+                               StrokeThickness="2"
+                               Margin="2"
+                               SnapsToDevicePixels="True" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
          BUTTONS — additive styles; set only Appearance DP + sizing,
          never override ControlTemplate (theming-rule-safe)
          ============================================================ -->
 
-    <!-- Focus visual shared by all three button styles (see FOCUS section) -->
-
     <!-- Primary action button -->
     <Style x:Key="PrimaryButton" TargetType="ui:Button"
            BasedOn="{StaticResource {x:Type ui:Button}}">
-        <Setter Property="Appearance" Value="Primary" />
-        <Setter Property="Padding"    Value="14,6" />
-        <Setter Property="MinHeight"  Value="32" />
+        <Setter Property="Appearance"       Value="Primary" />
+        <Setter Property="Padding"          Value="14,6" />
+        <Setter Property="MinHeight"        Value="32" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
     </Style>
 
     <!-- Secondary / ghost button -->
     <Style x:Key="SecondaryButton" TargetType="ui:Button"
            BasedOn="{StaticResource {x:Type ui:Button}}">
-        <Setter Property="Appearance" Value="Secondary" />
-        <Setter Property="Padding"    Value="14,6" />
-        <Setter Property="MinHeight"  Value="32" />
+        <Setter Property="Appearance"       Value="Secondary" />
+        <Setter Property="Padding"          Value="14,6" />
+        <Setter Property="MinHeight"        Value="32" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
     </Style>
 
     <!-- Tertiary / text-like button -->
     <Style x:Key="TertiaryButton" TargetType="ui:Button"
            BasedOn="{StaticResource {x:Type ui:Button}}">
-        <Setter Property="Appearance" Value="Transparent" />
-        <Setter Property="Padding"    Value="14,6" />
-        <Setter Property="MinHeight"  Value="32" />
+        <Setter Property="Appearance"       Value="Transparent" />
+        <Setter Property="Padding"          Value="14,6" />
+        <Setter Property="MinHeight"        Value="32" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
     </Style>
 
     <!-- ============================================================
@@ -205,10 +225,11 @@
          Uses triggers on IsChecked to flip background to accent; no ControlTemplate
          override — theming-rule-safe. -->
     <Style x:Key="ChipToggle" TargetType="ToggleButton">
-        <Setter Property="Background"  Value="{StaticResource SubtleFillBrush}" />
-        <Setter Property="Padding"     Value="10,4" />
-        <Setter Property="Cursor"      Value="Hand" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background"       Value="{StaticResource SubtleFillBrush}" />
+        <Setter Property="Padding"          Value="10,4" />
+        <Setter Property="Cursor"           Value="Hand" />
+        <Setter Property="BorderThickness"  Value="0" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
         <Style.Triggers>
             <Trigger Property="IsChecked" Value="True">
                 <Setter Property="Background" Value="{StaticResource AccentBrush}" />
@@ -221,22 +242,10 @@
     </Style>
 
     <!-- ============================================================
-         FOCUS — FocusVisualStyle adorner overlay.
-         A FocusVisualStyle is an adorner, NOT a control template
-         override — theming-rule-safe.
+         FOCUS VARIANTS — *Focused alias styles kept for any callers that
+         explicitly request the focused variant by key; focus ring is now
+         wired directly into the base styles above.
          ============================================================ -->
-    <Style x:Key="AppFocusVisual" TargetType="Control">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Control">
-                    <Rectangle Stroke="{StaticResource AccentBrush}"
-                               StrokeThickness="2"
-                               Margin="2"
-                               SnapsToDevicePixels="True" />
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
 
     <!-- Apply focus visual to button styles (defined above) -->
     <Style x:Key="PrimaryButtonFocused" TargetType="ui:Button"
