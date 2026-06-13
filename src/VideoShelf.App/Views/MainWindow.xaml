@@ -164,6 +164,11 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Queue}" />
 
+                <!-- Smart views management page -->
+                <views:SmartViewsView DataContext="{Binding SmartViews}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=SmartViews}" />
+
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
                      ordering is safe — overlay is last content-host child, before PlayerHost. -->

@@ -1,0 +1,176 @@
+<UserControl x:Class="VideoShelf.App.Views.SmartViewsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:InvertBool x:Key="InvertBool" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.ColumnDefinitions>
+            <!-- Left: list of saved smart views -->
+            <ColumnDefinition Width="*" />
+            <!-- Right: builder panel -->
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ── LEFT: Saved Views List ─────────────────────────────────── -->
+        <DockPanel Grid.Column="0" Margin="0,0,16,0">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBlock Text="Smart Views" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <ui:Button Content="New" Margin="16,0,0,0"
+                           Command="{Binding NewViewCommand}"
+                           Style="{StaticResource SecondaryButton}" />
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Views}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{StaticResource DividerBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="0,8">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Name + rule summary -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding RuleSummary}" Opacity="0.7" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    </StackPanel>
+
+                                    <!-- Show on home indicator -->
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,4,0,0">
+                                        <TextBlock Text="Show on home" FontSize="12" Opacity="0.6" VerticalAlignment="Center" />
+                                        <CheckBox IsChecked="{Binding ShowOnHome, Mode=OneWay}"
+                                                  IsEnabled="False" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+
+                                    <!-- Action buttons -->
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                                                Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:Button ToolTip="Move up" Margin="4,0,0,0"
+                                                   Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   CommandParameter="{Binding}"
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <ui:SymbolIcon Symbol="ChevronUp24" />
+                                        </ui:Button>
+                                        <ui:Button ToolTip="Move down" Margin="4,0,0,0"
+                                                   Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   CommandParameter="{Binding}"
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <ui:SymbolIcon Symbol="ChevronDown24" />
+                                        </ui:Button>
+                                        <ui:Button Content="Edit" Margin="4,0,0,0"
+                                                   Command="{Binding DataContext.EditViewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   CommandParameter="{Binding}"
+                                                   Style="{StaticResource SecondaryButton}" />
+                                        <ui:Button ToolTip="Delete" Margin="4,0,0,0"
+                                                   Command="{Binding DataContext.DeleteViewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                   CommandParameter="{Binding}"
+                                                   Style="{StaticResource TertiaryButton}">
+                                            <ui:SymbolIcon Symbol="Delete24" />
+                                        </ui:Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </DockPanel>
+
+        <!-- ── RIGHT: Builder Panel ───────────────────────────────────── -->
+        <Border Grid.Column="1"
+                Background="{StaticResource SubtleFillBrush}"
+                CornerRadius="8"
+                Padding="16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Panel title -->
+                    <TextBlock Text="View Builder" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+
+                    <!-- Name field -->
+                    <TextBlock Text="Name" Style="{StaticResource Caption}" Margin="0,0,0,4" />
+                    <ui:TextBox PlaceholderText="e.g. Unwatched anime"
+                                Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                Margin="0,0,0,12" />
+
+                    <!-- Match all / any -->
+                    <TextBlock Text="Match" Style="{StaticResource Caption}" Margin="0,0,0,4" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton Content="All rules" IsChecked="{Binding MatchAll}" Margin="0,0,12,0" />
+                        <RadioButton Content="Any rule"
+                                     IsChecked="{Binding MatchAll, Converter={StaticResource InvertBool}}" />
+                    </StackPanel>
+
+                    <!-- Rules -->
+                    <TextBlock Text="Rules" Style="{StaticResource Caption}" Margin="0,0,0,4" />
+                    <ItemsControl ItemsSource="{Binding EditRules}" Margin="0,0,0,8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox Grid.Column="0" Margin="0,0,4,0"
+                                              ItemsSource="{Binding FieldOptions}"
+                                              SelectedItem="{Binding Field}" />
+                                    <ComboBox Grid.Column="1" Margin="0,0,4,0"
+                                              ItemsSource="{Binding OpOptions}"
+                                              SelectedItem="{Binding Op}" />
+                                    <ui:TextBox Grid.Column="2" Margin="0,0,4,0"
+                                                Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="value" />
+                                    <ui:Button Grid.Column="3" ToolTip="Remove rule"
+                                               Command="{Binding DataContext.RemoveRuleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               CommandParameter="{Binding}"
+                                               Style="{StaticResource TertiaryButton}">
+                                        <ui:SymbolIcon Symbol="Dismiss24" />
+                                    </ui:Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <ui:Button Content="Add rule" Command="{Binding AddRuleCommand}"
+                               Style="{StaticResource SecondaryButton}" Margin="0,0,0,12" />
+
+                    <!-- Show on home -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                        <CheckBox IsChecked="{Binding EditShowOnHome}" VerticalAlignment="Center" />
+                        <TextBlock Text="Show on home" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Save / Cancel -->
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Save" Command="{Binding SaveCommand}"
+                                   Style="{StaticResource PrimaryButton}" />
+                        <ui:Button Content="Cancel" Margin="8,0,0,0"
+                                   Command="{Binding NewViewCommand}"
+                                   Style="{StaticResource SecondaryButton}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

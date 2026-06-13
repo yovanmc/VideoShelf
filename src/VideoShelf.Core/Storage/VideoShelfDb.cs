@@ -157,5 +157,13 @@ public sealed class VideoShelfDb : IDisposable
         );
         CREATE INDEX IF NOT EXISTS ix_series_tags_tag ON series_tags(tag);
         CREATE INDEX IF NOT EXISTS ix_video_tags_tag ON video_tags(tag);
+        CREATE TABLE IF NOT EXISTS smart_views (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            definition TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            show_on_home INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL
+        );
         """;
 }

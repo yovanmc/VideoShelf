@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, SmartViews }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -32,7 +32,8 @@ public sealed partial class MainViewModel : ObservableObject
         CreatorsViewModel creators,
         SearchViewModel search,
         MediaBackfillService backfill,
-        PlayQueueViewModel playQueue)
+        PlayQueueViewModel playQueue,
+        SmartViewsViewModel smartViews)
     {
         _sources = sources;
         _library = library;
@@ -41,6 +42,7 @@ public sealed partial class MainViewModel : ObservableObject
         _settings = settings;
         _backfill = backfill;
         _playQueue = playQueue;
+        SmartViews = smartViews;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
@@ -77,6 +79,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string Title => "VideoShelf";
 
+    public SmartViewsViewModel SmartViews { get; }
     public SourcesViewModel Sources => _sources;
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
@@ -160,6 +163,14 @@ public sealed partial class MainViewModel : ObservableObject
     {
         PushNav(CurrentView);
         CurrentView = AppView.Queue;
+    }
+
+    [RelayCommand]
+    private void ShowSmartViews()
+    {
+        SmartViews.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.SmartViews;
     }
 
     public async Task OpenSectionAsync(long sectionId)
