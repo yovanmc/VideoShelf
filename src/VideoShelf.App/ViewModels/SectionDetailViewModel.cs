@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,11 +23,27 @@ public sealed partial class SectionDetailViewModel(
     PlayQueueViewModel playQueue,
     CurationRepository? curation = null,
     PlaylistRepository? playlists = null,
-    ItemArtRepository? itemArt = null) : ObservableObject
+    ItemArtRepository? itemArt = null) : ObservableObject, IBulkSelectionSource
 {
     /// <summary>Shared playlist references for "add to playlist" menus on episode rows.</summary>
     public ObservableCollection<PlaylistRef> AvailablePlaylists { get; } = [];
     public long SectionId { get; private set; }
+
+    private readonly SelectionViewModel<EpisodeViewModel> _selection = new();
+
+    /// <summary>Per-page selection state spanning all loaded episode rows across series.</summary>
+    public SelectionViewModel<EpisodeViewModel> Selection => _selection;
+
+    // ── IBulkSelectionSource ─────────────────────────────────────────────────
+    bool IBulkSelectionSource.HasSelection => Selection.HasSelection;
+    IReadOnlyList<long> IBulkSelectionSource.GetSelectedVideoIds() => GetSelectedVideoIds();
+    public event EventHandler? SelectionChanged;
+    void IBulkSelectionSource.ClearSelection() => Selection.ClearSelectionCommand.Execute(null);
+    void IBulkSelectionSource.ExitSelectionMode() => Selection.ExitSelectionModeCommand.Execute(null);
+
+    /// <summary>Returns video ids for all currently selected episode rows.</summary>
+    public IReadOnlyList<long> GetSelectedVideoIds()
+        => Selection.SelectedItems.Select(e => e.VideoId).ToList();
 
     [ObservableProperty]
     private bool _isEditing;
@@ -97,6 +114,12 @@ public sealed partial class SectionDetailViewModel(
             foreach (var p in playlists.GetAll())
                 AvailablePlaylists.Add(new PlaylistRef(p.Id, p.Name));
 
+        // Unsubscribe from existing series episodes before clearing.
+        foreach (var existing in SeriesList)
+            existing.Episodes.CollectionChanged -= OnSeriesEpisodesChanged;
+
+        Selection.ExitSelectionModeCommand.Execute(null);
+
         SeriesList.Clear();
         foreach (var s in summaries)
         {
@@ -108,6 +131,8 @@ public sealed partial class SectionDetailViewModel(
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
             svm.MarkWatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, true); svm.Refresh(); };
             svm.MarkUnwatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, false); svm.Refresh(); };
+            // Subscribe to episodes as they lazy-load so each episode feeds the section-level Selection.
+            svm.Episodes.CollectionChanged += OnSeriesEpisodesChanged;
             SeriesList.Add(svm);
             _ = svm.LoadThumbnailAsync(CancellationToken.None);   // eager tile art (cached + fail-safe)
         }
@@ -146,6 +171,38 @@ public sealed partial class SectionDetailViewModel(
         art.ClearArtPath(SectionId);
         CreatorArtPath = null;
         await ResolveBackgroundAsync();
+    }
+
+    // ── Episode selection wiring ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Called when episodes are added to any series in this section.
+    /// Subscribes each new episode's PropertyChanged to route IsSelected changes
+    /// into the section-level <see cref="Selection"/> — no back-ref in the episode.
+    /// </summary>
+    private void OnSeriesEpisodesChanged(object? sender,
+        System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (EpisodeViewModel ep in e.NewItems)
+                ep.PropertyChanged += OnEpisodePropertyChanged;
+        }
+        if (e.OldItems is not null)
+        {
+            foreach (EpisodeViewModel ep in e.OldItems)
+                ep.PropertyChanged -= OnEpisodePropertyChanged;
+        }
+    }
+
+    private void OnEpisodePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(EpisodeViewModel.IsSelected) &&
+            sender is EpisodeViewModel ep)
+        {
+            Selection.OnItemSelectionChanged(ep);
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     [RelayCommand]

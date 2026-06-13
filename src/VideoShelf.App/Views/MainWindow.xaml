@@ -287,7 +287,7 @@
                 <views:BulkActionBar x:Name="BulkActionBarHost"
                                      DataContext="{Binding BulkBar}"
                                      VerticalAlignment="Bottom"
-                                     Visibility="{Binding DataContext.Creators.Selection.HasSelection,
+                                     Visibility="{Binding DataContext.BulkBarVisible,
                                          RelativeSource={RelativeSource AncestorType=Window},
                                          Converter={StaticResource BoolToVisibility}}" />
 

@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Discovery;
@@ -7,7 +10,7 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class SearchViewModel : ObservableObject
+public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSource
 {
     private const int ResultLimit = 48;
     private readonly LibraryRepository _library;
@@ -25,6 +28,22 @@ public sealed partial class SearchViewModel : ObservableObject
 
     public ObservableCollection<CreatorCardViewModel> CreatorResults { get; } = [];
     public ObservableCollection<RecencyCardViewModel> VideoResults { get; } = [];
+
+    private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
+
+    /// <summary>Per-page selection state for multi-select over the video result group.</summary>
+    public SelectionViewModel<RecencyCardViewModel> Selection => _selection;
+
+    // ── IBulkSelectionSource ─────────────────────────────────────────────────
+    bool IBulkSelectionSource.HasSelection => Selection.HasSelection;
+    IReadOnlyList<long> IBulkSelectionSource.GetSelectedVideoIds() => GetSelectedVideoIds();
+    public event EventHandler? SelectionChanged;
+    void IBulkSelectionSource.ClearSelection() => Selection.ClearSelectionCommand.Execute(null);
+    void IBulkSelectionSource.ExitSelectionMode() => Selection.ExitSelectionModeCommand.Execute(null);
+
+    /// <summary>Returns video ids for all currently selected video-result cards.</summary>
+    public IReadOnlyList<long> GetSelectedVideoIds()
+        => Selection.SelectedItems.Select(c => c.VideoId).ToList();
 
     [ObservableProperty] private string _query = "";
 
@@ -50,8 +69,10 @@ public sealed partial class SearchViewModel : ObservableObject
             if (string.IsNullOrWhiteSpace(query))
             {
                 _searching = false;
+                UnsubscribeVideoResults();
                 CreatorResults.Clear();
                 VideoResults.Clear();
+                Selection.ExitSelectionModeCommand.Execute(null);
                 RaiseFlags();
                 return;
             }
@@ -66,8 +87,15 @@ public sealed partial class SearchViewModel : ObservableObject
 
             CreatorResults.Clear();
             foreach (var c in creators) CreatorResults.Add(MakeCreatorCard(c));
+            UnsubscribeVideoResults();
+            Selection.ExitSelectionModeCommand.Execute(null);
             VideoResults.Clear();
-            foreach (var v in videos) VideoResults.Add(MakeVideoCard(v));
+            foreach (var v in videos)
+            {
+                var card = MakeVideoCard(v);
+                card.PropertyChanged += OnVideoCardPropertyChanged;
+                VideoResults.Add(card);
+            }
 
             _searching = false;
             RaiseFlags();
@@ -75,6 +103,22 @@ public sealed partial class SearchViewModel : ObservableObject
         catch (OperationCanceledException)
         {
             // superseded by a newer keystroke — swallow (no unobserved fault)
+        }
+    }
+
+    private void UnsubscribeVideoResults()
+    {
+        foreach (var card in VideoResults)
+            card.PropertyChanged -= OnVideoCardPropertyChanged;
+    }
+
+    private void OnVideoCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RecencyCardViewModel.IsSelected) &&
+            sender is RecencyCardViewModel card)
+        {
+            Selection.OnItemSelectionChanged(card);
+            SelectionChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

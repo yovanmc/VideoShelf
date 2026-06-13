@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,25 +20,58 @@ public partial class MainWindow : FluentWindow
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
 
-        // B2/B3 — wire bulk-bar clear and selection fan-out.
+        // C — generalized active-page bulk bar wiring.
         if (_viewModel.BulkBar is not null)
         {
-            // ClearButton dismisses selection (clears creators selection).
+            // ClearButton dismisses selection on whichever page is currently active.
             BulkActionBarHost.ClearRequested += (_, _) =>
             {
-                _viewModel.Creators.Selection.ClearSelectionCommand.Execute(null);
+                _viewModel.ActiveSelectionSource?.ClearSelection();
             };
 
-            // Each time the selection changes, push updated video ids to the bar.
-            _viewModel.Creators.Selection.SelectedItems.CollectionChanged += (_, _) =>
+            // When the active selection source changes, push updated video ids to the bar.
+            _viewModel.PropertyChanged += (_, e) =>
             {
-                _viewModel.BulkBar.SetVideoIds(_viewModel.Creators.GetSelectedVideoIds());
+                if (e.PropertyName == nameof(MainViewModel.BulkBarVisible) ||
+                    e.PropertyName == nameof(MainViewModel.ActiveSelectionSource))
+                {
+                    var source = _viewModel.ActiveSelectionSource;
+                    _viewModel.BulkBar.SetVideoIds(
+                        source is not null ? source.GetSelectedVideoIds() : System.Array.Empty<long>());
+                }
             };
 
-            // When a bulk action completes, exit selection mode.
+            // Each time the active source's selection changes (SelectionChanged event),
+            // forward the updated video ids to the bar.
+            _viewModel.ActiveSelectionSource?.SelectionChanged += (_, _) =>
+            {
+                _viewModel.BulkBar.SetVideoIds(
+                    _viewModel.ActiveSelectionSource?.GetSelectedVideoIds() ?? System.Array.Empty<long>());
+            };
+
+            // When CurrentView changes, re-subscribe SelectionChanged on the NEW active source.
+            _viewModel.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(MainViewModel.ActiveSelectionSource))
+                {
+                    // Re-wire the SelectionChanged listener to the new source.
+                    // (Old source is already detached in MainViewModel.OnCurrentViewChanged.)
+                    if (_viewModel.ActiveSelectionSource is { } src)
+                    {
+                        src.SelectionChanged += (_, _) =>
+                        {
+                            _viewModel.BulkBar.SetVideoIds(
+                                _viewModel.ActiveSelectionSource?.GetSelectedVideoIds()
+                                    ?? System.Array.Empty<long>());
+                        };
+                    }
+                }
+            };
+
+            // When a bulk action completes, exit selection mode on the active page.
             _viewModel.BulkBar.Completed += (_, _) =>
             {
-                _viewModel.Creators.Selection.ExitSelectionModeCommand.Execute(null);
+                _viewModel.ActiveSelectionSource?.ExitSelectionMode();
             };
         }
 

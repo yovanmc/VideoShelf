@@ -86,6 +86,31 @@
                                 <TextBlock Text="Mark all unwatched" VerticalAlignment="Center" />
                             </StackPanel>
                         </ui:Button>
+                        <!-- Episode multi-select toggle: appears alongside the action bar -->
+                        <ToggleButton IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
+                                      Margin="8,0,0,0"
+                                      Foreground="White"
+                                      Style="{StaticResource ChipToggle}"
+                                      AutomationProperties.Name="Toggle episode selection mode">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
+                                <TextBlock Text="Select" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <Button Content="Select all"
+                                Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                Command="{Binding Selection.SelectAllCommand}"
+                                Margin="8,0,0,0" Padding="10,4"
+                                Foreground="White"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                AutomationProperties.Name="Select all episodes" />
+                        <Button Content="Clear"
+                                Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                Command="{Binding Selection.ClearSelectionCommand}"
+                                Margin="4,0,0,0" Padding="10,4"
+                                Foreground="White"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                AutomationProperties.Name="Clear episode selection" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
@@ -203,6 +228,15 @@
                                                 <StackPanel>
                                                     <DockPanel Margin="0,2"
                                                                Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
+                                                        <!-- Selection checkbox: visible only when episode selection mode is active -->
+                                                        <CheckBox DockPanel.Dock="Left"
+                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                  Margin="0,0,4,0"
+                                                                  VerticalAlignment="Center"
+                                                                  Visibility="{Binding DataContext.Selection.IsSelectionMode,
+                                                                      RelativeSource={RelativeSource AncestorType=UserControl},
+                                                                      Converter={StaticResource BoolToVisibility}}"
+                                                                  AutomationProperties.Name="Select this episode" />
                                                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                                   Command="{Binding ToggleWatchedCommand}"/>
                                                         <!-- Watch later toggle: always visible when curation wired -->
