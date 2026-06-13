@@ -17,6 +17,12 @@ namespace VideoShelf.App.Harness;
 /// visual harness, then writes the done-signal file. UI-thread only.
 /// Test-only: gated behind HarnessOptions.IsHarness in App.OnStartup.
 /// </summary>
+/// <remarks>
+/// I1 note: MainViewModel's BulkBar/CommandPalette/MultiRename are nullable-trailing-param
+/// (null in slim test contexts, real instances in production DI and the harness).
+/// The production DI chain in ServiceCollectionExtensions.cs threads all three real
+/// instances; no consolidation is needed here — the pattern is correct as-is.
+/// </remarks>
 public sealed class HarnessRunner
 {
     private readonly MainViewModel _main;
@@ -97,8 +103,114 @@ public sealed class HarnessRunner
             case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
             case "History":    _main.ShowHistoryCommand.Execute(null); break;
+
+            // ── M17 surfaces (I2) ────────────────────────────────────────────────
+
+            // Browse with 2 creators pre-selected so the BulkActionBar is visible.
+            case "BrowseSelection": await NavigateBrowseSelectionAsync(); break;
+
+            // Command palette open with a pre-filled query ("home").
+            case "CommandPalette": NavigateCommandPalette(); break;
+
+            // Browse with the in-page filter bar visible + Compact density + List mode.
+            case "BrowseFilter": NavigateBrowseFilter(); break;
+
+            // MultiRename preview page seeded with the richest creator's series.
+            case "MultiRename": await NavigateMultiRenameAsync(); break;
+
             default: _main.CurrentView = AppView.Home; break;
         }
+    }
+
+    // ── M17 navigation helpers ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Navigates to Browse in selection mode with the first two creator cards pre-selected
+    /// so the BulkActionBar shows "2 selected". Uses the Creators collection that was
+    /// loaded during ScanAndReload / SeedDemo.
+    /// </summary>
+    private async Task NavigateBrowseSelectionAsync()
+    {
+        _main.CurrentView = AppView.Browse;
+        await SettleAsync(isVideo: false);
+
+        // Enter selection mode on the Creators VM.
+        _main.Creators.Selection.EnterSelectionModeCommand.Execute(null);
+
+        // Pre-select the first two cards (if available) so the bulk bar is visible.
+        var cards = _main.Creators.Creators;
+        for (var i = 0; i < Math.Min(2, cards.Count); i++)
+            cards[i].IsSelected = true;
+
+        // Give the BulkBar binding a render cycle to reflect the selection count.
+        await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+    }
+
+    /// <summary>
+    /// Opens the Ctrl+K command palette with a pre-filled query so the result list
+    /// is populated for the screenshot. Uses "home" which matches the "Home" action.
+    /// </summary>
+    private void NavigateCommandPalette()
+    {
+        _main.CurrentView = AppView.Browse; // show content behind the overlay
+        _main.OpenCommandPaletteCommand.Execute(null);
+        // Set a query after opening so the palette's RunAsync fires and populates Results.
+        if (_main.CommandPalette is not null)
+            _main.CommandPalette.Query = "home";
+    }
+
+    /// <summary>
+    /// Opens Browse with the in-page filter bar visible, Compact density, and List view mode
+    /// so the sweep can capture the filter toolbar affordance.
+    /// </summary>
+    private void NavigateBrowseFilter()
+    {
+        _main.CurrentView = AppView.Browse;
+        if (!_main.Creators.IsFilterVisible)
+            _main.Creators.ToggleFilterCommand.Execute(null);
+        _main.Creators.SetDensityCompactCommand.Execute(null);
+        _main.Creators.SetViewModeListCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Opens the MultiRename page seeded with the series ids from the richest creator
+    /// (the one with the most series, seeded in SeedDemoAsync).
+    /// Falls back to navigating to the Browse page if MultiRename is unavailable.
+    /// </summary>
+    private async Task NavigateMultiRenameAsync()
+    {
+        if (_main.MultiRename is null)
+        {
+            _main.CurrentView = AppView.Browse;
+            return;
+        }
+
+        // Find the section with the most series — that's the ≥40-series demo creator.
+        var allSections = _library.GetSectionSummaries();
+        long bestSectionId = 0;
+        int bestSeriesCount = 0;
+        foreach (var s in allSections)
+        {
+            var series = _library.GetSeriesForSection(s.SectionId);
+            if (series.Count > bestSeriesCount)
+            {
+                bestSeriesCount = series.Count;
+                bestSectionId = s.SectionId;
+            }
+        }
+
+        if (bestSectionId == 0 || bestSeriesCount == 0)
+        {
+            _main.CurrentView = AppView.Browse;
+            return;
+        }
+
+        var seriesIds = _library.GetSeriesForSection(bestSectionId)
+                                .Select(s => s.Id)
+                                .Take(5)   // limit to 5 for a readable preview screenshot
+                                .ToList();
+
+        await _main.OpenMultiRenameAsync(seriesIds);
     }
 
     /// <summary>
@@ -150,8 +262,17 @@ public sealed class HarnessRunner
         => _main.ScanAndReloadCommand.ExecuteAsync(null);
 
     /// <summary>
-    /// Seeds demo data: marks the first video watched, sets a resume position on the second
-    /// (if present), and tags the first section with "demo".
+    /// Seeds demo data for the visual sweep:
+    /// <list type="bullet">
+    ///   <item>Marks the richest real episode watched + sets resume position (M12 rails).</item>
+    ///   <item>Seeds Favorites/Watchlist/SmartViews/Playlists/History so those pages render non-empty.</item>
+    ///   <item><b>M17 additions (I2):</b> seeds ≥30 synthetic creators spanning letters A–Z and
+    ///         one "Alphabet Cinema" creator with exactly 42 series so virtualization, the A–Z
+    ///         jump-list, and collapse/expand-all are all exercisable from a single harness run.
+    ///         All synthetic creators share the "demo" tag for affinity rails.</item>
+    /// </list>
+    /// All seed values are derived from deterministic indices (no Date.Now/random nondeterminism
+    /// that could break other tests).
     /// </summary>
     private Task SeedDemoAsync()
     {
@@ -231,7 +352,78 @@ public sealed class HarnessRunner
             break; // seed one source is sufficient for demo
         }
 
+        // ── M17 (I2): synthetic creators for virtualization / A–Z / multi-rename sweeps ──
+        //
+        // Seed ≥30 creators spanning the alphabet so the A–Z jump-list shows lit letters
+        // across all 26, and the Browse grid is tall enough to exercise virtualization.
+        // Also seed one creator ("Alphabet Cinema") with exactly 42 series so the
+        // collapse/expand-all control and multi-rename preview have meaningful content.
+        //
+        // All data is tied to a dedicated synthetic source so it never conflicts with the
+        // real scanned source above (different source id, different root paths).
+        SeedAlphabetCreators();
+
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Seeds a synthetic "demo-alphabet" source containing:
+    /// <list type="bullet">
+    ///   <item>30 creators whose names start with every letter A–Z (some letters get 2 creators
+    ///         so the total reaches 30 even with only 26 distinct letters).</item>
+    ///   <item>One "Alphabet Cinema" creator with 42 series, each containing 2 episodes,
+    ///         for a total of 84 videos — enough for the collapse/expand-all and multi-rename sweeps.</item>
+    /// </list>
+    /// All file paths are synthetic (\DemoAlphabet\…) and will never be probed/scanned.
+    /// Idempotent: UpsertSource/Section/Series/Video are all ON CONFLICT DO UPDATE so
+    /// re-running SeedDemo (e.g. after a ScanAndReload) is safe.
+    /// </summary>
+    private void SeedAlphabetCreators()
+    {
+        var srcId = _library.UpsertSource(@"\DemoAlphabet", "DemoAlphabet");
+
+        // 30 creator names: A–Z (26) + 4 extras (Bella, Diana, Elena, Frank) to hit ≥30.
+        // Names are deterministic strings derived from index — no Date.Now/random.
+        string[] creatorNames =
+        {
+            "Alice A",     "Bella B",     "Carlos C",    "Diana D",
+            "Elena E",     "Frank F",     "Grace G",     "Hector H",
+            "Iris I",      "James J",     "Kira K",      "Leo L",
+            "Maya M",      "Noel N",      "Olivia O",    "Pedro P",
+            "Quinn Q",     "Rosa R",      "Sam S",       "Tara T",
+            "Uma U",       "Victor V",    "Wendy W",     "Xander X",
+            "Yuki Y",      "Zara Z",      "Ana Autumn",  "Bruno Bay",
+            "Cleo Cross",  "Dani Dusk",
+        };
+
+        foreach (var (name, idx) in creatorNames.Select((n, i) => (n, i)))
+        {
+            var sectionId = _library.UpsertSection(srcId, name);
+            _tags.AddTag(sectionId, "demo");
+
+            // Give each creator 1 standalone video so they appear in summaries.
+            var seriesId = _library.UpsertSeries(sectionId, name, isStandalone: true);
+            var filePath = $@"\DemoAlphabet\{name}\video_{idx:D2}.mp4";
+            _library.UpsertVideo(seriesId, filePath, 1, ".mp4");
+        }
+
+        // ── ≥40-series creator: "Alphabet Cinema" ────────────────────────────
+        // 42 series, each with 2 episodes. SeriesId is stable across runs (UpsertSeries
+        // is ON CONFLICT DO UPDATE by (section_id, base_title)).
+        const int SeriesCount = 42;
+        var cinemaSectionId = _library.UpsertSection(srcId, "Alphabet Cinema");
+        _tags.AddTag(cinemaSectionId, "demo");
+
+        for (var s = 1; s <= SeriesCount; s++)
+        {
+            var seriesTitle = $"Series {s:D2}";
+            var seriesId = _library.UpsertSeries(cinemaSectionId, seriesTitle, isStandalone: false);
+            for (var ep = 1; ep <= 2; ep++)
+            {
+                var filePath = $@"\DemoAlphabet\AlphabetCinema\{seriesTitle}\ep{ep:D2}.mp4";
+                _library.UpsertVideo(seriesId, filePath, ep, ".mp4");
+            }
+        }
     }
 
     /// <summary>
