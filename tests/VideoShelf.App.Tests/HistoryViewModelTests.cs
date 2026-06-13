@@ -108,8 +108,9 @@ public sealed class HistoryViewModelTests
         var vm = new HistoryViewModel(history, lib);
 
         vm.Load();
-        // Allow the async continuation to complete.
-        await Task.Delay(200);
+        // Poll until the async continuation populates Entries (up to 5 s).
+        var populated = await TestWait.UntilAsync(() => vm.Entries.Count >= 1);
+        populated.ShouldBeTrue("HistoryViewModel.Load() async continuation did not populate Entries within the timeout");
 
         vm.Entries.Count.ShouldBeGreaterThanOrEqualTo(1);
     }
