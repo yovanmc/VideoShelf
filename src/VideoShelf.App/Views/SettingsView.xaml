@@ -25,11 +25,12 @@
             <!-- Actions row -->
             <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
                 <ui:Button Content="Add source"
-                           Appearance="Primary"
-                           Command="{Binding Sources.AddSourceCommand}" />
+                           Command="{Binding Sources.AddSourceCommand}"
+                           Style="{StaticResource PrimaryButton}" />
                 <ui:Button Content="Scan"
                            Margin="8,0,0,0"
-                           Command="{Binding ScanAndReloadCommand}" />
+                           Command="{Binding ScanAndReloadCommand}"
+                           Style="{StaticResource SecondaryButton}" />
                 <ui:ProgressRing IsIndeterminate="True"
                                  Width="20" Height="20"
                                  Margin="12,0,0,0"
@@ -50,7 +51,8 @@
                                        Content="Remove"
                                        Command="{Binding DataContext.Sources.RemoveSourceCommand,
                                                  RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                       CommandParameter="{Binding}" />
+                                       CommandParameter="{Binding}"
+                                       Style="{StaticResource SecondaryButton}" />
                             <TextBlock Text="{Binding DisplayName}"
                                        VerticalAlignment="Center"
                                        Opacity="0.85" />
@@ -64,12 +66,6 @@
             <CheckBox Margin="0,8,0,0"
                       Content="Auto-play next episode"
                       IsChecked="{Binding Settings.AutoAdvanceEpisodes}" />
-
-            <!-- APPEARANCE section -->
-            <TextBlock Text="APPEARANCE" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
-            <TextBlock Margin="0,8,0,0"
-                       Opacity="0.6"
-                       Text="Light/dark theme options are coming in a later update." />
 
         </StackPanel>
     </ScrollViewer>

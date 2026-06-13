@@ -49,18 +49,31 @@
                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}" Appearance="Transparent"
+                    <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}"
                                Margin="0,0,8,0" ToolTip="Back"
-                               Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisibility}}">
+                               Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisibility}}"
+                               Style="{StaticResource TertiaryButton}">
                         <ui:SymbolIcon Symbol="ArrowLeft24" />
                     </ui:Button>
                     <Grid Grid.Column="1" Margin="0,0,4,0">
-                        <ui:Button Content="Home" Command="{Binding ShowHomeCommand}" Appearance="Transparent" />
+                        <ui:Button Command="{Binding ShowHomeCommand}"
+                                   Style="{StaticResource TertiaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Home24" Margin="0,0,4,0" />
+                                <TextBlock Text="Home" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Home}" />
                     </Grid>
                     <Grid Grid.Column="2">
-                        <ui:Button Content="Browse" Command="{Binding ShowBrowseCommand}" Appearance="Transparent" />
+                        <ui:Button Command="{Binding ShowBrowseCommand}"
+                                   Style="{StaticResource TertiaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Apps24" Margin="0,0,4,0" />
+                                <TextBlock Text="Browse" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Browse,SectionDetail,RenameTool'}" />
                     </Grid>
@@ -68,13 +81,20 @@
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
                     <!-- Up next nav button: visible when a queue is active -->
                     <Grid Grid.Column="4" Margin="0,0,4,0">
-                        <ui:Button Content="Up next" Command="{Binding ShowQueueCommand}" Appearance="Transparent"
-                                   Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"/>
+                        <ui:Button Command="{Binding ShowQueueCommand}"
+                                   Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
+                                   Style="{StaticResource TertiaryButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
+                                <TextBlock Text="Up next" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ui:Button>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
                                 Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Queue}"/>
                     </Grid>
                     <Grid Grid.Column="5">
-                        <ui:Button Command="{Binding ShowSettingsCommand}" Appearance="Transparent" ToolTip="Settings">
+                        <ui:Button Command="{Binding ShowSettingsCommand}" ToolTip="Settings"
+                                   Style="{StaticResource TertiaryButton}">
                             <ui:SymbolIcon Symbol="Settings24" />
                         </ui:Button>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
@@ -154,8 +174,9 @@
                         <TextBlock Text="No sources yet" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" />
                         <TextBlock Text="Add a folder of videos to start building your library."
                                    TextWrapping="Wrap" TextAlignment="Center" Opacity="0.8" Margin="0,8,0,16" />
-                        <ui:Button Content="Add a source" Appearance="Primary" HorizontalAlignment="Center"
-                                   Command="{Binding DataContext.Sources.AddSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        <ui:Button Content="Add a source" HorizontalAlignment="Center"
+                                   Command="{Binding DataContext.Sources.AddSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                   Style="{StaticResource PrimaryButton}" />
                     </StackPanel>
                 </Border>
 

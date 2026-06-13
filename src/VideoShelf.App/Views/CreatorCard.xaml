@@ -8,13 +8,13 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
-    <Button Command="{Binding OpenCommand}" Width="200" Padding="0"
+    <Button Command="{Binding OpenCommand}" Width="{StaticResource CardWidth}" Padding="0"
             Background="Transparent" BorderThickness="0" Cursor="Hand"
             HorizontalContentAlignment="Stretch">
         <StackPanel>
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"
-                    Height="120" ClipToBounds="True">
+                    Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
                 <Image Source="{Binding ImagePath, IsAsync=True}" Stretch="UniformToFill" />
             </Border>
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="2,8,2,0"

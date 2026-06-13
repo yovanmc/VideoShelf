@@ -24,9 +24,12 @@
 
         <!-- Action bar -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
-            <ui:Button Content="Apply rename" Appearance="Primary" Command="{Binding ApplyCommand}" />
-            <ui:Button Content="Undo last rename" Margin="8,0,0,0" Command="{Binding UndoCommand}" />
-            <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}" />
+            <ui:Button Content="Apply rename" Command="{Binding ApplyCommand}"
+                       Style="{StaticResource PrimaryButton}" />
+            <ui:Button Content="Undo last rename" Margin="8,0,0,0" Command="{Binding UndoCommand}"
+                       Style="{StaticResource SecondaryButton}" />
+            <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}"
+                       Style="{StaticResource SecondaryButton}" />
             <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Opacity="0.85" />
             <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="12,0,0,0"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />

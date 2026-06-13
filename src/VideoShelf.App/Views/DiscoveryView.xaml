@@ -19,7 +19,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{StaticResource SubtleFillBrush}" CornerRadius="12" Padding="10,4" Margin="0,0,8,0">
+                            <Border Style="{StaticResource Chip}" Margin="0,0,8,0">
                                 <TextBlock>
                                     <Run Text="{Binding Name}" />
                                     <Run Text=" · " />
@@ -38,7 +38,7 @@
 
             <!-- Continue watching rail -->
             <StackPanel Visibility="{Binding HasContinueWatching, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Continue watching" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Continue watching" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding ContinueWatching}">
                         <ItemsControl.ItemsPanel>
@@ -70,7 +70,7 @@
             <!-- Recommended creators rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Creators" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedCreators}">
                         <ItemsControl.ItemsPanel>
@@ -88,7 +88,7 @@
             <!-- Recommended videos rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="More to watch" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="More to watch" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecommendedVideos}">
                         <ItemsControl.ItemsPanel>
@@ -120,7 +120,7 @@
             <!-- Recently added rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecentlyAdded, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recently added" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Recently added" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecentlyAdded}">
                         <ItemsControl.ItemsPanel>
@@ -130,15 +130,19 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
-                                        Background="Transparent" BorderThickness="0" Width="200">
-                                    <StackPanel>
-                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
-                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard/>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -148,7 +152,7 @@
             <!-- Recently watched rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasRecentlyWatched, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Recently watched" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Recently watched" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{Binding RecentlyWatched}">
                         <ItemsControl.ItemsPanel>
@@ -158,15 +162,19 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
-                                        Background="Transparent" BorderThickness="0" Width="200">
-                                    <StackPanel>
-                                        <Image Source="{Binding ThumbnailPath}" Height="112" Stretch="UniformToFill"/>
-                                        <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
-                                                   TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12"/>
-                                    </StackPanel>
-                                </Button>
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard/>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -176,7 +184,7 @@
             <!-- Pick-a-tag section -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasTags, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Text="Pick a tag" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBlock Text="Pick a tag" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ItemsControl ItemsSource="{Binding AvailableTags}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -186,6 +194,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ToggleButton Content="{Binding Label}" IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                          Style="{StaticResource ChipToggle}"
                                           Margin="0,0,8,8"
                                           Command="{Binding DataContext.ToggleTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                           CommandParameter="{Binding}"/>
