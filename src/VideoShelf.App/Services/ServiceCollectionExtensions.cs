@@ -38,6 +38,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IFolderPicker, FolderPicker>();
         services.AddSingleton<IImagePicker, ImagePicker>();
+        services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
         services.AddSingleton<CreatorArtRepository>();
         services.AddSingleton<CreatorsViewModel>();
 
