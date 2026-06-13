@@ -62,10 +62,17 @@
     <StaticResource x:Key="SurfaceBrush"      ResourceKey="ApplicationBackgroundBrush" />
     <!-- Card / panel fill — WPF-UI ControlFillColorDefaultBrush (dark: ~#14FFFFFF) -->
     <StaticResource x:Key="CardSurfaceBrush"  ResourceKey="ControlFillColorDefaultBrush" />
-    <!-- Primary text — WPF-UI TextFillColorPrimaryBrush (dark: white #FFFFFFFF) -->
-    <StaticResource x:Key="TextPrimaryBrush"  ResourceKey="TextFillColorPrimaryBrush" />
-    <!-- Secondary / muted text — WPF-UI TextFillColorSecondaryBrush (dark: ~#B0FFFFFF) -->
-    <StaticResource x:Key="TextSecondaryBrush" ResourceKey="TextFillColorSecondaryBrush" />
+    <!-- Primary / secondary text. Defined as DIRECT brushes (dark-only app) using the
+         WPF-UI Fluent dark text values. NOTE: these were previously `<StaticResource>`
+         aliases to the WPF-UI TextFillColor*Brush keys, but a nested <StaticResource>
+         dictionary-value is resolved at DesignTokens-merge time, when the sibling
+         ui:ThemesDictionary in the same MergedDictionaries is not yet visible — so the
+         alias silently failed to materialise and the key did not exist at runtime
+         (crash: "Cannot find resource named 'TextPrimaryBrush'"). Latent since M15
+         because no view consumed these tokens until M17; caught by the M17 sweep.
+         Direct brushes resolve reliably via {StaticResource} everywhere (cf. DividerBrush). -->
+    <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#C5FFFFFF" />
 
     <!-- Divider: deliberate visibility fix — was #22000000 (near-black, invisible on
          dark canvas); now #22FFFFFF (low-opacity white, visible on dark). -->
