@@ -111,6 +111,8 @@ $views = [ordered]@{
     'pip'           = @('--view','PiP','--play',$playClip)
     'settings'      = @('--view','Settings')
     'empty'         = @('--view','Home','--no-folder')   # first-run empty-library CTA (no source configured)
+    'queue'         = @('--view','Queue','--seed-demo')
+    'player-queue'  = @('--view','PlayerQueue','--seed-demo')
 }
 
 $results = @()

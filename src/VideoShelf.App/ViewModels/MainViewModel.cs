@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -18,6 +18,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PlayerViewModel _player;
     private readonly SettingsViewModel _settings;
     private readonly MediaBackfillService _backfill;
+    private readonly PlayQueueViewModel _playQueue;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -30,7 +31,8 @@ public sealed partial class MainViewModel : ObservableObject
         RenameToolViewModel renameTool,
         CreatorsViewModel creators,
         SearchViewModel search,
-        MediaBackfillService backfill)
+        MediaBackfillService backfill,
+        PlayQueueViewModel playQueue)
     {
         _sources = sources;
         _library = library;
@@ -38,9 +40,15 @@ public sealed partial class MainViewModel : ObservableObject
         _player = player;
         _settings = settings;
         _backfill = backfill;
+        _playQueue = playQueue;
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
-        _player.NextEpisodeRequested += (_, ep) => PlayEpisode(ep);
+        _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
+        _player.PlaybackEnded += (_, finished) =>
+        {
+            var next = _playQueue.GetNextAfterEnd(finished);
+            if (next is not null) OpenPlayer(next);
+        };
 
         Discovery = discovery;
         SectionDetail = sectionDetail;
@@ -73,6 +81,7 @@ public sealed partial class MainViewModel : ObservableObject
     public LibraryViewModel Library => _library;
     public PlayerViewModel Player => _player;
     public SettingsViewModel Settings => _settings;
+    public PlayQueueViewModel PlayQueue => _playQueue;
     public DiscoveryViewModel Discovery { get; }
     public SectionDetailViewModel SectionDetail { get; }
     public RenameToolViewModel RenameTool { get; }
@@ -127,8 +136,14 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ShowSettings() { ClearBack(); CurrentView = AppView.Settings; }
 
-    /// <summary>Routes a play request into the player and shows the player pane.</summary>
+    /// <summary>Direct single-episode play: registers it as a non-explicit queue entry then opens the player.</summary>
     public void PlayEpisode(EpisodeView episode)
+    {
+        _playQueue.StartSingle(episode);
+        OpenPlayer(episode);
+    }
+
+    private void OpenPlayer(EpisodeView episode)
     {
         IsPlayerVisible = true;
         _player.Open(episode);
@@ -139,6 +154,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ShowBrowse() { ClearBack(); CurrentView = AppView.Browse; }
+
+    [RelayCommand]
+    private void ShowQueue()
+    {
+        PushNav(CurrentView);
+        CurrentView = AppView.Queue;
+    }
 
     public async Task OpenSectionAsync(long sectionId)
     {

@@ -47,7 +47,7 @@
                 <Grid Margin="16,6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}" Appearance="Transparent"
                                Margin="0,0,8,0" ToolTip="Back"
@@ -66,7 +66,14 @@
                     </Grid>
                     <ui:TextBox Grid.Column="3" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
-                    <Grid Grid.Column="4">
+                    <!-- Up next nav button: visible when a queue is active -->
+                    <Grid Grid.Column="4" Margin="0,0,4,0">
+                        <ui:Button Content="Up next" Command="{Binding ShowQueueCommand}" Appearance="Transparent"
+                                   Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"/>
+                        <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter=Queue}"/>
+                    </Grid>
+                    <Grid Grid.Column="5">
                         <ui:Button Command="{Binding ShowSettingsCommand}" Appearance="Transparent" ToolTip="Settings">
                             <ui:SymbolIcon Symbol="Settings24" />
                         </ui:Button>
@@ -131,6 +138,11 @@
                 <views:SettingsView
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Settings}" />
+
+                <!-- Queue page view -->
+                <views:QueuePageView
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Queue}" />
 
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so

@@ -43,8 +43,9 @@ public class MainViewModelPlaybackTests
         var art = new CreatorArtRepository(temp.Db);
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
-        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null));
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
@@ -53,7 +54,7 @@ public class MainViewModelPlaybackTests
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()));
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
     }
 
     [Fact]
@@ -84,17 +85,45 @@ public class MainViewModelPlaybackTests
     }
 
     [Fact]
-    public void NextEpisodeRequested_from_player_reopens_via_PlayEpisode()
+    public void PlaybackEnded_via_queue_auto_advance_reopens_next_episode()
     {
         using var temp = new AppTempDb();
         var engine = new FakePlaybackEngine();
-        var vm = Make(temp, engine, out _);
-        var ep = new EpisodeView(1, 1, @"C:\V\S\a.mp4", 1, "Base", false, false);
-        var next = new EpisodeView(2, 1, @"C:\V\S\b.mp4", 2, "Base 2", false, false);
-        vm.PlayEpisode(ep);
+        var lib = new LibraryRepository(temp.Db);
+        var watch = new WatchRepository(temp.Db);
+        var settings = new SettingsRepository(temp.Db);
+        settings.SetAutoAdvanceEpisodes(true);
+        var seriesId = lib.UpsertSeries(lib.UpsertSection(lib.UpsertSource(@"C:\V", "V"), "S"), "Base", false);
+        lib.UpsertVideo(seriesId, @"C:\V\S\a.mp4", 1, ".mp4");
+        lib.UpsertVideo(seriesId, @"C:\V\S\b.mp4", 2, ".mp4");
+        var ep1 = lib.GetEpisodes(seriesId)[0];
+        var ep2 = lib.GetEpisodes(seriesId)[1];
 
-        vm.Player.RaiseNextEpisodeForTest(next);
+        var thumbs = new NullThumbs();
+        var sources = new SourcesViewModel(lib, new FakeFolderPicker());
+        var libraryVm = new LibraryViewModel(lib, watch, thumbs);
+        var player = new PlayerViewModel(engine, lib, watch, settings, new ResumePolicy(), new FakeSubtitleFilePicker());
+        var settingsVm = new SettingsViewModel(settings);
+        var disc = new DiscoveryRepository(temp.Db, lib, new TagRepository(temp.Db));
+        var art = new CreatorArtRepository(temp.Db);
+        var cardFactory = new CreatorCardFactory(art, thumbs);
+        var statsRepo = new StatsRepository(temp.Db);
+        var tags = new TagRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
+        var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
+        var fs = new InMemoryFileSystem();
+        var paths = new AppPaths(temp.DbPath + "-dir");
+        var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
+        var creators = new CreatorsViewModel(lib, art, thumbs);
+        var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
+        var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
+            discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue);
 
-        vm.Player.Title.ShouldBe("Base 2");
+        vm.PlayEpisode(ep1);
+        vm.Player.RaisePlaybackEndedForTest(ep1);
+
+        vm.Player.Title.ShouldBe(ep2.Title);
     }
 }

@@ -54,7 +54,7 @@ public sealed class HarnessRunner
             }
 
             await NavigateAsync(_options.View);
-            await SettleAsync(isVideo: _options.View is "Player" or "PiP");
+            await SettleAsync(isVideo: _options.View is "Player" or "PiP" or "PlayerQueue");
             WriteDoneSignal($"OK view={_options.View}");
         }
         catch (Exception ex)
@@ -80,6 +80,8 @@ public sealed class HarnessRunner
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
             case "PiP": await PlayAsync(_options.Play!, pip: true); break;
             case "Search": await NavigateSearchAsync(); break;
+            case "Queue": await ShowQueueAsync(); break;
+            case "PlayerQueue": await PlayWithQueueDrawerAsync(); break;
             default: _main.CurrentView = AppView.Home; break;
         }
     }
@@ -250,5 +252,46 @@ public sealed class HarnessRunner
             // click-through) rather than over a black full-window player backdrop.
             _main.CurrentView = AppView.Home;
         }
+    }
+
+    /// <summary>
+    /// Navigates to the Queue page with the richest section's episodes loaded into the queue,
+    /// so the page shows a populated list with the first item highlighted as now-playing.
+    /// </summary>
+    private async Task ShowQueueAsync()
+    {
+        var (sectionId, _) = await FindRichestSeriesAsync();
+        var episodes = _library.GetEpisodesForSection(sectionId);
+        // Build the queue; PlayAll raises PlayRequested which MainViewModel routes to OpenPlayer.
+        // Suppress that here — we want to show the Queue PAGE, not start video playback.
+        // Silence play requests by pre-wiring and opening the player ourselves so MainViewModel
+        // does not navigate away from the Queue page after we set it.
+        _main.PlayQueue.PlayAll(episodes);
+        // Navigate to Queue page (PlayAll set CurrentView via PlayRequested → OpenPlayer; reset it).
+        _main.CurrentView = AppView.Queue;
+    }
+
+    /// <summary>
+    /// Plays the richest series' first clip AND opens the in-player queue drawer with the
+    /// section's full episode list, so the capture shows the opaque right-hand drawer over
+    /// live video. AutoHideSuppressed keeps the transport visible.
+    /// </summary>
+    private async Task PlayWithQueueDrawerAsync()
+    {
+        var (sectionId, series) = await FindRichestSeriesAsync();
+        var episode = _library.GetEpisodes(series.SeriesId).FirstOrDefault()
+            ?? throw new InvalidOperationException("Richest series has no episodes to play.");
+
+        // Keep transport visible for the screenshot.
+        _main.Player.AutoHideSuppressed = true;
+
+        // Build the queue from the full section (same section the player clip belongs to),
+        // then play the first item.  PlayAll raises PlayRequested → MainViewModel.OpenPlayer.
+        var allEps = _library.GetEpisodesForSection(sectionId);
+        _main.PlayQueue.PlayAll(allEps);
+
+        // Allow the player to initialise before opening the drawer.
+        await Task.Delay(800);
+        _main.PlayQueue.IsQueueOpen = true;
     }
 }

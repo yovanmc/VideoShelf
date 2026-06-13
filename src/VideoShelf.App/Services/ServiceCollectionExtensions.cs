@@ -74,6 +74,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<TagRepository>();
         services.AddSingleton<DiscoveryRepository>();
+        services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
         services.AddSingleton<SectionDetailViewModel>();
         services.AddSingleton<SettingsViewModel>();

@@ -21,7 +21,8 @@ public sealed class DiscoveryViewModelTests
     }
 
     private sealed record Fx(AppTempDb Db, LibraryRepository Lib, WatchRepository Watch,
-        TagRepository Tags, DiscoveryRepository Disc, StatsRepository Stats, DiscoveryViewModel Vm);
+        TagRepository Tags, DiscoveryRepository Disc, StatsRepository Stats, DiscoveryViewModel Vm,
+        PlayQueueViewModel PlayQueue);
 
     private static Fx NewFx()
     {
@@ -31,11 +32,13 @@ public sealed class DiscoveryViewModelTests
         var tags = new TagRepository(db.Db);
         var disc = new DiscoveryRepository(db.Db, lib, tags);
         var statsRepo = new StatsRepository(db.Db);
+        var settings = new SettingsRepository(db.Db);
         var art = new CreatorArtRepository(db.Db);
         var thumbs = new NullThumbs();
         var cardFactory = new CreatorCardFactory(art, thumbs);
-        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
-        return new Fx(db, lib, watch, tags, disc, statsRepo, vm);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
+        return new Fx(db, lib, watch, tags, disc, statsRepo, vm, playQueue);
     }
 
     [Fact]
@@ -199,5 +202,21 @@ public sealed class DiscoveryViewModelTests
         var card = f.Vm.ContinueWatching[0];
         card.ChapterLabel.ShouldBeNull();
         card.HasChapter.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void EnqueueVideoCommand_adds_episode_to_queue_by_video_id()
+    {
+        var f = NewFx(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "S");
+        var ser = f.Lib.UpsertSeries(sec, "Show", false);
+        var vid = f.Lib.UpsertVideo(ser, @"C:\m\Show\e01.mkv", 1, "mkv");
+
+        f.Vm.EnqueueVideoCommand.Execute(vid);
+
+        f.PlayQueue.HasQueue.ShouldBeTrue();
+        f.PlayQueue.Items.Count.ShouldBe(1);
+        f.PlayQueue.Items[0].Episode.VideoId.ShouldBe(vid);
     }
 }

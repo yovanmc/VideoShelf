@@ -139,6 +139,22 @@ public sealed class MainViewModelNavigationTests
         vm.IsLibraryEmpty.ShouldBe(vm.Sources.Sources.Count == 0);
     }
 
+    [Fact]
+    public void ShowQueueCommand_sets_Queue_view_and_GoBack_returns_to_prior()
+    {
+        var vm = MainViewModelTestFactory.Create(out _);
+        // Navigate to Browse first so we have a non-Home prior view.
+        vm.ShowBrowseCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Browse);
+
+        vm.ShowQueueCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Queue);
+        vm.CanGoBack.ShouldBeTrue();
+
+        vm.GoBackCommand.Execute(null);
+        vm.CurrentView.ShouldBe(AppView.Browse);
+    }
+
     private static async Task WaitForAsync(Func<bool> condition, int timeoutMs = 5000)
     {
         var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
