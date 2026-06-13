@@ -10,6 +10,8 @@
                 <ui:ControlsDictionary />
                 <!-- Shared design tokens (color/surface/radius/spacing/type). -->
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+                <!-- Selection grid styles: PlainListBox/PlainListBoxItem + selection tokens. -->
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/SelectionStyles.xaml" />
                 <!-- Queue item template + styles (declares xmlns:ui for WPF-UI buttons). -->
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/QueueStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -18,6 +20,7 @@
             <conv:MissingToOpacity x:Key="MissingToOpacity" />
             <conv:EnumToVisibility x:Key="EnumToVis" />
             <conv:FractionToWidth x:Key="FractionToWidth" />
+            <conv:InvertBool x:Key="InverseBoolToBool" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

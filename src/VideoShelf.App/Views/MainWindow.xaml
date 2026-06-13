@@ -5,6 +5,7 @@
                  xmlns:vm="clr-namespace:VideoShelf.App.ViewModels"
                  xmlns:views="clr-namespace:VideoShelf.App.Views"
                  xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+                 xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
                  Title="VideoShelf"
                  Width="1180"
                  Height="760"
@@ -24,6 +25,7 @@
             <conv:SortModeToIndex x:Key="SortModeToIndex" />
             <conv:EnumToVisibility x:Key="EnumToVis" />
             <conv:EnumSetToVisibility x:Key="EnumSetToVis" />
+            <conv:InvertBool x:Key="InverseBoolToBool" />
         </ResourceDictionary>
     </ui:FluentWindow.Resources>
 
@@ -138,23 +140,90 @@
                                          Converter={StaticResource EnumToVis},
                                          ConverterParameter=Home}" />
 
-                <!-- Browse view — creator grid -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding DataContext.CurrentView,
-                                  RelativeSource={RelativeSource AncestorType=Window},
-                                  Converter={StaticResource EnumToVis},
-                                  ConverterParameter=Browse}">
-                    <ItemsControl ItemsSource="{Binding Creators.Creators}" Margin="16">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <views:CreatorCard Margin="{StaticResource CardGap}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- Browse view — virtualized, selectable creator grid -->
+                <Grid Visibility="{Binding DataContext.CurrentView,
+                          RelativeSource={RelativeSource AncestorType=Window},
+                          Converter={StaticResource EnumToVis},
+                          ConverterParameter=Browse}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Browse page header: Select toggle + Select All / Clear (selection mode only) -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,12,16,4">
+                        <ToggleButton Content="Select"
+                                      IsChecked="{Binding Creators.Selection.IsSelectionMode, Mode=TwoWay}"
+                                      Style="{StaticResource ChipToggle}"
+                                      AutomationProperties.Name="Toggle selection mode" />
+                        <Button Content="Select all"
+                                Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                Command="{Binding Creators.Selection.SelectAllCommand}"
+                                CommandParameter="{Binding Creators.Creators}"
+                                Margin="8,0,0,0"
+                                Padding="10,4"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                AutomationProperties.Name="Select all creators" />
+                        <Button Content="Clear"
+                                Visibility="{Binding Creators.Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                Command="{Binding Creators.Selection.ClearSelectionCommand}"
+                                Margin="4,0,0,0"
+                                Padding="10,4"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                AutomationProperties.Name="Clear selection" />
+                    </StackPanel>
+
+                    <!-- Virtualized creator grid using VirtualizingWrapPanel -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ListBox ItemsSource="{Binding Creators.Creators}"
+                                 SelectionMode="Extended"
+                                 ScrollViewer.CanContentScroll="True"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 Style="{StaticResource PlainListBox}"
+                                 Margin="16,0,16,16">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListBoxItem}">
+                                    <!-- Two-way bind ListBoxItem.IsSelected to card VM's IsSelected.
+                                         Native Shift-range and Ctrl-multi select drive this property. -->
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Grid wraps the card so the checkbox overlay can be positioned absolutely. -->
+                                    <Grid>
+                                        <!-- Inner card: IsHitTestVisible is suppressed in selection mode
+                                             so clicks land on the ListBoxItem (native toggle), not the Button.
+                                             When NOT in selection mode, the Button's OpenCommand fires normally. -->
+                                        <views:CreatorCard
+                                            IsHitTestVisible="{Binding DataContext.Creators.Selection.IsSelectionMode,
+                                                RelativeSource={RelativeSource AncestorType=ListBox},
+                                                Converter={StaticResource InverseBoolToBool}}" />
+
+                                        <!-- Checkbox overlay: top-left, visible only in selection mode. -->
+                                        <CheckBox Width="{StaticResource CheckboxSize}"
+                                                  Height="{StaticResource CheckboxSize}"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  Margin="6,6,0,0"
+                                                  IsHitTestVisible="False"
+                                                  Visibility="{Binding DataContext.Creators.Selection.IsSelectionMode,
+                                                      RelativeSource={RelativeSource AncestorType=ListBox},
+                                                      Converter={StaticResource BoolToVisibility}}"
+                                                  AutomationProperties.Name="Select this creator" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </Grid>
 
                 <!-- Section detail view -->
                 <views:SectionDetailView DataContext="{Binding SectionDetail}"
