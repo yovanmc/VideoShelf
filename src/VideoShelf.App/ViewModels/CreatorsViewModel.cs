@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,6 +24,9 @@ public partial class CreatorsViewModel : ObservableObject
 
     public ObservableCollection<CreatorCardViewModel> Creators { get; } = new();
 
+    /// <summary>Per-page selection state (enter/exit mode, selected set, commands).</summary>
+    public SelectionViewModel<CreatorCardViewModel> Selection { get; } = new();
+
     /// <summary>Raised when a creator card is activated (forwarded to the host nav).</summary>
     public event Action<long>? OpenCreatorRequested;
 
@@ -41,13 +45,28 @@ public partial class CreatorsViewModel : ObservableObject
             return result;
         }, ct);
 
+        // Unsubscribe from all existing cards before clearing.
+        foreach (var existing in Creators)
+            existing.PropertyChanged -= OnCardPropertyChanged;
+
         Creators.Clear();
         foreach (var (summary, overridePath) in cards)
         {
             var card = new CreatorCardViewModel(summary, overridePath, _thumbnails);
             card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
+            // Subscribe to route IsSelected changes into the Selection VM (no back-ref in card).
+            card.PropertyChanged += OnCardPropertyChanged;
             Creators.Add(card);
             await card.LoadImageAsync(ct);
+        }
+    }
+
+    private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(CreatorCardViewModel.IsSelected) &&
+            sender is CreatorCardViewModel card)
+        {
+            Selection.OnItemSelectionChanged(card);
         }
     }
 }

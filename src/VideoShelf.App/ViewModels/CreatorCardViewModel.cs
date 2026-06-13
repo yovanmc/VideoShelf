@@ -8,7 +8,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public partial class CreatorCardViewModel : ObservableObject
+public partial class CreatorCardViewModel : ObservableObject, ISelectableCard
 {
     private readonly SectionSummary _summary;
     private readonly string? _overrideArtPath;
@@ -28,6 +28,12 @@ public partial class CreatorCardViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _imagePath;
+
+    /// <summary>True when this card is selected in the multi-select grid.
+    /// The hosting VM subscribes to PropertyChanged and routes changes to
+    /// <see cref="SelectionViewModel{T}.OnItemSelectionChanged"/> — no back-ref is stored here.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
 
     /// <summary>Raised when the card is activated; the host opens the creator page.</summary>
     public event Action<long>? OpenRequested;

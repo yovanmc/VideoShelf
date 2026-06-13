@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
@@ -65,5 +66,79 @@ public class CreatorCardViewModelTests
         await vm.LoadImageAsync(CancellationToken.None);
 
         vm.ImagePath.ShouldBeNull();
+    }
+
+    // -----------------------------------------------------------------
+    // A1 — ISelectableCard / IsSelected
+    // -----------------------------------------------------------------
+
+    [Fact]
+    public void IsSelected_defaults_to_false()
+    {
+        var vm = new CreatorCardViewModel(Summary(), overrideArtPath: null, new StubThumbs());
+
+        vm.IsSelected.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void IsSelected_round_trips_true_then_false()
+    {
+        var vm = new CreatorCardViewModel(Summary(), overrideArtPath: null, new StubThumbs());
+
+        vm.IsSelected = true;
+        vm.IsSelected.ShouldBeTrue();
+
+        vm.IsSelected = false;
+        vm.IsSelected.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void IsSelected_raises_PropertyChanged()
+    {
+        var vm = new CreatorCardViewModel(Summary(), overrideArtPath: null, new StubThumbs());
+        var raised = new List<string?>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        vm.IsSelected = true;
+
+        raised.ShouldContain(nameof(CreatorCardViewModel.IsSelected));
+    }
+
+    [Fact]
+    public void CreatorCardViewModel_implements_ISelectableCard()
+    {
+        var vm = new CreatorCardViewModel(Summary(), overrideArtPath: null, new StubThumbs());
+
+        // Verify the interface contract via the typed reference.
+        ISelectableCard card = vm;
+        card.IsSelected = true;
+        card.IsSelected.ShouldBeTrue();
+
+        card.IsSelected = false;
+        card.IsSelected.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void SelectionViewModel_wires_via_PropertyChanged_subscription()
+    {
+        // Verify the CreatorsViewModel-style wiring: subscribe, mutate, observe SelectedItems.
+        var selection = new SelectionViewModel<CreatorCardViewModel>();
+        var vm = new CreatorCardViewModel(Summary(), overrideArtPath: null, new StubThumbs());
+
+        // Mirror what CreatorsViewModel.OnCardPropertyChanged does.
+        vm.PropertyChanged += (sender, e) =>
+        {
+            if (e.PropertyName == nameof(CreatorCardViewModel.IsSelected) &&
+                sender is CreatorCardViewModel card)
+                selection.OnItemSelectionChanged(card);
+        };
+
+        vm.IsSelected = true;
+        selection.SelectedItems.ShouldContain(vm);
+        selection.SelectedCount.ShouldBe(1);
+
+        vm.IsSelected = false;
+        selection.SelectedItems.ShouldBeEmpty();
+        selection.SelectedCount.ShouldBe(0);
     }
 }
