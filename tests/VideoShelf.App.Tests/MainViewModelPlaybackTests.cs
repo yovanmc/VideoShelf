@@ -44,7 +44,7 @@ public class MainViewModelPlaybackTests
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
@@ -110,7 +110,7 @@ public class MainViewModelPlaybackTests
         var statsRepo = new StatsRepository(temp.Db);
         var tags = new TagRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");

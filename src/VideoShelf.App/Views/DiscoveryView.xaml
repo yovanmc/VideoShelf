@@ -48,7 +48,19 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <views:VideoCard />
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard />
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -85,7 +97,21 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate><views:VideoCard/></DataTemplate>
+                            <DataTemplate>
+                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Play next"
+                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                            <MenuItem Header="Add to queue"
+                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding VideoId}"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
+                                    <views:VideoCard/>
+                                </Border>
+                            </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>

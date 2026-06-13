@@ -10,7 +10,7 @@ namespace VideoShelf.App.ViewModels.Discovery;
 
 public sealed partial class DiscoveryViewModel(
     DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
-    CreatorCardFactory cards, StatsRepository stats) : ObservableObject
+    CreatorCardFactory cards, StatsRepository stats, PlayQueueViewModel playQueue) : ObservableObject
 {
     private const int RailLimit = 24;
 
@@ -96,6 +96,20 @@ public sealed partial class DiscoveryViewModel(
         HasStats = s.TotalVideos > 0;
 
         RaiseAllHasFlags();
+    }
+
+    [RelayCommand]
+    private void EnqueueVideo(long videoId)
+    {
+        var ep = library.GetEpisode(videoId);
+        if (ep is not null) playQueue.Enqueue(ep);
+    }
+
+    [RelayCommand]
+    private void PlayVideoNext(long videoId)
+    {
+        var ep = library.GetEpisode(videoId);
+        if (ep is not null) playQueue.PlayNext(ep);
     }
 
     [RelayCommand]
