@@ -23,7 +23,7 @@
 
                     <!-- Error / missing-file banner (additive) -->
                     <Border VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Padding="20" CornerRadius="8" Background="#CC202020"
+                            Padding="20" CornerRadius="8" Background="{StaticResource PlayerPanelBrush}"
                             Visibility="{Binding Player.HasError, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{Binding Player.PlaybackError}" Foreground="White"
                                    TextAlignment="Center" TextWrapping="Wrap" MaxWidth="480" />
@@ -31,7 +31,7 @@
 
                     <!-- Resume-offer banner (additive) -->
                     <Border VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0"
-                            Padding="14,8" CornerRadius="6" Background="#CC202020"
+                            Padding="14,8" CornerRadius="6" Background="{StaticResource PlayerPanelBrush}"
                             Visibility="{Binding Player.CanResume, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Resume where you left off?" Foreground="White"
@@ -47,7 +47,7 @@
 
                         <!-- Top scrim + title/close (drag strip in PiP) -->
                         <Border x:Name="TopBar" VerticalAlignment="Top" Padding="12,8"
-                                Background="#80101010" MouseLeftButtonDown="OnTopBarMouseDown">
+                                Background="{StaticResource PlayerTopScrimBrush}" MouseLeftButtonDown="OnTopBarMouseDown">
                             <Grid>
                                 <TextBlock Text="{Binding Player.Title}" Foreground="White"
                                            VerticalAlignment="Center" FontSize="14"
@@ -74,14 +74,14 @@
                         <!-- Seek-preview thumbnail popup (shown while scrubbing) -->
                         <Border x:Name="SeekPreview" Width="160" Height="90"
                                 VerticalAlignment="Bottom" HorizontalAlignment="Left"
-                                Margin="0,0,0,86" CornerRadius="6" Background="#E0101010"
-                                BorderBrush="#60FFFFFF" BorderThickness="1"
+                                Margin="0,0,0,86" CornerRadius="6" Background="{StaticResource PlayerPopupBrush}"
+                                BorderBrush="{StaticResource PlayerPopupBorderBrush}" BorderThickness="1"
                                 Visibility="{Binding Player.IsScrubbing, Converter={StaticResource BoolToVisibility}}">
                             <Image Source="{Binding Player.SeekPreviewPath}" Stretch="UniformToFill" />
                         </Border>
 
                         <!-- Bottom transport -->
-                        <Border VerticalAlignment="Bottom" Background="#B0101010" Padding="12,8">
+                        <Border VerticalAlignment="Bottom" Background="{StaticResource PlayerScrimBrush}" Padding="12,8">
                             <StackPanel>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -212,7 +212,7 @@
                     <!-- ===== Queue drawer: right-side overlay, collapsed in PiP ===== -->
                     <Border x:Name="QueueDrawer"
                             HorizontalAlignment="Right" VerticalAlignment="Stretch"
-                            Width="320" Background="#E6101010"
+                            Width="320" Background="{StaticResource PlayerDrawerBrush}"
                             BorderBrush="{StaticResource DividerBrush}" BorderThickness="1,0,0,0">
                         <Border.Style>
                             <Style TargetType="Border">

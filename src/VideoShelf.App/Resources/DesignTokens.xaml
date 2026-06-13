@@ -91,6 +91,8 @@
     <SolidColorBrush x:Key="PlayerPopupBrush"        Color="#E0101010" />
     <!-- Popup border — low-opacity white outline -->
     <SolidColorBrush x:Key="PlayerPopupBorderBrush"  Color="#60FFFFFF" />
+    <!-- Queue drawer background — slightly more opaque than popup -->
+    <SolidColorBrush x:Key="PlayerDrawerBrush"        Color="#E6101010" />
 
     <!-- ============================================================
          RADII & SPACING
@@ -239,33 +241,6 @@
                 <Setter Property="Opacity" Value="0.85" />
             </Trigger>
         </Style.Triggers>
-    </Style>
-
-    <!-- ============================================================
-         FOCUS VARIANTS — *Focused alias styles kept for any callers that
-         explicitly request the focused variant by key; focus ring is now
-         wired directly into the base styles above.
-         ============================================================ -->
-
-    <!-- Apply focus visual to button styles (defined above) -->
-    <Style x:Key="PrimaryButtonFocused" TargetType="ui:Button"
-           BasedOn="{StaticResource PrimaryButton}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
-    </Style>
-
-    <Style x:Key="SecondaryButtonFocused" TargetType="ui:Button"
-           BasedOn="{StaticResource SecondaryButton}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
-    </Style>
-
-    <Style x:Key="TertiaryButtonFocused" TargetType="ui:Button"
-           BasedOn="{StaticResource TertiaryButton}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
-    </Style>
-
-    <Style x:Key="ChipToggleFocused" TargetType="ToggleButton"
-           BasedOn="{StaticResource ChipToggle}">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
     </Style>
 
     <!-- ============================================================
