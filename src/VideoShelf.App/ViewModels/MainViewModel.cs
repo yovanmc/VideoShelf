@@ -397,7 +397,13 @@ public sealed partial class MainViewModel : ObservableObject
         // BeginInvoke so focus lands after the target view is re-realized in the visual tree.
         var el = _focusReturn?.TakeForRestore();
         if (el is not null)
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => el.Focus());
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Loaded,
+                new System.Action(() =>
+                {
+                    if (el is System.Windows.FrameworkElement fe && !fe.IsLoaded) return;
+                    el.Focus();
+                }));
     }
 
     /// <summary>Opens the Ctrl+K command palette overlay and resets its state.</summary>
