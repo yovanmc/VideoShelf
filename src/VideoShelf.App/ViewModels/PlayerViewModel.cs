@@ -254,6 +254,42 @@ public sealed partial class PlayerViewModel(
     [RelayCommand]
     private void ToggleFullscreen() => IsFullscreen = !IsFullscreen;
 
+    // ===== B-VM: skip + mute commands =========================================
+
+    [RelayCommand]
+    private void SkipBack10() => engine.SeekTo(Math.Max(0, PositionSeconds - 10));
+
+    [RelayCommand]
+    private void SkipForward30()
+    {
+        var target = PositionSeconds + 30;
+        if (LengthSeconds > 0) target = Math.Min(LengthSeconds, target);
+        engine.SeekTo(target);
+    }
+
+    [ObservableProperty]
+    private bool _isMuted;
+
+    private int _volumeBeforeMute = 100;
+
+    [RelayCommand]
+    private void ToggleMute()
+    {
+        if (IsMuted)
+        {
+            Volume = _volumeBeforeMute;
+            IsMuted = false;
+        }
+        else
+        {
+            _volumeBeforeMute = Volume == 0 ? 100 : Volume;
+            Volume = 0;
+            IsMuted = true;
+        }
+    }
+
+    // ==========================================================================
+
     /// <summary>Raised after the finished video is marked watched. The host decides what (if anything) plays next.</summary>
     public event EventHandler<EpisodeView>? PlaybackEnded;
 

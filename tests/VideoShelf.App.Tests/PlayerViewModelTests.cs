@@ -193,4 +193,133 @@ public class PlayerViewModelTests
 
         vm.SeekPreviewPath.ShouldBeNull();
     }
+
+    // ===== B-VM: SkipBack10 / SkipForward30 / ToggleMute ===================
+
+    [Fact]
+    public void SkipBack10_seeks_back_10_seconds()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+        engine.RaiseLength(100.0);
+        engine.RaisePosition(50.0);
+
+        vm.SkipBack10Command.Execute(null);
+
+        engine.Seeks[^1].ShouldBe(40.0);
+    }
+
+    [Fact]
+    public void SkipBack10_clamps_to_zero_when_near_start()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+        engine.RaiseLength(100.0);
+        engine.RaisePosition(5.0);
+
+        vm.SkipBack10Command.Execute(null);
+
+        engine.Seeks[^1].ShouldBe(0.0);
+    }
+
+    [Fact]
+    public void SkipForward30_seeks_forward_30_seconds()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+        engine.RaiseLength(200.0);
+        engine.RaisePosition(50.0);
+
+        vm.SkipForward30Command.Execute(null);
+
+        engine.Seeks[^1].ShouldBe(80.0);
+    }
+
+    [Fact]
+    public void SkipForward30_clamps_to_length_when_near_end()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+        engine.RaiseLength(100.0);
+        engine.RaisePosition(85.0);
+
+        vm.SkipForward30Command.Execute(null);
+
+        engine.Seeks[^1].ShouldBe(100.0);
+    }
+
+    [Fact]
+    public void SkipForward30_does_not_clamp_when_length_unknown()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Open(ep);
+        // LengthSeconds stays 0 (length not raised)
+        engine.RaisePosition(50.0);
+
+        vm.SkipForward30Command.Execute(null);
+
+        engine.Seeks[^1].ShouldBe(80.0);
+    }
+
+    [Fact]
+    public void ToggleMute_sets_volume_to_zero_and_remembers_previous()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Volume = 80;
+
+        vm.ToggleMuteCommand.Execute(null);
+
+        vm.IsMuted.ShouldBeTrue();
+        vm.Volume.ShouldBe(0);
+    }
+
+    [Fact]
+    public void ToggleMute_restores_volume_on_unmute()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Volume = 75;
+
+        vm.ToggleMuteCommand.Execute(null); // mute
+        vm.ToggleMuteCommand.Execute(null); // unmute
+
+        vm.IsMuted.ShouldBeFalse();
+        vm.Volume.ShouldBe(75);
+    }
+
+    [Fact]
+    public void ToggleMute_when_volume_already_zero_restores_to_100()
+    {
+        using var temp = new AppTempDb();
+        var (lib, watch, settings, ep) = Seed(temp);
+        var engine = new FakePlaybackEngine();
+        var vm = NewVm(temp, engine, lib, watch, settings);
+        vm.Volume = 0;
+
+        vm.ToggleMuteCommand.Execute(null); // mute with volume 0 → saves 100
+        vm.ToggleMuteCommand.Execute(null); // unmute → restores 100
+
+        vm.IsMuted.ShouldBeFalse();
+        vm.Volume.ShouldBe(100);
+    }
 }
