@@ -46,7 +46,6 @@
             <!-- Progress percent text: non-color redundant cue, visible only when in-progress (not fully watched). -->
             <TextBlock Style="{StaticResource Caption}"
                        Text="{Binding ProgressFraction, Converter={StaticResource FractionToPercentText}}"
-                       AutomationProperties.Name="{Binding ProgressFraction, Converter={StaticResource FractionToPercentText}}"
                        Margin="0,1,0,2"
                        Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}" />
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
