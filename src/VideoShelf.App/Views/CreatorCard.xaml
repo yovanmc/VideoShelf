@@ -12,12 +12,65 @@
             Background="Transparent" BorderThickness="0" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
             IsTabStop="True"
-            FocusVisualStyle="{StaticResource AppFocusVisual}">
+            FocusVisualStyle="{StaticResource AppFocusVisual}"
+            RenderTransformOrigin="0.5,0.5">
+        <Button.Effect>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270"
+                              Color="#000000" Opacity="0"/>
+        </Button.Effect>
+        <Button.RenderTransform>
+            <ScaleTransform ScaleX="1" ScaleY="1"/>
+        </Button.RenderTransform>
+        <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="1.03" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="1.03" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Effect.Opacity"
+                                                     To="0.45" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="1" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="1" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Effect.Opacity"
+                                                     To="0" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Button.Style>
         <StackPanel>
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"
                     Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
-                <Image Source="{Binding ImagePath, IsAsync=True}" Stretch="UniformToFill" />
+                <Image Source="{Binding ImagePath, IsAsync=True, NotifyOnTargetUpdated=True}"
+                       Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
             </Border>
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="2,8,2,0"
                        TextTrimming="CharacterEllipsis" />

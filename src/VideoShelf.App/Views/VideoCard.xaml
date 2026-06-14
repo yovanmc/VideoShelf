@@ -13,7 +13,59 @@
             Background="Transparent" BorderThickness="0" Width="{StaticResource CardWidth}" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
             IsTabStop="True"
-            FocusVisualStyle="{StaticResource AppFocusVisual}">
+            FocusVisualStyle="{StaticResource AppFocusVisual}"
+            RenderTransformOrigin="0.5,0.5">
+        <Button.Effect>
+            <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270"
+                              Color="#000000" Opacity="0"/>
+        </Button.Effect>
+        <Button.RenderTransform>
+            <ScaleTransform ScaleX="1" ScaleY="1"/>
+        </Button.RenderTransform>
+        <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger.EnterActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="1.03" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="1.03" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Effect.Opacity"
+                                                     To="0.45" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.EnterActions>
+                        <Trigger.ExitActions>
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                     To="1" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                     To="1" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="Effect.Opacity"
+                                                     To="0" Duration="{StaticResource AnimFast}">
+                                        <DoubleAnimation.EasingFunction><StaticResource ResourceKey="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </Trigger.ExitActions>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Button.Style>
         <StackPanel>
             <!-- Thumbnail with watched-checkmark badge overlay. Grid allows the badge to float
                  over the top-right corner of the art without pushing layout. -->
@@ -21,7 +73,8 @@
                 <Border CornerRadius="{StaticResource CardImageRadius}"
                         Background="{StaticResource ThumbPlaceholderBrush}"
                         Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
-                    <Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
+                    <Image Source="{Binding ThumbnailPath, IsAsync=True, NotifyOnTargetUpdated=True}"
+                           Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
                 </Border>
                 <!-- Watched checkmark badge: top-right chip overlay, visible when IsWatched=True.
                      Uses ChipFillBrush (~25% alpha white) for contrast on both dark and light art.
@@ -40,11 +93,22 @@
                 <Border HorizontalAlignment="Left" CornerRadius="2" Background="{StaticResource AccentBrush}"
                         Width="{Binding ProgressFraction, Converter={StaticResource FractionToWidth}, ConverterParameter=200}" />
             </Border>
-            <!-- Progress percent text: non-color redundant cue, visible only when in-progress (not fully watched). -->
-            <TextBlock Style="{StaticResource Caption}"
-                       Text="{Binding ProgressFraction, Converter={StaticResource FractionToPercentText}}"
+            <!-- Progress percent text: non-color redundant cue, visible only when in-progress (not fully watched).
+                 Opacity 0.6 normally; becomes 1.0 on hover for prominence. Visibility gate preserved. -->
+            <TextBlock Text="{Binding ProgressFraction, Converter={StaticResource FractionToPercentText}}"
                        Margin="0,1,0,2"
-                       Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}" />
+                       Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
+                        <Setter Property="Opacity" Value="0.6"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                                <Setter Property="Opacity" Value="1.0"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12" />

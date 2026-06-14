@@ -263,6 +263,15 @@
     </Style>
 
     <!-- ============================================================
+         ANIMATION TOKENS (additive — M21)
+         ============================================================ -->
+    <Duration x:Key="AnimFast">0:0:0.12</Duration>
+    <Duration x:Key="AnimNormal">0:0:0.22</Duration>
+    <Duration x:Key="AnimSlow">0:0:0.35</Duration>
+    <CubicEase x:Key="EaseOut" EasingMode="EaseOut"/>
+    <CubicEase x:Key="EaseInOut" EasingMode="EaseInOut"/>
+
+    <!-- ============================================================
          IMAGE — shared thumbnail fade-in animation
          ============================================================ -->
     <!-- ThumbnailImage: Opacity defaults to 1 so a thumbnail is never stuck
