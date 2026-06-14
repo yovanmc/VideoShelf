@@ -32,6 +32,7 @@
                 </Border>
                 <!-- Edit/Done toggle button (top-right of hero) -->
                 <ui:Button Command="{Binding ToggleEditCommand}"
+                           AutomationProperties.Name="Edit creator"
                            Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
                     <ui:Button.Style>
                         <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
@@ -66,7 +67,8 @@
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
                         <ui:Button Command="{Binding PlayAllCommand}"
                                    Style="{StaticResource PrimaryButton}"
-                                   HorizontalAlignment="Left">
+                                   HorizontalAlignment="Left"
+                                   AutomationProperties.Name="Play all">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
                                 <TextBlock Text="Play all" VerticalAlignment="Center" />
@@ -75,6 +77,7 @@
                         <!-- Mark all watched / unwatched: only visible in edit mode -->
                         <ui:Button Command="{Binding MarkCreatorWatchedCommand}" Margin="8,0,0,0"
                                    Style="{StaticResource SecondaryButton}"
+                                   AutomationProperties.Name="Mark all watched"
                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Eye24" Margin="0,0,4,0" />
@@ -83,6 +86,7 @@
                         </ui:Button>
                         <ui:Button Command="{Binding MarkCreatorUnwatchedCommand}" Margin="8,0,0,0"
                                    Style="{StaticResource SecondaryButton}"
+                                   AutomationProperties.Name="Mark all unwatched"
                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="EyeOff24" Margin="0,0,4,0" />
@@ -186,7 +190,8 @@
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <ui:Button Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
-                                       Style="{StaticResource SecondaryButton}">
+                                       Style="{StaticResource SecondaryButton}"
+                                       AutomationProperties.Name="Set image">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
                                     <TextBlock Text="Set image…" VerticalAlignment="Center" />
@@ -194,7 +199,8 @@
                             </ui:Button>
                             <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
                                        Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
-                                       Style="{StaticResource SecondaryButton}">
+                                       Style="{StaticResource SecondaryButton}"
+                                       AutomationProperties.Name="Use default image">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
                                     <TextBlock Text="Use default" VerticalAlignment="Center" />
@@ -253,6 +259,7 @@
                                     </TextBlock>
                                     <ui:Button Margin="8,0,0,0"
                                                Style="{StaticResource SecondaryButton}"
+                                               AutomationProperties.Name="Compare and resolve duplicates"
                                                Command="{Binding DataContext.OpenResolveCommand,
                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                CommandParameter="{Binding}">
@@ -288,7 +295,10 @@
                             <StackPanel>
                                 <!-- clickable tile header = Activate (play standalone / toggle expand) -->
                                 <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
-                                        Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch">
+                                        Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
+                                        AutomationProperties.Name="{Binding BaseTitle}"
+                                        IsTabStop="True"
+                                        FocusVisualStyle="{StaticResource AppFocusVisual}">
                                     <StackPanel>
                                         <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
                                                 CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
@@ -392,23 +402,28 @@
                                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                                                                     Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="1"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="1 star">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="1 star"
+                                                                       AutomationProperties.Name="1 star">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=1}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="2"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="2 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="2 stars"
+                                                                       AutomationProperties.Name="2 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=2}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="3"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="3 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="3 stars"
+                                                                       AutomationProperties.Name="3 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=3}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="4"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="4 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="4 stars"
+                                                                       AutomationProperties.Name="4 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=4}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="5"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="5 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="5 stars"
+                                                                       AutomationProperties.Name="5 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=5}" />
                                                             </ui:Button>
                                                         </StackPanel>

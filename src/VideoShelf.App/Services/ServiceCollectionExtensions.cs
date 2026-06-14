@@ -1,5 +1,6 @@
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
+using VideoShelf.App.Accessibility;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.App.Views;
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         {
             services.AddSingleton<AppPaths>();
         }
+        services.AddSingleton<IFocusReturnService, FocusReturnService>();
         services.AddSingleton<LibraryBootstrap>();
         services.AddSingleton<VideoShelfDb>(sp =>
             sp.GetRequiredService<LibraryBootstrap>().OpenLibrary());
@@ -172,7 +174,8 @@ public static class ServiceCollectionExtensions
                 palette,
                 sp.GetRequiredService<MultiRenameViewModel>(),
                 sp.GetRequiredService<ResolutionBackfillService>(),
-                sp.GetRequiredService<MaintenanceViewModel>());
+                sp.GetRequiredService<MaintenanceViewModel>(),
+                sp.GetRequiredService<IFocusReturnService>());
 
             mainVmBox = mainVm;
             return mainVm;

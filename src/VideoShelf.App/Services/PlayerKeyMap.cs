@@ -12,6 +12,11 @@ public enum PlayerCommand
     // E3: routed through the skip commands so feedback fires
     SkipBack,
     SkipForward,
+    /// <summary>
+    /// Emitted by the view's OnKeyDown when Esc is pressed, no flyout is open,
+    /// and the player is NOT in fullscreen — closes the player and returns focus.
+    /// </summary>
+    ClosePlayer,
 }
 
 /// <summary>Pure keyboard-to-command mapping for the player (spec §9 shortcuts).</summary>

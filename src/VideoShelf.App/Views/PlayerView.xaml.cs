@@ -300,9 +300,30 @@ public partial class PlayerView : UserControl
             case PlayerCommand.SkipBack:          main.Player.SkipBack10Command.Execute(null); e.Handled = true; break;
             case PlayerCommand.SkipForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
             case PlayerCommand.ToggleFullscreen:  main.Player.ToggleFullscreenCommand.Execute(null); e.Handled = true; break;
-            case PlayerCommand.ExitFullscreen:    main.Player.IsFullscreen = false; e.Handled = true; break;
+            case PlayerCommand.ExitFullscreen:    HandleEscapeKey(main); e.Handled = true; break;
             case PlayerCommand.Screenshot:        main.Player.ScreenshotCommand.Execute(null); e.Handled = true; break;
         }
+    }
+
+    /// <summary>
+    /// Esc back-out chain (B4):
+    /// 1. Close any open flyout (More/Tracks/Volume) — swallows the Esc.
+    /// 2. Exit fullscreen if the player is in fullscreen mode.
+    /// 3. Close the player entirely and return focus to the launching card.
+    /// Each level "consumes" the key and does not fall through to the next.
+    /// </summary>
+    private void HandleEscapeKey(MainViewModel main)
+    {
+        // Priority 1: close an open flyout first.
+        if (MoreFlyout.IsOpen)   { MoreFlyout.IsOpen   = false; return; }
+        if (TracksFlyout.IsOpen) { TracksFlyout.IsOpen = false; return; }
+        if (VolumeFlyout.IsOpen) { VolumeFlyout.IsOpen = false; return; }
+
+        // Priority 2: exit fullscreen.
+        if (main.Player.IsFullscreen) { main.Player.IsFullscreen = false; return; }
+
+        // Priority 3: close the player and restore focus to the launching card.
+        main.ClosePlayerCommand.Execute(null);
     }
 
     // ===== E4: volume scroll feedback ==========================================

@@ -11,6 +11,8 @@
     <Button Command="{Binding OpenCommand}" Width="{StaticResource CardWidth}" Padding="0"
             Background="Transparent" BorderThickness="0" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
+            IsTabStop="True"
+            FocusVisualStyle="{StaticResource AppFocusVisual}"
             AutomationProperties.Name="{Binding Name}"
             AutomationProperties.HelpText="{Binding VideoCountLabel}">
         <StackPanel>

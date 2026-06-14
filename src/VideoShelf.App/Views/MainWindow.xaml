@@ -66,13 +66,15 @@
                     </Grid.ColumnDefinitions>
                     <ui:Button Grid.Column="0" Command="{Binding GoBackCommand}"
                                Margin="0,0,8,0" ToolTip="Back"
+                               AutomationProperties.Name="Back"
                                Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisibility}}"
                                Style="{StaticResource TertiaryButton}">
                         <ui:SymbolIcon Symbol="ArrowLeft24" />
                     </ui:Button>
                     <Grid Grid.Column="1" Margin="0,0,4,0">
                         <ui:Button Command="{Binding ShowHomeCommand}"
-                                   Style="{StaticResource TertiaryButton}">
+                                   Style="{StaticResource TertiaryButton}"
+                                   AutomationProperties.Name="Home">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Home24" Margin="0,0,4,0" />
                                 <TextBlock Text="Home" VerticalAlignment="Center" />
@@ -83,7 +85,8 @@
                     </Grid>
                     <Grid Grid.Column="2" Margin="0,0,4,0">
                         <ui:Button Command="{Binding ShowBrowseCommand}"
-                                   Style="{StaticResource TertiaryButton}">
+                                   Style="{StaticResource TertiaryButton}"
+                                   AutomationProperties.Name="Browse">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Apps24" Margin="0,0,4,0" />
                                 <TextBlock Text="Browse" VerticalAlignment="Center" />
@@ -95,7 +98,8 @@
                     <!-- Library menu: links to SmartViews, Playlists, Watchlist, Favorites, History, SurpriseMe -->
                     <Grid Grid.Column="3" Margin="0,0,4,0">
                         <Menu Background="Transparent" VerticalAlignment="Center">
-                            <MenuItem Padding="8,6">
+                            <MenuItem Padding="8,6"
+                                      AutomationProperties.Name="Library">
                                 <MenuItem.Header>
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Library24" Margin="0,0,4,0" />
@@ -122,7 +126,8 @@
                     <Grid Grid.Column="5" Margin="0,0,4,0">
                         <ui:Button Command="{Binding ShowQueueCommand}"
                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                   Style="{StaticResource TertiaryButton}">
+                                   Style="{StaticResource TertiaryButton}"
+                                   AutomationProperties.Name="Up next">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
                                 <TextBlock Text="Up next" VerticalAlignment="Center" />
@@ -133,6 +138,7 @@
                     </Grid>
                     <Grid Grid.Column="6">
                         <ui:Button Command="{Binding ShowSettingsCommand}" ToolTip="Settings"
+                                   AutomationProperties.Name="Settings"
                                    Style="{StaticResource TertiaryButton}">
                             <ui:SymbolIcon Symbol="Settings24" />
                         </ui:Button>
@@ -313,7 +319,11 @@
                                  VirtualizingPanel.IsVirtualizing="True"
                                  VirtualizingPanel.VirtualizationMode="Recycling"
                                  Style="{StaticResource PlainListBox}"
-                                 Margin="16,0,16,16">
+                                 Margin="16,0,16,16"
+                                 IsTextSearchEnabled="True"
+                                 TextSearch.TextPath="Name"
+                                 KeyboardNavigation.TabNavigation="Once"
+                                 KeyboardNavigation.DirectionalNavigation="Contained">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />

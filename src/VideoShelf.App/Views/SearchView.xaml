@@ -11,7 +11,9 @@
             <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"
                        Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding CreatorResults}"
-                          Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}">
+                          Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"
+                          KeyboardNavigation.TabNavigation="Once"
+                          KeyboardNavigation.DirectionalNavigation="Contained">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate><views:CreatorCard Margin="0,0,12,12"/></DataTemplate>
@@ -47,7 +49,9 @@
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
-                         Style="{StaticResource PlainListBox}">
+                         Style="{StaticResource PlainListBox}"
+                         KeyboardNavigation.TabNavigation="Once"
+                         KeyboardNavigation.DirectionalNavigation="Contained">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />
