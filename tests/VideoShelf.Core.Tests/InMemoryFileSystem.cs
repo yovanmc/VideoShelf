@@ -38,4 +38,16 @@ public sealed class InMemoryFileSystem : IFileSystem
 
     public string ReadAllText(string path) => _files[Norm(path)];
     public void WriteAllText(string path, string contents) => _files[Norm(path)] = contents;
+
+    /// <summary>
+    /// Returns the byte-length of the stored string content encoded as UTF-8.
+    /// An empty string represents a zero-byte file (which the keeper gate rejects).
+    /// Returns -1 when the file does not exist in the in-memory store.
+    /// </summary>
+    public long GetFileLength(string path)
+    {
+        var key = Norm(path);
+        if (!_files.TryGetValue(key, out var content)) return -1L;
+        return System.Text.Encoding.UTF8.GetByteCount(content);
+    }
 }

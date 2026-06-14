@@ -520,6 +520,11 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Maintenance}" />
 
+                <!-- Duplicate compare/resolve page — M18-G -->
+                <views:DuplicateResolveView DataContext="{Binding DuplicateResolve}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=DuplicateResolve}" />
+
                 <!-- Bulk-action bar: docked at the bottom of the content area.
                      Visible when the Browse creator selection is non-empty.
                      Overlays the bottom of content (not the nav bar). -->

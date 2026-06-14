@@ -11,6 +11,8 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:StarSymbolConverter x:Key="StarSymbolConv" />
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:NotNullToVisibility x:Key="NotNullToVis" />
+            <conv:CountToVisibility x:Key="CountToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -221,6 +223,47 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+
+            <!-- M18-G: POSSIBLE DUPLICATES banner — shown when HasDuplicates is true -->
+            <Border Margin="24,12,24,0" Padding="12,8"
+                    CornerRadius="{StaticResource ControlRadius}"
+                    Background="{StaticResource ChipFillBrush}"
+                    Visibility="{Binding HasDuplicates, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <ui:SymbolIcon Symbol="Warning24" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13">
+                            <Run Text="Possible duplicates (" />
+                            <Run Text="{Binding PossibleDuplicates.Count, Mode=OneWay}" />
+                            <Run Text=") — review" />
+                        </TextBlock>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding PossibleDuplicates}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock FontSize="12"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding Videos.Count, Mode=OneWay}" />
+                                        <Run Text=" files, " />
+                                        <Run Text="{Binding SizeBytes, Mode=OneWay, StringFormat='{}{0:N0} bytes'}" />
+                                    </TextBlock>
+                                    <ui:Button Margin="8,0,0,0"
+                                               Style="{StaticResource SecondaryButton}"
+                                               Command="{Binding DataContext.OpenResolveCommand,
+                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                               CommandParameter="{Binding}">
+                                        <TextBlock Text="Compare &amp; resolve" FontSize="11" />
+                                    </ui:Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
 
             <!-- SERIES GRID (accordion tiles) -->
             <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="24,16,24,8"/>

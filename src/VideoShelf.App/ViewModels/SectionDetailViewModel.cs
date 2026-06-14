@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
+using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
@@ -27,6 +28,12 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     private readonly PlaylistRepository? playlists;
     private readonly ItemArtRepository? itemArt;
 
+    // ── M18-G: duplicate-resolve deps (nullable trailing params) ─────────────
+    private readonly MaintenanceRepository? _maintenance;
+    private readonly IRecycleBinService? _recycleBin;
+    private readonly IConfirmService? _confirm;
+    private readonly IFileSystem? _fs;
+
     // ── ICollectionView for live series filtering ─────────────────────────────
     // Null in test environments (no WPF Dispatcher).
     private readonly ICollectionView? _seriesView;
@@ -41,7 +48,11 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         PlayQueueViewModel playQueue,
         CurationRepository? curation = null,
         PlaylistRepository? playlists = null,
-        ItemArtRepository? itemArt = null)
+        ItemArtRepository? itemArt = null,
+        MaintenanceRepository? maintenance = null,
+        IRecycleBinService? recycleBin = null,
+        IConfirmService? confirm = null,
+        IFileSystem? fs = null)
     {
         this.library      = library;
         this.tags         = tags;
@@ -53,6 +64,10 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         this.curation     = curation;
         this.playlists    = playlists;
         this.itemArt      = itemArt;
+        _maintenance      = maintenance;
+        _recycleBin       = recycleBin;
+        _confirm          = confirm;
+        _fs               = fs;
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
         // In unit tests there is no Application/Dispatcher, and SeriesList is
@@ -188,6 +203,36 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     public event EventHandler<EpisodeView>? PlayRequested;
     public event EventHandler<SeriesViewModel>? RenameRequested;
 
+    // ── M18-G: possible duplicates banner ─────────────────────────────────────
+
+    /// <summary>Raised when the owner wants to open the resolve screen for a group.</summary>
+    public event EventHandler<DuplicateResolveViewModel>? ResolveRequested;
+
+    /// <summary>Duplicate groups scoped to this creator section. Populated on LoadAsync.</summary>
+    public ObservableCollection<DuplicateGroup> PossibleDuplicates { get; } = new();
+
+    /// <summary>True when <see cref="PossibleDuplicates"/> has entries.</summary>
+    public bool HasDuplicates => PossibleDuplicates.Count > 0;
+
+    /// <summary>Opens the compare/resolve screen for the given group.</summary>
+    [RelayCommand]
+    private void OpenResolve(DuplicateGroup group)
+    {
+        if (_maintenance is null || _recycleBin is null || _confirm is null || _fs is null) return;
+        var vm = new DuplicateResolveViewModel(group, _maintenance, library, _recycleBin, _confirm, _fs);
+        vm.Resolved += (_, _) => RefreshDuplicates();
+        ResolveRequested?.Invoke(this, vm);
+    }
+
+    private void RefreshDuplicates()
+    {
+        PossibleDuplicates.Clear();
+        if (_maintenance is not null)
+            foreach (var g in _maintenance.GetDuplicateGroupsForSection(SectionId))
+                PossibleDuplicates.Add(g);
+        OnPropertyChanged(nameof(HasDuplicates));
+    }
+
     public async Task LoadAsync(long sectionId)
     {
         SectionId = sectionId;
@@ -242,6 +287,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         foreach (var t in sectionTags) Tags.Add(t);
         RefreshSuggestions();
         RefreshCreatorArt();                 // existing: sets CreatorArtPath from the override
+        RefreshDuplicates();                 // M18-G: populate possible-duplicates banner
         await ResolveBackgroundAsync();
     }
 

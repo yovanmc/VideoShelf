@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
@@ -33,6 +34,7 @@ public sealed class HarnessRunner
     private readonly CurationRepository _curation;
     private readonly SmartViewRepository _smartViews;
     private readonly PlaylistRepository _playlists;
+    private readonly MaintenanceRepository _maintenance;
 
     public HarnessRunner(
         MainViewModel main,
@@ -42,7 +44,8 @@ public sealed class HarnessRunner
         TagRepository tags,
         CurationRepository curation,
         SmartViewRepository smartViews,
-        PlaylistRepository playlists)
+        PlaylistRepository playlists,
+        MaintenanceRepository maintenance)
     {
         _main = main;
         _options = options;
@@ -52,6 +55,7 @@ public sealed class HarnessRunner
         _curation = curation;
         _smartViews = smartViews;
         _playlists = playlists;
+        _maintenance = maintenance;
     }
 
     public async Task RunAsync()
@@ -111,6 +115,13 @@ public sealed class HarnessRunner
                 _main.ShowMaintenanceCommand.Execute(null);
                 break;
 
+            // Duplicate compare/resolve screen (M18-G).
+            // Navigates to the DuplicateResolve view type; relies on seed data for real content.
+            // Falls back to the Maintenance view if no duplicate group exists in the seeded DB.
+            case "DuplicateResolve":
+                NavigateDuplicateResolve();
+                break;
+
             // ── M17 surfaces (I2) ────────────────────────────────────────────────
 
             // Browse with 2 creators pre-selected so the BulkActionBar is visible.
@@ -127,6 +138,38 @@ public sealed class HarnessRunner
 
             default: _main.CurrentView = AppView.Home; break;
         }
+    }
+
+    // ── M18-G navigation helper ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Navigates to the DuplicateResolve view for the first available duplicate group.
+    /// Falls back to the Maintenance page if no groups exist (e.g. no data seeded).
+    /// </summary>
+    private void NavigateDuplicateResolve()
+    {
+        // Try to find a section with duplicates; use the library-wide list first.
+        var groups = _maintenance.GetDuplicateGroups();
+        if (groups.Count > 0)
+        {
+            // Use the first group's section to open SectionDetail, which then fires ResolveRequested.
+            var firstGroup = groups[0];
+            var firstSectionId = firstGroup.Videos[0].SectionId;
+            // Wire a one-time handler to intercept the ResolveRequested event.
+            EventHandler<DuplicateResolveViewModel>? handler = null;
+            handler = (_, resolveVm) =>
+            {
+                _main.SectionDetail.ResolveRequested -= handler;
+            };
+            _main.SectionDetail.ResolveRequested += handler;
+            // Navigate to the section so PossibleDuplicates is loaded.
+            // Then manually open the first group's resolve screen.
+            _main.SectionDetail.OpenResolveCommand.Execute(firstGroup);
+            // After the command fires, CurrentView should be DuplicateResolve.
+            return;
+        }
+        // Fallback: no duplicates seeded, show Maintenance instead.
+        _main.ShowMaintenanceCommand.Execute(null);
     }
 
     // ── M17 navigation helpers ────────────────────────────────────────────────

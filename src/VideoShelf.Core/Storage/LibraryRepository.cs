@@ -356,6 +356,28 @@ public sealed class LibraryRepository(VideoShelfDb db)
             r.GetInt64(5) != 0, r.GetInt64(6) != 0);
     }
 
+    /// <summary>Looks up an episode by its file path; returns null when not found.</summary>
+    public EpisodeView? GetEpisodeByPath(string filePath)
+    {
+        using var conn = db.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            WHERE v.file_path = $p;
+            """;
+        cmd.Parameters.AddWithValue("$p", filePath);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        var episodeNo = r.GetInt32(3);
+        var baseTitle = r.GetString(4);
+        var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
+        return new EpisodeView(
+            r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
+            r.GetInt64(5) != 0, r.GetInt64(6) != 0);
+    }
+
     public IReadOnlyList<SearchHit> Search(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -891,5 +913,20 @@ public sealed class LibraryRepository(VideoShelfDb db)
             cmd.ExecuteNonQuery();
         }
         tx.Commit();
+    }
+
+    /// <summary>
+    /// Removes a single video row from the DB index.
+    /// CASCADE FK constraints on the schema clean up <c>video_tags</c>,
+    /// <c>video_chapters</c>, <c>watch_events</c>, and <c>video_art</c> automatically.
+    /// Does NOT touch the filesystem — call <see cref="IRecycleBinService"/> before this.
+    /// </summary>
+    public void DeleteVideoIndexById(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
     }
 }
