@@ -27,21 +27,18 @@
                     <ToggleButton Content="Select"
                                   IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
                                   Style="{StaticResource ChipToggle}"
-                                  Margin="12,0,0,0"
-                                  AutomationProperties.Name="Toggle video selection mode" />
+                                  Margin="12,0,0,0" />
                     <Button Content="Select all"
                             Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
                             Command="{Binding Selection.SelectAllCommand}"
                             CommandParameter="{Binding VideoResults}"
                             Margin="8,0,0,0" Padding="10,4"
-                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                            AutomationProperties.Name="Select all video results" />
+                            Background="Transparent" BorderThickness="0" Cursor="Hand" />
                     <Button Content="Clear"
                             Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
                             Command="{Binding Selection.ClearSelectionCommand}"
                             Margin="4,0,0,0" Padding="10,4"
-                            Background="Transparent" BorderThickness="0" Cursor="Hand"
-                            AutomationProperties.Name="Clear video selection" />
+                            Background="Transparent" BorderThickness="0" Cursor="Hand" />
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding VideoResults}"
@@ -79,7 +76,7 @@
                                           Visibility="{Binding DataContext.Selection.IsSelectionMode,
                                               RelativeSource={RelativeSource AncestorType=ListBox},
                                               Converter={StaticResource BoolToVisibility}}"
-                                          AutomationProperties.Name="Select this video" />
+                                          />
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

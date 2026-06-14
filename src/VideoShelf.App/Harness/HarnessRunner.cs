@@ -101,9 +101,6 @@ public sealed class HarnessRunner
                 await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
             }
 
-            if (!string.IsNullOrEmpty(_options.A11yDumpPath))
-                A11yTreeDumper.Dump((System.Windows.Window)Application.Current.MainWindow, _options.A11yDumpPath);
-
             WriteDoneSignal($"OK view={_options.View}");
         }
         catch (Exception ex)
