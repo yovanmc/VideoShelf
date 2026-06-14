@@ -384,16 +384,24 @@ public sealed partial class PlayerViewModel(
             RepeatEndSeconds = PositionSeconds;
     }
 
+    /// <summary>True while we're waiting for the engine to settle after a SeekTo(A) call.
+    /// Prevents position ticks that arrive during seek buffering from firing SeekTo(A) repeatedly.</summary>
+    private bool _abSeeking;
+
     [RelayCommand]
     private void ClearAbRepeat()
     {
         RepeatStartSeconds = null;
         RepeatEndSeconds = null;
+        _abSeeking = false;
     }
 
     // ==========================================================================
 
     // ===== E3: skip feedback badge ============================================
+
+    /// <summary>How long (ms) the skip and volume feedback badges stay visible.</summary>
+    private const int FeedbackBadgeMs = 700;
 
     [ObservableProperty]
     private string? _skipFeedback;
@@ -410,7 +418,7 @@ public sealed partial class PlayerViewModel(
         {
             if (_skipFeedbackTimer is null)
             {
-                _skipFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+                _skipFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(FeedbackBadgeMs) };
                 _skipFeedbackTimer.Tick += (_, _) =>
                 {
                     _skipFeedbackTimer.Stop();
@@ -442,7 +450,7 @@ public sealed partial class PlayerViewModel(
         {
             if (_volumeFeedbackTimer is null)
             {
-                _volumeFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+                _volumeFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(FeedbackBadgeMs) };
                 _volumeFeedbackTimer.Tick += (_, _) =>
                 {
                     _volumeFeedbackTimer.Stop();
@@ -503,6 +511,14 @@ public sealed partial class PlayerViewModel(
         _current = episode;
         OnPropertyChanged(nameof(CurrentFilePath));
         OnPropertyChanged(nameof(CanAddSubtitle));
+
+        // Stop any pending feedback badge timers so a ~700ms timer from the previous episode
+        // can't clobber the new episode's badge under autoplay/episode-switch.
+        _skipFeedbackTimer?.Stop();
+        SkipFeedback = null;
+        _volumeFeedbackTimer?.Stop();
+        VolumeFeedback = null;
+
         _lastSavedAt = 0;
         _length = 0;
         ScrubPosition = 0;
@@ -520,6 +536,7 @@ public sealed partial class PlayerViewModel(
         // E1: reset A-B repeat per-open
         RepeatStartSeconds = null;
         RepeatEndSeconds = null;
+        _abSeeking = false;
 
         // E5: mark completed if the episode was already watched
         CurrentWatched = watch.IsWatched(episode.VideoId);
@@ -562,9 +579,21 @@ public sealed partial class PlayerViewModel(
             _lastSavedAt = seconds;
         }
 
-        // E1: enforce A-B repeat loop
-        if (IsAbRepeatActive && seconds >= RepeatEndSeconds!.Value)
-            engine.SeekTo(RepeatStartSeconds!.Value);
+        // E1: enforce A-B repeat loop (with re-entrancy guard to avoid spamming SeekTo
+        // while the seek settles — libVLC keeps firing position ticks during buffering).
+        if (IsAbRepeatActive)
+        {
+            var endSec = RepeatEndSeconds!.Value; // RepeatEndSeconds non-null when IsAbRepeatActive
+            if (!_abSeeking && seconds >= endSec)
+            {
+                _abSeeking = true;
+                engine.SeekTo(RepeatStartSeconds!.Value);
+            }
+            else if (_abSeeking && seconds < endSec - 1.0)
+            {
+                _abSeeking = false; // position has settled back below B
+            }
+        }
     }
 
     [RelayCommand]

@@ -610,4 +610,108 @@ public class PlayerGroupDeTests
             vm.IsCompleted.ShouldBeTrue();
         }
     }
+
+    // ── Fix 1: Open clears pending feedback badges ─────────────────────────────
+
+    [Fact]
+    public void Open_clears_SkipFeedback_set_by_previous_episode()
+    {
+        var (vm, _, ep, temp) = Make();
+        using (temp)
+        {
+            vm.Open(ep);
+            // Simulate a skip badge being displayed (set synchronously in tests — no WPF timer)
+            vm.SkipBack10Command.Execute(null);
+            vm.SkipFeedback.ShouldBe("−10s"); // confirm it is set
+
+            // Opening the same episode again must clear the badge
+            vm.Open(ep);
+            vm.SkipFeedback.ShouldBeNull();
+        }
+    }
+
+    [Fact]
+    public void Open_clears_VolumeFeedback_set_by_previous_episode()
+    {
+        var (vm, _, ep, temp) = Make();
+        using (temp)
+        {
+            vm.Open(ep);
+            vm.Volume = 50;
+            vm.AdjustVolumeByWheel(120);
+            vm.VolumeFeedback.ShouldBe("Volume 55%"); // confirm it is set
+
+            // Opening the same episode again must clear the badge
+            vm.Open(ep);
+            vm.VolumeFeedback.ShouldBeNull();
+        }
+    }
+
+    // ── Fix 2: A-B repeat re-entrancy guard ────────────────────────────────────
+
+    [Fact]
+    public void AbRepeat_guard_suppresses_second_SeekTo_before_position_settles()
+    {
+        var (vm, engine, ep, temp) = Make();
+        using (temp)
+        {
+            vm.Open(ep);
+            engine.RaiseLength(120.0);
+
+            // Set A=10, B=50
+            engine.RaisePosition(10.0);
+            vm.SetRepeatACommand.Execute(null);
+            engine.RaisePosition(50.0);
+            vm.SetRepeatBCommand.Execute(null);
+
+            engine.Seeks.Clear();
+
+            // First tick past B — should seek to A once
+            engine.RaisePosition(55.0);
+            engine.Seeks.Count.ShouldBe(1);
+            engine.Seeks[0].ShouldBe(10.0);
+
+            // Second tick still ≥ B (position hasn't settled yet) — guard must suppress this
+            engine.RaisePosition(55.0);
+            engine.Seeks.Count.ShouldBe(1, "re-entrancy guard must suppress second SeekTo while settling");
+
+            // Position settles back below B-1 → guard is lifted
+            engine.RaisePosition(12.0);
+
+            // Now tick past B again — should fire a fresh SeekTo(A)
+            engine.RaisePosition(55.0);
+            engine.Seeks.Count.ShouldBe(2, "a new boundary crossing after settling must seek again");
+            engine.Seeks[1].ShouldBe(10.0);
+        }
+    }
+
+    [Fact]
+    public void AbRepeat_guard_is_reset_when_ClearAbRepeat_is_called()
+    {
+        var (vm, engine, ep, temp) = Make();
+        using (temp)
+        {
+            vm.Open(ep);
+            engine.RaiseLength(120.0);
+
+            // Set A=10, B=50 and trigger the guard
+            engine.RaisePosition(10.0); vm.SetRepeatACommand.Execute(null);
+            engine.RaisePosition(50.0); vm.SetRepeatBCommand.Execute(null);
+            engine.Seeks.Clear();
+            engine.RaisePosition(55.0); // _abSeeking = true
+
+            // Clear A-B
+            vm.ClearAbRepeatCommand.Execute(null);
+
+            // Re-set A-B
+            engine.RaisePosition(10.0); vm.SetRepeatACommand.Execute(null);
+            engine.RaisePosition(50.0); vm.SetRepeatBCommand.Execute(null);
+            engine.Seeks.Clear();
+
+            // Should now fire normally (guard was reset by ClearAbRepeat)
+            engine.RaisePosition(55.0);
+            engine.Seeks.Count.ShouldBe(1);
+            engine.Seeks[0].ShouldBe(10.0);
+        }
+    }
 }
