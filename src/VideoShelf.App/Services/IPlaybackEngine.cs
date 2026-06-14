@@ -52,6 +52,22 @@ public interface IPlaybackEngine : IDisposable
     /// <summary>Renders a preview frame for the given position to a PNG (for seek-preview). Returns false on failure.</summary>
     Task<bool> TryGeneratePreviewFrameAsync(double seconds, string outputPngPath, CancellationToken cancellationToken);
 
+    // ----- playback speed -----
+    /// <summary>Playback rate. Interface accepts [0.5, 2.0]; the real engine clamps in the setter.</summary>
+    double Rate { get; set; }
+
+    // ----- aspect ratio / zoom -----
+    /// <summary>Aspect-ratio override. null/"" = libVLC auto; e.g. "16:9", "4:3", "1:1".</summary>
+    string? AspectRatio { get; set; }
+    /// <summary>Zoom scale factor. 0 = fit-to-window (auto); >0 = fixed zoom (1.0 = 1:1 pixels).</summary>
+    float Scale { get; set; }
+
+    // ----- volume normalization -----
+    /// <summary>True when the engine can apply the normvol audio filter at Load time.</summary>
+    bool SupportsVolumeNormalize { get; }
+    /// <summary>When true and SupportsVolumeNormalize, normvol filter is added on the next Load.</summary>
+    bool VolumeNormalizeEnabled { get; set; }
+
     // ----- events -----
     /// <summary>Fires (roughly per second) with the current position in seconds.</summary>
     event EventHandler<double>? PositionChanged;
@@ -61,4 +77,8 @@ public interface IPlaybackEngine : IDisposable
     event EventHandler? Ended;
     /// <summary>Fires when the engine hits an unrecoverable error for the loaded media.</summary>
     event EventHandler? EncounteredError;
+    /// <summary>Fires when libVLC discovers a new elementary stream (audio/subtitle track). Use to
+    /// refresh track lists without manual polling. Raised on a libVLC thread — subscribers MUST marshal
+    /// to the UI thread themselves.</summary>
+    event EventHandler? TracksChanged;
 }

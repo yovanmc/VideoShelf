@@ -330,10 +330,12 @@ public sealed partial class PlayerViewModel(
         engine.LengthChanged -= OnLengthChanged;
         engine.Ended -= OnEnded;
         engine.EncounteredError -= OnEngineError;
+        engine.TracksChanged -= OnTracksChanged;
         engine.PositionChanged += OnPositionChanged;
         engine.LengthChanged += OnLengthChanged;
         engine.Ended += OnEnded;
         engine.EncounteredError += OnEngineError;
+        engine.TracksChanged += OnTracksChanged;
 
         engine.Load(episode.FilePath);
         engine.Play();
@@ -400,6 +402,22 @@ public sealed partial class PlayerViewModel(
         PlaybackError = _current is { } cur
             ? $"This video could not be played:\n{cur.FilePath}"
             : "This video could not be played.";
+    }
+
+    /// <summary>
+    /// Handles libVLC ESAdded: refreshes audio/subtitle track lists when a new elementary stream
+    /// is discovered (e.g. a sidecar subtitle attached via Media.AddSlave — the M13 gap).
+    /// ESAdded fires on a libVLC background thread, so we marshal to the UI dispatcher.
+    /// In unit tests (no Application.Current), Application.Current?.Dispatcher is null and we
+    /// call RefreshTracks directly (the FakePlaybackEngine fires synchronously anyway).
+    /// </summary>
+    private void OnTracksChanged(object? sender, EventArgs e)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            RefreshTracks();
+        else
+            dispatcher.BeginInvoke(RefreshTracks);
     }
 
     /// <summary>Persists the current position immediately (on pause/stop/close).</summary>
