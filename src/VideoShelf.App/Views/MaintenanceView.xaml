@@ -24,7 +24,24 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Library Health" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Library Health" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
+                    <!-- C2: scan phase label visible while a global scan is running -->
+                    <ui:ProgressRing IsIndeterminate="True"
+                                     Width="18" Height="18"
+                                     Margin="16,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Visibility="{Binding DataContext.IsScanning,
+                                         RelativeSource={RelativeSource AncestorType=Window},
+                                         Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Text="{Binding DataContext.ScanStatusText, RelativeSource={RelativeSource AncestorType=Window}}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0"
+                               Opacity="0.75"
+                               Visibility="{Binding DataContext.IsScanning,
+                                   RelativeSource={RelativeSource AncestorType=Window},
+                                   Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
                 <ui:Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}"
                            Style="{StaticResource SecondaryButton}" />
             </Grid>
