@@ -50,6 +50,12 @@ public sealed class VideoShelfDb : IDisposable
         // M16-E: watchlist / watch-later
         EnsureColumn(conn, "videos", "in_watchlist", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumn(conn, "videos", "watchlist_at", "TEXT");
+        // M18-A: file size (filesystem, no libVLC) + resolution (libVLC probe, Group C)
+        EnsureColumn(conn, "videos", "size_bytes", "INTEGER");   // file size from FileInfo.Length
+        EnsureColumn(conn, "videos", "width",      "INTEGER");   // video pixel width  (resolution probe)
+        EnsureColumn(conn, "videos", "height",     "INTEGER");   // video pixel height
+        // M18-A: per-source last-scan timestamp (ISO8601 "o")
+        EnsureColumn(conn, "sources", "last_scan_utc", "TEXT");
         CreateAddedAtIndex(conn);
     }
 
@@ -187,6 +193,12 @@ public sealed class VideoShelfDb : IDisposable
         CREATE TABLE IF NOT EXISTS series_art (
             series_id INTEGER NOT NULL PRIMARY KEY REFERENCES series(id)  ON DELETE CASCADE,
             image_path TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS dismissed_duplicates (
+            video_id_a INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+            video_id_b INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+            dismissed_at TEXT NOT NULL,
+            PRIMARY KEY (video_id_a, video_id_b)
         );
         """;
 }
