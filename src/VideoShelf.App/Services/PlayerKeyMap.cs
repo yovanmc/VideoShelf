@@ -6,8 +6,6 @@ public enum PlayerCommand
 {
     None,
     TogglePlayPause,
-    SeekBackward,
-    SeekForward,
     ToggleFullscreen,
     ExitFullscreen,
     Screenshot,

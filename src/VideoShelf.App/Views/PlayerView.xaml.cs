@@ -299,9 +299,6 @@ public partial class PlayerView : UserControl
             // E3: route Left/Right through the VM skip commands so feedback fires + clamping is single-source
             case PlayerCommand.SkipBack:          main.Player.SkipBack10Command.Execute(null); e.Handled = true; break;
             case PlayerCommand.SkipForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
-            // Legacy SeekBackward/SeekForward cases are unused now (enum values kept for compat)
-            case PlayerCommand.SeekForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
-            case PlayerCommand.SeekBackward:      main.Player.SkipBack10Command.Execute(null); e.Handled = true; break;
             case PlayerCommand.ToggleFullscreen:  main.Player.ToggleFullscreenCommand.Execute(null); e.Handled = true; break;
             case PlayerCommand.ExitFullscreen:    main.Player.IsFullscreen = false; e.Handled = true; break;
             case PlayerCommand.Screenshot:        main.Player.ScreenshotCommand.Execute(null); e.Handled = true; break;
@@ -314,5 +311,30 @@ public partial class PlayerView : UserControl
     {
         _main?.Player.AdjustVolumeByWheel(e.Delta);
         e.Handled = true;
+    }
+
+    // ===== Harness hook: open a named flyout from HarnessRunner ================
+    // Additive, harness-only, theming-safe — no VM change, no binding side-effect.
+    // Called after Loaded fires (harness waits for done-signal, which is written after
+    // SettleAsync, so the PlayerView is guaranteed to be in the visual tree).
+
+    /// <summary>
+    /// Opens one of the view-level Popup flyouts by name for the visual sweep harness.
+    /// Valid values: "Volume", "Tracks", "More".
+    /// No-op for unknown names so the harness is forward-compatible.
+    /// </summary>
+    internal void OpenFlyoutForHarness(string which)
+    {
+        // Close all first (same mutual-exclusion logic as the button handlers)
+        VolumeFlyout.IsOpen = false;
+        TracksFlyout.IsOpen = false;
+        MoreFlyout.IsOpen   = false;
+
+        switch (which)
+        {
+            case "Volume": VolumeFlyout.IsOpen = true; break;
+            case "Tracks": TracksFlyout.IsOpen = true; break;
+            case "More":   MoreFlyout.IsOpen   = true; break;
+        }
     }
 }

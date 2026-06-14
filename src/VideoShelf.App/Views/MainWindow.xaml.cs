@@ -171,6 +171,13 @@ public partial class MainWindow : FluentWindow
         }
     }
 
+    /// <summary>
+    /// Harness hook: returns the live <see cref="PlayerView"/> instance (non-null only while
+    /// <see cref="MainViewModel.IsPlayerVisible"/> is true). Used by <see cref="HarnessRunner"/>
+    /// to open flyouts that are view-level Popups with no VM binding.
+    /// </summary>
+    internal PlayerView? GetPlayerView() => _playerView;
+
     /// <summary>Realizes the player (and its VideoView) only while playing; tearing it down on hide
     /// destroys the airspace overlay window that otherwise bleeds the transport bar onto other views.
     /// PiP is an in-window mode of the SAME PlayerView — no separate window, so the vout never re-hosts.</summary>
