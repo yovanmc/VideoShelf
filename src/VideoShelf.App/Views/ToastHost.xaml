@@ -1,0 +1,67 @@
+<UserControl x:Class="VideoShelf.App.Views.ToastHost"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             Background="Transparent"
+             IsHitTestVisible="True">
+    <UserControl.Resources>
+        <conv:BoolToVisibility x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <!-- Bottom-right toast stack. No background → click-through except the toast borders. -->
+    <ItemsControl ItemsSource="{Binding Toasts.Toasts}"
+                  VerticalAlignment="Bottom"
+                  HorizontalAlignment="Right"
+                  Margin="0,0,24,24">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <Border CornerRadius="8"
+                        Background="{StaticResource ChipFillBrush}"
+                        Padding="14,10"
+                        Margin="0,8,0,0"
+                        MaxWidth="360">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Style.Triggers>
+                                <!-- Fade in on load (mild 220ms entry; appears even under reduced motion) -->
+                                <EventTrigger RoutedEvent="Border.Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0" To="1"
+                                                             Duration="{StaticResource AnimNormal}" />
+                                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)">
+                                                <SplineDoubleKeyFrame KeyTime="0:0:0" Value="12" />
+                                                <EasingDoubleKeyFrame KeyTime="{StaticResource AnimNormal}" Value="0">
+                                                    <EasingDoubleKeyFrame.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut" />
+                                                    </EasingDoubleKeyFrame.EasingFunction>
+                                                </EasingDoubleKeyFrame>
+                                            </DoubleAnimationUsingKeyFrames>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <Border.RenderTransform>
+                        <TranslateTransform />
+                    </Border.RenderTransform>
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Message}"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="260" />
+                        <ui:Button Content="Undo"
+                                   Margin="14,0,0,0"
+                                   Command="{Binding UndoCommand}"
+                                   Visibility="{Binding HasUndo, Converter={StaticResource BoolToVisibility}}"
+                                   Style="{StaticResource TertiaryButton}" />
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

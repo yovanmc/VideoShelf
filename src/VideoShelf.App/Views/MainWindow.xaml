@@ -567,6 +567,14 @@
             </ContentControl.Style>
         </ContentControl>
 
+        <!-- ── Toast overlay — floats above everything, click-through except toast borders. -->
+        <!-- DataContext is inherited from the window (MainViewModel). -->
+        <views:ToastHost Grid.Row="0" Grid.RowSpan="2"
+                         DataContext="{Binding}"
+                         VerticalAlignment="Bottom"
+                         HorizontalAlignment="Right"
+                         IsHitTestVisible="True" />
+
         <!-- ── Command palette overlay (Ctrl+K) ────────────────────────────
              Spans the full window (both rows) so it floats above everything.
              Gated by IsCommandPaletteOpen. Opaque card avoids transparency-
