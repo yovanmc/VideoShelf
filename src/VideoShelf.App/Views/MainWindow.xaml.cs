@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using Wpf.Ui.Controls;
+using VideoShelf.App.Motion;
 using VideoShelf.App.ViewModels;
 using VideoShelf.Core.Search;
 
@@ -15,11 +17,16 @@ public partial class MainWindow : FluentWindow
     private readonly MainViewModel _viewModel;
     private PlayerView? _playerView;
 
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, IMotionPolicy? motionPolicy = null)
     {
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
+
+        // D1: wire the static ShouldAnimate gate from the injected IMotionPolicy.
+        if (motionPolicy is not null)
+            ViewTransition.ShouldAnimate = () => motionPolicy.ShouldAnimate;
+
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
 
@@ -108,6 +115,10 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName == nameof(MainViewModel.IsPlayerVisible))
             UpdatePlayerHost(_viewModel.IsPlayerVisible);
 
+        // D6: animate PiP host width/height on snap-to-corner.
+        if (e.PropertyName == nameof(MainViewModel.IsPictureInPicture))
+            UpdatePiPAnimation(_viewModel.IsPictureInPicture);
+
         // Focus the palette search TextBox whenever the palette opens.
         if (e.PropertyName == nameof(MainViewModel.IsCommandPaletteOpen) &&
             _viewModel.IsCommandPaletteOpen)
@@ -117,6 +128,53 @@ public partial class MainWindow : FluentWindow
                 PaletteSearchBox?.Focus();
             });
         }
+    }
+
+    /// <summary>
+    /// D6: Animate the PiP host's Width/Height when snapping to/from the corner.
+    /// Animates layout Width/Height ONLY (NOT RenderTransform — never transform an HwndHost).
+    /// The DataTrigger setters in XAML act as the static fallback (reduced-motion + initial state).
+    /// </summary>
+    private void UpdatePiPAnimation(bool pipOn)
+    {
+        const double PipWidth  = 360;
+        const double PipHeight = 203;
+
+        if (_viewModel.AnimationsEnabled)
+        {
+            var dur = (Duration)FindResource("AnimNormal");
+            var ease = (IEasingFunction)FindResource("EaseInOut");
+
+            if (pipOn)
+            {
+                // Animate to corner size.
+                PlayerHost.BeginAnimation(WidthProperty,
+                    new DoubleAnimation(PlayerHost.ActualWidth, PipWidth, dur) { EasingFunction = ease });
+                PlayerHost.BeginAnimation(HeightProperty,
+                    new DoubleAnimation(PlayerHost.ActualHeight, PipHeight, dur) { EasingFunction = ease });
+            }
+            else
+            {
+                // Animate back to stretch (NaN = Auto-stretch); clear animations so layout takes over.
+                var toFull = new DoubleAnimation { To = double.NaN, Duration = dur, EasingFunction = ease };
+                toFull.Completed += (_, _) =>
+                {
+                    PlayerHost.BeginAnimation(WidthProperty, null);
+                    PlayerHost.BeginAnimation(HeightProperty, null);
+                };
+                PlayerHost.BeginAnimation(WidthProperty,
+                    new DoubleAnimation(PlayerHost.ActualWidth, PlayerHost.ActualWidth, dur) { EasingFunction = ease });
+                PlayerHost.BeginAnimation(HeightProperty,
+                    new DoubleAnimation(PlayerHost.ActualHeight, PlayerHost.ActualHeight, dur) { EasingFunction = ease });
+                // After a brief settle, release animations so the DataTrigger stretch takes over.
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                {
+                    PlayerHost.BeginAnimation(WidthProperty, null);
+                    PlayerHost.BeginAnimation(HeightProperty, null);
+                }));
+            }
+        }
+        // Else: reduced motion — the DataTrigger Setters in XAML already set Width=360/Height=203.
     }
 
     /// <summary>
