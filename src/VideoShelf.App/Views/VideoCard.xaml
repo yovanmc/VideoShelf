@@ -13,9 +13,7 @@
             Background="Transparent" BorderThickness="0" Width="{StaticResource CardWidth}" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
             IsTabStop="True"
-            FocusVisualStyle="{StaticResource AppFocusVisual}"
-            AutomationProperties.Name="{Binding SeriesTitle}"
-            AutomationProperties.HelpText="{Binding EpisodeLabel}">
+            FocusVisualStyle="{StaticResource AppFocusVisual}">
         <StackPanel>
             <!-- Thumbnail with watched-checkmark badge overlay. Grid allows the badge to float
                  over the top-right corner of the art without pushing layout. -->
@@ -34,7 +32,6 @@
                         ToolTip="Watched"
                         Visibility="{Binding IsWatched, Converter={StaticResource BoolToVisibility}}">
                     <ui:SymbolIcon Symbol="Checkmark24"
-                                   AutomationProperties.Name="Watched"
                                    FontSize="12" />
                 </Border>
             </Grid>

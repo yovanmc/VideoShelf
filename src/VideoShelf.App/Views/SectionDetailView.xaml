@@ -32,7 +32,6 @@
                 </Border>
                 <!-- Edit/Done toggle button (top-right of hero) -->
                 <ui:Button Command="{Binding ToggleEditCommand}"
-                           AutomationProperties.Name="Edit creator"
                            Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
                     <ui:Button.Style>
                         <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
@@ -67,8 +66,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
                         <ui:Button Command="{Binding PlayAllCommand}"
                                    Style="{StaticResource PrimaryButton}"
-                                   HorizontalAlignment="Left"
-                                   AutomationProperties.Name="Play all">
+                                   HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
                                 <TextBlock Text="Play all" VerticalAlignment="Center" />
@@ -77,7 +75,6 @@
                         <!-- Mark all watched / unwatched: only visible in edit mode -->
                         <ui:Button Command="{Binding MarkCreatorWatchedCommand}" Margin="8,0,0,0"
                                    Style="{StaticResource SecondaryButton}"
-                                   AutomationProperties.Name="Mark all watched"
                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Eye24" Margin="0,0,4,0" />
@@ -86,7 +83,6 @@
                         </ui:Button>
                         <ui:Button Command="{Binding MarkCreatorUnwatchedCommand}" Margin="8,0,0,0"
                                    Style="{StaticResource SecondaryButton}"
-                                   AutomationProperties.Name="Mark all unwatched"
                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="EyeOff24" Margin="0,0,4,0" />
@@ -97,8 +93,7 @@
                         <ToggleButton IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
                                       Margin="8,0,0,0"
                                       Foreground="White"
-                                      Style="{StaticResource ChipToggle}"
-                                      AutomationProperties.Name="Toggle episode selection mode">
+                                      Style="{StaticResource ChipToggle}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
                                 <TextBlock Text="Select" VerticalAlignment="Center" />
@@ -109,27 +104,23 @@
                                 Command="{Binding Selection.SelectAllCommand}"
                                 Margin="8,0,0,0" Padding="10,4"
                                 Foreground="White"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                AutomationProperties.Name="Select all episodes" />
+                                Background="Transparent" BorderThickness="0" Cursor="Hand" />
                         <Button Content="Clear"
                                 Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
                                 Command="{Binding Selection.ClearSelectionCommand}"
                                 Margin="4,0,0,0" Padding="10,4"
                                 Foreground="White"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                AutomationProperties.Name="Clear episode selection" />
+                                Background="Transparent" BorderThickness="0" Cursor="Hand" />
                         <!-- Collapse / Expand all series accordion tiles -->
                         <ui:Button Command="{Binding CollapseAllCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}"
-                                   AutomationProperties.Name="Collapse all series">
+                                   Style="{StaticResource SecondaryButton}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ChevronUp24" Margin="0,0,4,0" />
                                 <TextBlock Text="Collapse all" VerticalAlignment="Center" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Command="{Binding ExpandAllCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}"
-                                   AutomationProperties.Name="Expand all series">
+                                   Style="{StaticResource SecondaryButton}">
                             <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="ChevronDown24" Margin="0,0,4,0" />
                                 <TextBlock Text="Expand all" VerticalAlignment="Center" />
@@ -140,8 +131,7 @@
                                       Margin="8,0,0,0"
                                       Foreground="White"
                                       Style="{StaticResource ChipToggle}"
-                                      ToolTip="Filter series"
-                                      AutomationProperties.Name="Toggle series filter">
+                                      ToolTip="Filter series">
                             <ui:SymbolIcon Symbol="Filter24" />
                         </ToggleButton>
                     </StackPanel>
@@ -154,16 +144,14 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                  Text="{Binding SeriesFilterText, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="Filter series…"
-                                 AutomationProperties.Name="Filter series" />
+                                 PlaceholderText="Filter series…" />
                         <Button Grid.Column="1"
                                 Content="✕"
                                 Margin="4,0,0,0" Padding="8,4"
                                 Foreground="White"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 Command="{Binding ClearSeriesFilterCommand}"
-                                ToolTip="Clear filter"
-                                AutomationProperties.Name="Clear series filter" />
+                                ToolTip="Clear filter" />
                     </Grid>
                     <StackPanel Orientation="Horizontal">
                         <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
@@ -177,7 +165,6 @@
                                                     Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="Remove tag"
-                                                    AutomationProperties.Name="Remove tag"
                                                     Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
                                                 <ui:SymbolIcon Symbol="Dismiss24" />
                                             </ui:Button>
@@ -190,8 +177,7 @@
                         <StackPanel Orientation="Horizontal"
                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                             <ui:Button Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
-                                       Style="{StaticResource SecondaryButton}"
-                                       AutomationProperties.Name="Set image">
+                                       Style="{StaticResource SecondaryButton}">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
                                     <TextBlock Text="Set image…" VerticalAlignment="Center" />
@@ -199,8 +185,7 @@
                             </ui:Button>
                             <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
                                        Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
-                                       Style="{StaticResource SecondaryButton}"
-                                       AutomationProperties.Name="Use default image">
+                                       Style="{StaticResource SecondaryButton}">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
                                     <TextBlock Text="Use default" VerticalAlignment="Center" />
@@ -259,7 +244,6 @@
                                     </TextBlock>
                                     <ui:Button Margin="8,0,0,0"
                                                Style="{StaticResource SecondaryButton}"
-                                               AutomationProperties.Name="Compare and resolve duplicates"
                                                Command="{Binding DataContext.OpenResolveCommand,
                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                CommandParameter="{Binding}">
@@ -296,7 +280,6 @@
                                 <!-- clickable tile header = Activate (play standalone / toggle expand) -->
                                 <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
                                         Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
-                                        AutomationProperties.Name="{Binding BaseTitle}"
                                         IsTabStop="True"
                                         FocusVisualStyle="{StaticResource AppFocusVisual}">
                                     <StackPanel>
@@ -335,14 +318,12 @@
                                                                   VerticalAlignment="Center"
                                                                   Visibility="{Binding DataContext.Selection.IsSelectionMode,
                                                                       RelativeSource={RelativeSource AncestorType=UserControl},
-                                                                      Converter={StaticResource BoolToVisibility}}"
-                                                                  AutomationProperties.Name="Select this episode" />
+                                                                      Converter={StaticResource BoolToVisibility}}" />
                                                         <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
                                                                   Command="{Binding ToggleWatchedCommand}"/>
                                                         <!-- Watch later toggle: always visible when curation wired -->
                                                         <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
                                                                    ToolTip="Watch later" Command="{Binding ToggleWatchlistCommand}"
-                                                                   AutomationProperties.Name="Toggle watch later"
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
                                                             <ui:SymbolIcon>
@@ -362,7 +343,6 @@
                                                         <!-- Add to playlist: visible when playlists are available -->
                                                         <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
                                                                    ToolTip="Add to playlist"
-                                                                   AutomationProperties.Name="Add to playlist"
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Tag="{Binding}"
                                                                    Click="AddToPlaylist_Click">
@@ -382,7 +362,6 @@
                                                         <!-- Heart (favorite) toggle: always visible when curation wired -->
                                                         <ui:Button DockPanel.Dock="Right" Padding="4,2" Margin="2,0,0,0"
                                                                    ToolTip="Favorite" Command="{Binding ToggleFavoriteCommand}"
-                                                                   AutomationProperties.Name="Toggle favorite"
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
                                                             <ui:SymbolIcon>
@@ -402,34 +381,28 @@
                                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                                                                     Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="1"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="1 star"
-                                                                       AutomationProperties.Name="1 star">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="1 star">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=1}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="2"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="2 stars"
-                                                                       AutomationProperties.Name="2 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="2 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=2}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="3"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="3 stars"
-                                                                       AutomationProperties.Name="3 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="3 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=3}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="4"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="4 stars"
-                                                                       AutomationProperties.Name="4 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="4 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=4}" />
                                                             </ui:Button>
                                                             <ui:Button Padding="2,2" Command="{Binding SetRatingCommand}" CommandParameter="5"
-                                                                       Style="{StaticResource TertiaryButton}" ToolTip="5 stars"
-                                                                       AutomationProperties.Name="5 stars">
+                                                                       Style="{StaticResource TertiaryButton}" ToolTip="5 stars">
                                                                 <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource StarSymbolConv}, ConverterParameter=5}" />
                                                             </ui:Button>
                                                         </StackPanel>
                                                         <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
                                                                    ToolTip="Play" Command="{Binding PlayCommand}"
-                                                                   AutomationProperties.Name="Play"
                                                                    Style="{StaticResource TertiaryButton}">
                                                             <ui:SymbolIcon Symbol="Play24" />
                                                         </ui:Button>
@@ -455,15 +428,13 @@
                                                                         RelativeSource={RelativeSource AncestorType=UserControl},
                                                                         UpdateSourceTrigger=PropertyChanged}"
                                                                     PlaceholderText="Move to series…"
-                                                                    Width="160" FontSize="11"
-                                                                    AutomationProperties.Name="Target series title for move" />
+                                                                    Width="160" FontSize="11" />
                                                                 <ui:Button Margin="4,0,0,0"
                                                                            Style="{StaticResource SecondaryButton}"
                                                                            Command="{Binding DataContext.MoveEpisodeToSeriesCommand,
                                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding}"
-                                                                           ToolTip="Move this episode to the named series (sets grouping override)"
-                                                                           AutomationProperties.Name="Move episode to series">
+                                                                           ToolTip="Move this episode to the named series (sets grouping override)">
                                                                     <ui:SymbolIcon Symbol="ArrowRight24" />
                                                                 </ui:Button>
                                                                 <!-- Reset override for this single episode -->
@@ -472,8 +443,7 @@
                                                                            Command="{Binding DataContext.ResetEpisodeGroupingCommand,
                                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                            CommandParameter="{Binding FilePath}"
-                                                                           ToolTip="Clear grouping override for this episode"
-                                                                           AutomationProperties.Name="Reset episode grouping">
+                                                                           ToolTip="Clear grouping override for this episode">
                                                                     <ui:SymbolIcon Symbol="ArrowReset24" />
                                                                 </ui:Button>
                                                             </StackPanel>
@@ -503,15 +473,13 @@
                                                         RelativeSource={RelativeSource AncestorType=UserControl},
                                                         UpdateSourceTrigger=PropertyChanged}"
                                                     PlaceholderText="Merge into series…"
-                                                    Width="180" FontSize="11"
-                                                    AutomationProperties.Name="Target series title for merge" />
+                                                    Width="180" FontSize="11" />
                                                 <ui:Button Margin="4,0,0,0"
                                                            Style="{StaticResource SecondaryButton}"
                                                            Command="{Binding DataContext.MergeSeriesIntoCommand,
                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                            CommandParameter="{Binding}"
-                                                           ToolTip="Merge all episodes of this series into the named series"
-                                                           AutomationProperties.Name="Merge series into">
+                                                           ToolTip="Merge all episodes of this series into the named series">
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:SymbolIcon Symbol="ArrowRight24" Margin="0,0,4,0" />
                                                         <TextBlock Text="Merge" VerticalAlignment="Center" />
@@ -522,8 +490,7 @@
                                                            Command="{Binding DataContext.ResetSeriesGroupingCommand,
                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                            CommandParameter="{Binding}"
-                                                           ToolTip="Clear all grouping overrides for this series"
-                                                           AutomationProperties.Name="Reset series grouping">
+                                                           ToolTip="Clear all grouping overrides for this series">
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
                                                         <TextBlock Text="Reset grouping" VerticalAlignment="Center" />

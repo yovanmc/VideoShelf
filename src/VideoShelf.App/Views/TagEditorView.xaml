@@ -16,17 +16,14 @@
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4"
-                            AutomationProperties.Name="{Binding}"
-                            AutomationProperties.HelpText="Tag">
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <ui:Button Style="{StaticResource TertiaryButton}"
                                        MinWidth="44" MinHeight="44"
                                        Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                        CommandParameter="{Binding}"
-                                       ToolTip="Remove tag"
-                                       AutomationProperties.Name="Remove tag">
+                                       ToolTip="Remove tag">
                                 <ui:SymbolIcon Symbol="Dismiss24" />
                             </ui:Button>
                         </StackPanel>
@@ -40,9 +37,7 @@
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4" Opacity="0.6"
-                            AutomationProperties.Name="{Binding Tag}"
-                            AutomationProperties.HelpText="Inherited tag">
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4" Opacity="0.6">
                         <TextBlock VerticalAlignment="Center">
                             <Run Text="{Binding Tag, Mode=OneWay}"/>
                             <Run Text=" · " Foreground="{StaticResource TextFillColorTertiaryBrush}"/>

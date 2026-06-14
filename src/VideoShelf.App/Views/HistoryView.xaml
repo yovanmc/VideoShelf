@@ -43,8 +43,7 @@
                                 <ui:Button DockPanel.Dock="Right"
                                            Command="{Binding PlayCommand}"
                                            Style="{StaticResource TertiaryButton}"
-                                           ToolTip="Play"
-                                           AutomationProperties.Name="Play">
+                                           ToolTip="Play">
                                     <ui:SymbolIcon Symbol="Play24" />
                                 </ui:Button>
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding WatchedAt}"

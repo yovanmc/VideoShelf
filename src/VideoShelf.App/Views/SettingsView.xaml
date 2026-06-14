@@ -65,8 +65,7 @@
                                                  RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                        CommandParameter="{Binding}"
                                        Style="{StaticResource SecondaryButton}"
-                                       MinWidth="44" MinHeight="44"
-                                       AutomationProperties.Name="Remove source" />
+                                       MinWidth="44" MinHeight="44" />
                             <TextBlock Text="{Binding DisplayName}"
                                        VerticalAlignment="Center"
                                        Opacity="0.85" />
@@ -81,7 +80,6 @@
                        Style="{StaticResource SecondaryButton}"
                        Margin="0,0,0,8"
                        MinWidth="44" MinHeight="44"
-                       AutomationProperties.Name="Undo remove source"
                        Visibility="{Binding Sources.CanUndoRemove, Converter={StaticResource BoolToVisibility}}" />
 
             <!-- PLAYBACK section -->

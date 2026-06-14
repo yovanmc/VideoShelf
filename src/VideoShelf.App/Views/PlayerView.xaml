@@ -4,7 +4,6 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
              xmlns:conv="clr-namespace:VideoShelf.App.Converters"
-             xmlns:acc="clr-namespace:VideoShelf.App.Accessibility"
              Focusable="True"
              Background="Black">
     <UserControl.Resources>
@@ -27,15 +26,6 @@
         <Border x:Name="PlayerShell" Background="Black">
             <vlc:VideoView x:Name="VideoSurface">
                 <Grid x:Name="OverlayRoot">
-
-                    <!-- D2: Live-region announcer for now-playing.
-                         This is a dedicated offscreen TextBlock (Width=0, Height=0, IsHitTestVisible=False).
-                         LiveRegion.Text overwrites the element's .Text, so it MUST NOT be the visible
-                         title label — a separate element keeps the visual title intact while SR hears
-                         "Now playing Big Buck Bunny" when the track changes. -->
-                    <TextBlock Width="0" Height="0" IsHitTestVisible="False"
-                               acc:LiveRegion.Text="{Binding Player.NowPlayingAnnouncement}"
-                               acc:LiveRegion.Politeness="Polite" />
 
                     <!-- Error / missing-file banner (additive) -->
                     <Border VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -91,14 +81,12 @@
                                                Command="{Binding TogglePictureInPictureCommand}"
                                                Visibility="Collapsed" Margin="0,0,8,0"
                                                Style="{StaticResource TertiaryButton}"
-                                               ToolTip="Back to window"
-                                               AutomationProperties.Name="Back to window">
+                                               ToolTip="Back to window">
                                         <ui:SymbolIcon Symbol="ArrowLeft24" />
                                     </ui:Button>
                                     <ui:Button Command="{Binding ClosePlayerCommand}"
                                                Style="{StaticResource TertiaryButton}"
-                                               ToolTip="Close player"
-                                               AutomationProperties.Name="Close player">
+                                               ToolTip="Close player">
                                         <ui:SymbolIcon Symbol="Dismiss24" />
                                     </ui:Button>
                                 </StackPanel>
@@ -134,9 +122,7 @@
                                     <Grid Grid.Column="1">
                                         <Slider x:Name="SeekBar" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="{Binding Player.LengthSeconds}"
-                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}"
-                                                AutomationProperties.Name="Seek"
-                                                AutomationProperties.ItemStatus="{Binding Player.PositionText}" />
+                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}" />
                                     </Grid>
                                     <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}"
@@ -173,8 +159,7 @@
                                         <ui:Button x:Name="VolumeButton"
                                                    Style="{StaticResource TransportIconButton}"
                                                    Click="OnVolumeButtonClick"
-                                                   ToolTip="Volume"
-                                                   AutomationProperties.Name="Volume">
+                                                   ToolTip="Volume">
                                             <ui:Button.Content>
                                                 <ui:SymbolIcon x:Name="VolumeIcon" Symbol="Speaker224">
                                                     <ui:SymbolIcon.Style>
@@ -209,8 +194,7 @@
                                                                Command="{Binding Player.ToggleMuteCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Left"
-                                                               ToolTip="Mute / Unmute"
-                                                               AutomationProperties.Name="Mute / Unmute">
+                                                               ToolTip="Mute / Unmute">
                                                         <StackPanel Orientation="Horizontal">
                                                             <ui:SymbolIcon Symbol="SpeakerMute24" Margin="0,0,6,0" />
                                                             <TextBlock Text="Mute" VerticalAlignment="Center"
@@ -229,16 +213,14 @@
                                         <!-- Skip back 10s — PiP: show only on non-pip, match queue skip -->
                                         <ui:Button Command="{Binding Player.SkipBack10Command}"
                                                    Style="{StaticResource TransportIconButton}"
-                                                   ToolTip="Skip back 10 s"
-                                                   AutomationProperties.Name="Skip back 10 seconds">
+                                                   ToolTip="Skip back 10 s">
                                             <ui:SymbolIcon Symbol="SkipBack1024" />
                                         </ui:Button>
 
                                         <!-- Play / Pause -->
                                         <ui:Button Margin="4,0" Command="{Binding Player.TogglePlayPauseCommand}"
                                                    Style="{StaticResource TransportIconButton}"
-                                                   ToolTip="Play / Pause"
-                                                   AutomationProperties.Name="Play / Pause">
+                                                   ToolTip="Play / Pause">
                                             <ui:Button.Content>
                                                 <ui:SymbolIcon x:Name="PlayPauseIcon" Symbol="Play24">
                                                     <ui:SymbolIcon.Style>
@@ -258,15 +240,13 @@
                                         <!-- Skip forward 30s -->
                                         <ui:Button Command="{Binding Player.SkipForward30Command}"
                                                    Style="{StaticResource TransportIconButton}"
-                                                   ToolTip="Skip forward 30 s"
-                                                   AutomationProperties.Name="Skip forward 30 seconds">
+                                                   ToolTip="Skip forward 30 s">
                                             <ui:SymbolIcon Symbol="SkipForward3024" />
                                         </ui:Button>
 
                                         <!-- Queue: skip to next (visible when queue has items) — shown in PiP too -->
                                         <ui:Button Margin="4,0,0,0"
                                                    ToolTip="Skip to next"
-                                                   AutomationProperties.Name="Skip to next"
                                                    Command="{Binding PlayQueue.SkipNextCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
                                                    Style="{StaticResource TransportIconButton}">
@@ -292,8 +272,7 @@
                                         <ui:Button x:Name="TracksButton"
                                                    Style="{StaticResource TransportIconButton}"
                                                    Click="OnTracksButtonClick"
-                                                   ToolTip="Audio &amp; subtitles"
-                                                   AutomationProperties.Name="Audio and subtitles">
+                                                   ToolTip="Audio &amp; subtitles">
                                             <ui:SymbolIcon Symbol="ClosedCaption24" />
                                         </ui:Button>
 
@@ -324,8 +303,7 @@
                                                                   Style="{StaticResource ChipToggle}"
                                                                   HorizontalAlignment="Left"
                                                                   Visibility="{Binding Player.CanNormalizeVolume, Converter={StaticResource BoolToVisibility}}"
-                                                                  ToolTip="Normalize audio volume"
-                                                                  AutomationProperties.Name="Normalize audio volume">
+                                                                  ToolTip="Normalize audio volume">
                                                         <TextBlock Text="Normalize" Foreground="White" />
                                                     </ToggleButton>
 
@@ -348,8 +326,7 @@
                                                     <ui:Button Command="{Binding Player.AddSubtitleFileCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Left"
-                                                               ToolTip="Add subtitle file…"
-                                                               AutomationProperties.Name="Add subtitle file">
+                                                               ToolTip="Add subtitle file…">
                                                         <StackPanel Orientation="Horizontal">
                                                             <ui:SymbolIcon Symbol="ClosedCaption24" Margin="0,0,6,0" />
                                                             <TextBlock Text="+ Subtitle file" VerticalAlignment="Center"
@@ -364,16 +341,14 @@
                                         <!-- PiP -->
                                         <ui:Button Margin="2,0,0,0" Command="{Binding TogglePictureInPictureCommand}"
                                                    Style="{StaticResource TransportIconButton}"
-                                                   ToolTip="Mini-player"
-                                                   AutomationProperties.Name="Mini-player">
+                                                   ToolTip="Mini-player">
                                             <ui:SymbolIcon Symbol="PictureInPicture24" />
                                         </ui:Button>
 
                                         <!-- Fullscreen -->
                                         <ui:Button Margin="2,0,0,0" Command="{Binding Player.ToggleFullscreenCommand}"
                                                    Style="{StaticResource TransportIconButton}"
-                                                   ToolTip="Fullscreen"
-                                                   AutomationProperties.Name="Fullscreen">
+                                                   ToolTip="Fullscreen">
                                             <ui:SymbolIcon Symbol="FullScreenMaximize24" />
                                         </ui:Button>
 
@@ -382,8 +357,7 @@
                                                    Margin="2,0,0,0"
                                                    Style="{StaticResource TransportIconButton}"
                                                    Click="OnMoreButtonClick"
-                                                   ToolTip="More options"
-                                                   AutomationProperties.Name="More options">
+                                                   ToolTip="More options">
                                             <ui:SymbolIcon Symbol="MoreHorizontal24" />
                                         </ui:Button>
 
@@ -399,8 +373,7 @@
                                                     <ui:Button Command="{Binding Player.ScreenshotCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Stretch"
-                                                               ToolTip="Screenshot"
-                                                               AutomationProperties.Name="Screenshot">
+                                                               ToolTip="Screenshot">
                                                         <StackPanel Orientation="Horizontal">
                                                             <ui:SymbolIcon Symbol="Camera24" Margin="0,0,8,0" />
                                                             <TextBlock Text="Screenshot" VerticalAlignment="Center"
@@ -410,8 +383,7 @@
                                                     <ui:Button Command="{Binding Player.SetCoverFromFrameCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Stretch"
-                                                               ToolTip="Set as cover"
-                                                               AutomationProperties.Name="Set as cover">
+                                                               ToolTip="Set as cover">
                                                         <StackPanel Orientation="Horizontal">
                                                             <ui:SymbolIcon Symbol="Image24" Margin="0,0,8,0" />
                                                             <TextBlock Text="Set as cover" VerticalAlignment="Center"
@@ -448,8 +420,7 @@
                                                     <ui:Button Command="{Binding Player.CycleAspectCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Left"
-                                                               ToolTip="Cycle aspect ratio"
-                                                               AutomationProperties.Name="Cycle aspect ratio">
+                                                               ToolTip="Cycle aspect ratio">
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="Aspect: " VerticalAlignment="Center"
                                                                        Foreground="White" Margin="0,0,4,0" FontSize="12" />
@@ -468,8 +439,7 @@
                                                         <ui:Button Command="{Binding Player.SetRepeatACommand}"
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Padding="6,3" MinHeight="0"
-                                                                   ToolTip="Set A (start) point"
-                                                                   AutomationProperties.Name="Set A point">
+                                                                   ToolTip="Set A (start) point">
                                                             <TextBlock Foreground="White" FontSize="12"
                                                                        Text="{Binding Player.RepeatStartSeconds, StringFormat='A {0:0}s', TargetNullValue='Set A'}" />
                                                         </ui:Button>
@@ -477,8 +447,7 @@
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Padding="6,3" MinHeight="0"
                                                                    Margin="4,0,0,0"
-                                                                   ToolTip="Set B (end) point"
-                                                                   AutomationProperties.Name="Set B point">
+                                                                   ToolTip="Set B (end) point">
                                                             <TextBlock Foreground="White" FontSize="12"
                                                                        Text="{Binding Player.RepeatEndSeconds, StringFormat='B {0:0}s', TargetNullValue='Set B'}" />
                                                         </ui:Button>
@@ -486,8 +455,7 @@
                                                                    Style="{StaticResource TertiaryButton}"
                                                                    Padding="6,3" MinHeight="0"
                                                                    Margin="4,0,0,0"
-                                                                   ToolTip="Clear A-B repeat"
-                                                                   AutomationProperties.Name="Clear A-B repeat">
+                                                                   ToolTip="Clear A-B repeat">
                                                             <ui:SymbolIcon Symbol="Dismiss24" />
                                                         </ui:Button>
                                                     </StackPanel>
@@ -497,8 +465,7 @@
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Left"
                                                                Visibility="{Binding Player.IsCompleted, Converter={StaticResource BoolToVisibility}}"
-                                                               ToolTip="Play from beginning"
-                                                               AutomationProperties.Name="Play from beginning">
+                                                               ToolTip="Play from beginning">
                                                         <StackPanel Orientation="Horizontal">
                                                             <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,8,0" />
                                                             <TextBlock Text="Play from beginning" VerticalAlignment="Center"
@@ -513,8 +480,7 @@
                                         <ui:Button Margin="4,0,0,0"
                                                    Command="{Binding PlayQueue.ToggleDrawerCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TransportIconButton}"
-                                                   AutomationProperties.Name="Up next queue">
+                                                   Style="{StaticResource TransportIconButton}">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
                                                 <TextBlock Text="Up next" VerticalAlignment="Center" Foreground="White" />
@@ -586,16 +552,14 @@
                                 <ui:Button Command="{Binding UpNext.DismissUpNextCommand}"
                                            Style="{StaticResource TertiaryButton}"
                                            Padding="10,4" MinHeight="28"
-                                           ToolTip="Dismiss"
-                                           AutomationProperties.Name="Dismiss up next">
+                                           ToolTip="Dismiss">
                                     <TextBlock Text="Dismiss" Foreground="White" FontSize="12" />
                                 </ui:Button>
                                 <ui:Button Command="{Binding UpNext.PlayNextNowCommand}"
                                            Style="{StaticResource PrimaryButton}"
                                            Padding="10,4" MinHeight="28"
                                            Margin="6,0,0,0"
-                                           ToolTip="Play now"
-                                           AutomationProperties.Name="Play now">
+                                           ToolTip="Play now">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Play24" Margin="0,0,4,0" />
                                         <TextBlock Text="Play now" VerticalAlignment="Center"
@@ -632,8 +596,7 @@
                                 <ui:Button HorizontalAlignment="Right"
                                            Command="{Binding PlayQueue.ClearCommand}"
                                            Style="{StaticResource TertiaryButton}"
-                                           ToolTip="Clear queue"
-                                           AutomationProperties.Name="Clear queue">
+                                           ToolTip="Clear queue">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Delete24" Margin="0,0,4,0" />
                                         <TextBlock Text="Clear" VerticalAlignment="Center" />

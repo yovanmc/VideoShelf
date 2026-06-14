@@ -12,8 +12,7 @@
     <DataTemplate x:Key="QueueItemTemplate">
         <Border Padding="8,6" Margin="0,0,0,4"
                 CornerRadius="{StaticResource ControlRadius}"
-                Background="{StaticResource SubtleFillBrush}"
-                AutomationProperties.Name="{Binding Title}">
+                Background="{StaticResource SubtleFillBrush}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="4"/>
@@ -35,7 +34,6 @@
                     <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Move up"
-                               AutomationProperties.Name="Move up"
                                Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="ChevronUp24" />
@@ -43,7 +41,6 @@
                     <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Move down"
-                               AutomationProperties.Name="Move down"
                                Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="ChevronDown24" />
@@ -51,7 +48,6 @@
                     <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Play"
-                               AutomationProperties.Name="Play this item"
                                Command="{Binding DataContext.JumpToCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="Play24" />
@@ -59,7 +55,6 @@
                     <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Remove from queue"
-                               AutomationProperties.Name="Remove from queue"
                                Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="Dismiss24" />

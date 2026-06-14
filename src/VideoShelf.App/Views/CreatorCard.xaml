@@ -12,9 +12,7 @@
             Background="Transparent" BorderThickness="0" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
             IsTabStop="True"
-            FocusVisualStyle="{StaticResource AppFocusVisual}"
-            AutomationProperties.Name="{Binding Name}"
-            AutomationProperties.HelpText="{Binding VideoCountLabel}">
+            FocusVisualStyle="{StaticResource AppFocusVisual}">
         <StackPanel>
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"
