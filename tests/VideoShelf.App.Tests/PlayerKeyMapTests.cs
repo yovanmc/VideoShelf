@@ -24,4 +24,28 @@ public class PlayerKeyMapTests
     [Fact]
     public void E_without_control_is_not_screenshot()
         => PlayerKeyMap.Resolve(Key.E, ModifierKeys.None).ShouldBe(PlayerCommand.None);
+
+    // ── B4: ClosePlayer enum regression tests ─────────────────────────────────
+    // The B4 Esc back-out chain is:
+    //   flyout open → close flyout (view-level, no keymap change)
+    //   fullscreen  → ExitFullscreen (existing keymap entry)
+    //   neither     → ClosePlayer (view routes there after checking state)
+    // PlayerKeyMap.Resolve still returns ExitFullscreen for raw Esc — the view
+    // decides context. These tests guard that ClosePlayer exists and is distinct.
+
+    [Fact]
+    public void ClosePlayer_enum_value_is_distinct_from_None_and_ExitFullscreen()
+    {
+        PlayerCommand.ClosePlayer.ShouldNotBe(PlayerCommand.None);
+        PlayerCommand.ClosePlayer.ShouldNotBe(PlayerCommand.ExitFullscreen);
+    }
+
+    [Fact]
+    public void Escape_raw_mapping_is_ExitFullscreen_not_ClosePlayer()
+    {
+        // The contextual Esc routing (flyout → fullscreen → close player) lives
+        // in PlayerView.HandleEscapeKey, NOT in the pure keymap. This test pins
+        // that the raw mapping stays ExitFullscreen so existing fullscreen tests pass.
+        PlayerKeyMap.Resolve(Key.Escape, ModifierKeys.None).ShouldBe(PlayerCommand.ExitFullscreen);
+    }
 }
