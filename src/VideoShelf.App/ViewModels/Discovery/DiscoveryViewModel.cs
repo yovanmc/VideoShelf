@@ -59,21 +59,8 @@ public sealed partial class DiscoveryViewModel(
         var data = await Task.Run(() =>
         {
             var cont = discovery.GetContinueWatching(RailLimit);
-            var contLabels = cont.Select(item =>
-            {
-                var chapters = library.GetChapters(item.VideoId);
-                string? chapterLabel = null;
-                if (chapters.Count > 0)
-                {
-                    ChapterRecord? cur = null;
-                    foreach (var c in chapters) { if (c.StartSeconds <= item.ResumePosition) cur = c; else break; }
-                    if (cur is not null) chapterLabel = string.IsNullOrEmpty(cur.Name) ? $"Chapter {cur.Index + 1}" : cur.Name;
-                }
-                return chapterLabel;
-            }).ToList();
             return (
                 cont,
-                contLabels,
                 forYou: discovery.GetForYou(RailLimit, now),
                 recVideos: discovery.GetRecommendedVideos(RailLimit, now),
                 added: discovery.GetRecentlyAdded(RailLimit),
@@ -93,7 +80,7 @@ public sealed partial class DiscoveryViewModel(
 
         _summaryById = data.summaries.ToDictionary(s => s.SectionId);
 
-        Fill(ContinueWatching, data.cont, data.contLabels, MakeContinueCard);
+        Fill(ContinueWatching, data.cont, MakeContinueCard);
         FillCreators(RecommendedCreators, data.forYou);
         Fill(RecommendedVideos, data.recVideos, MakeRecencyCard);
         Fill(RecentlyAdded, data.added, MakeRecencyCard);
@@ -164,9 +151,9 @@ public sealed partial class DiscoveryViewModel(
         return card;
     }
 
-    private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i, string? chapterLabel)
+    private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i)
     {
-        var card = new ContinueWatchingCardViewModel(i) { ChapterLabel = chapterLabel };
+        var card = new ContinueWatchingCardViewModel(i);
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
         return card;
     }

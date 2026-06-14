@@ -26,8 +26,6 @@
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12" />
-            <TextBlock Text="{Binding ChapterLabel}" FontSize="11" Opacity="0.75" TextTrimming="CharacterEllipsis"
-                       Visibility="{Binding HasChapter, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
     </Button>
 </UserControl>

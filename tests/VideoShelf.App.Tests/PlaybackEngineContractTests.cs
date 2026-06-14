@@ -21,12 +21,4 @@ public class PlaybackEngineContractTests
         TrackOption.SubtitlesOffId.ShouldBe(-1);
     }
 
-    [Fact]
-    public void ChapterOption_carries_index_and_name()
-    {
-        var c = new ChapterOption(0, "Intro");
-
-        c.Index.ShouldBe(0);
-        c.Name.ShouldBe("Intro");
-    }
 }

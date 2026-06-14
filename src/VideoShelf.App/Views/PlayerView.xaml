@@ -92,8 +92,6 @@
                                     <TextBlock Grid.Column="0" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.PositionSeconds, StringFormat={}{0:0}s}" Margin="0,0,8,0" />
                                     <Grid Grid.Column="1">
-                                        <Canvas x:Name="ChapterTicks" Height="6" VerticalAlignment="Bottom"
-                                                Margin="0,0,0,2" IsHitTestVisible="False" />
                                         <Slider x:Name="SeekBar" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="{Binding Player.LengthSeconds}"
                                                 Value="{Binding Player.ScrubPosition, Mode=TwoWay}" />
@@ -133,22 +131,6 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </StackPanel.Style>
-                                        <ui:Button Margin="8,0,0,0"
-                                                   Command="{Binding Player.PreviousChapterCommand}"
-                                                   Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}"
-                                                   ToolTip="Previous chapter"
-                                                   AutomationProperties.Name="Previous chapter">
-                                            <ui:SymbolIcon Symbol="Previous24" />
-                                        </ui:Button>
-                                        <ui:Button Margin="4,0,0,0"
-                                                   Command="{Binding Player.NextChapterCommand}"
-                                                   Visibility="{Binding Player.HasChapters, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TertiaryButton}"
-                                                   ToolTip="Next chapter"
-                                                   AutomationProperties.Name="Next chapter">
-                                            <ui:SymbolIcon Symbol="Next24" />
-                                        </ui:Button>
                                         <ComboBox Margin="8,0,0,0" Width="140"
                                                   ItemsSource="{Binding Player.AudioTracks}"
                                                   SelectedItem="{Binding Player.SelectedAudioTrack}"

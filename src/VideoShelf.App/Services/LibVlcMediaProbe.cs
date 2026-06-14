@@ -1,20 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using LibVLCSharp.Shared;
-using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.Services;
 
 /// <summary>
-/// Briefly opens a file in a headless libVLC MediaPlayer to read its duration and chapter markers.
+/// Briefly opens a file in a headless libVLC MediaPlayer to read its duration and video resolution.
 /// Thin by design: real coverage comes from the integration harness. Fail-safe — never throws for a bad file.
 /// </summary>
 public sealed class LibVlcMediaProbe : IMediaProbe, IDisposable
 {
-    private static readonly MediaProbeResult Empty =
-        new MediaProbeResult(null, Array.Empty<ChapterRecord>(), null, null);
+    private static readonly MediaProbeResult Empty = new MediaProbeResult(null, null, null);
 
     private readonly LibVLC _libVlc;
 
@@ -58,24 +55,6 @@ public sealed class LibVlcMediaProbe : IMediaProbe, IDisposable
             var lenMs = player.Length;
             double? durationSeconds = lenMs > 0 ? lenMs / 1000.0 : null;
 
-            // Read chapters — FullChapterDescriptions(int titleIndex); pass -1 = current title.
-            var rawChapters = player.FullChapterDescriptions(-1);
-            List<ChapterRecord> chapters;
-            if (rawChapters is { Length: > 0 })
-            {
-                chapters = new List<ChapterRecord>(rawChapters.Length);
-                for (int i = 0; i < rawChapters.Length; i++)
-                {
-                    var c = rawChapters[i];
-                    // TimeOffset is milliseconds (long); convert to seconds.
-                    chapters.Add(new ChapterRecord(i, c.Name ?? string.Empty, c.TimeOffset / 1000.0));
-                }
-            }
-            else
-            {
-                chapters = new List<ChapterRecord>(0);
-            }
-
             // Read video pixel size via Size(0, ref px, ref py).
             // Verified via reflection on LibVLCSharp 3.9.7.1:
             //   bool Size(uint num, ref uint px, ref uint py)
@@ -114,7 +93,7 @@ public sealed class LibVlcMediaProbe : IMediaProbe, IDisposable
             }
 
             player.Stop();
-            return new MediaProbeResult(durationSeconds, chapters, width, height);
+            return new MediaProbeResult(durationSeconds, width, height);
         }
         catch (OperationCanceledException)
         {

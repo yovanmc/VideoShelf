@@ -11,10 +11,6 @@ public sealed record TrackOption(int Id, string Label)
     public const int SubtitlesOffId = -1;
 }
 
-/// <summary>An embedded chapter. Index is the libVLC chapter index (0-based); Name may be empty.
-/// StartSeconds is the chapter's start offset in seconds (for scrubber tick marks; 0 if unknown).</summary>
-public sealed record ChapterOption(int Index, string Name, double StartSeconds = 0);
-
 /// <summary>
 /// Abstracts the libVLC MediaPlayer so all playback decision logic stays unit-testable.
 /// Implementations MUST be fail-safe — surface failures via events/return values, never throw into callers.
@@ -49,11 +45,6 @@ public interface IPlaybackEngine : IDisposable
     void SetSubtitleTrack(int id);
     /// <summary>Attaches an external subtitle file to the currently-loaded media and selects it.</summary>
     void AddSubtitle(string subtitlePath);
-
-    // ----- chapters -----
-    IReadOnlyList<ChapterOption> GetChapters();
-    void NextChapter();
-    void PreviousChapter();
 
     // ----- frame capture -----
     /// <summary>Saves the current frame to a PNG. Returns false on any failure (fail-safe).</summary>

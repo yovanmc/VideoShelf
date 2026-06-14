@@ -601,52 +601,6 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
-    /// <summary>Atomically replaces all chapters for a video. Idempotent on re-probe.</summary>
-    public void ReplaceChapters(long videoId, IReadOnlyList<ChapterRecord> chapters)
-    {
-        using var conn = db.Open();
-        using var tx = conn.BeginTransaction();
-
-        using (var cmd = conn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = "DELETE FROM video_chapters WHERE video_id = $id";
-            cmd.Parameters.AddWithValue("$id", videoId);
-            cmd.ExecuteNonQuery();
-        }
-
-        foreach (var ch in chapters)
-        {
-            using var cmd = conn.CreateCommand();
-            cmd.Transaction = tx;
-            cmd.CommandText = """
-                INSERT INTO video_chapters(video_id, idx, name, start_seconds)
-                VALUES($id, $idx, $name, $start)
-                """;
-            cmd.Parameters.AddWithValue("$id", videoId);
-            cmd.Parameters.AddWithValue("$idx", ch.Index);
-            cmd.Parameters.AddWithValue("$name", ch.Name);
-            cmd.Parameters.AddWithValue("$start", ch.StartSeconds);
-            cmd.ExecuteNonQuery();
-        }
-
-        tx.Commit();
-    }
-
-    /// <summary>Returns all chapters for a video, ordered by index.</summary>
-    public IReadOnlyList<ChapterRecord> GetChapters(long videoId)
-    {
-        using var conn = db.Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT idx, name, start_seconds FROM video_chapters WHERE video_id = $id ORDER BY idx";
-        cmd.Parameters.AddWithValue("$id", videoId);
-        var list = new List<ChapterRecord>();
-        using var r = cmd.ExecuteReader();
-        while (r.Read())
-            list.Add(new ChapterRecord(r.GetInt32(0), r.GetString(1), r.GetDouble(2)));
-        return list;
-    }
-
     /// <summary>Repaths a video after an on-disk rename. Updates the stable row's file_path + raw_filename and
     /// any path-keyed grouping_overrides, in one transaction. Watched/resume/tags key off ids and are untouched.</summary>
     public void UpdateVideoPath(long videoId, string oldPath, string newPath)
@@ -901,7 +855,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
 
     /// <summary>
     /// Repaths a video (relink after manual move) and clears its missing flag in one transaction.
-    /// Watched-state/tags/chapters survive because they key off the stable video id.
+    /// Watched-state/tags survive because they key off the stable video id.
     /// Also updates any path-keyed grouping_overrides for the old path.
     /// </summary>
     public void RelinkVideo(long videoId, string oldPath, string newPath)
@@ -932,7 +886,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
     /// <summary>
     /// Removes a single video row from the DB index.
     /// CASCADE FK constraints on the schema clean up <c>video_tags</c>,
-    /// <c>video_chapters</c>, <c>watch_events</c>, and <c>video_art</c> automatically.
+    /// <c>watch_events</c>, and <c>video_art</c> automatically.
     /// Does NOT touch the filesystem — call <see cref="IRecycleBinService"/> before this.
     /// </summary>
     public void DeleteVideoIndexById(long videoId)
@@ -951,7 +905,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
     /// <see cref="Naming.SectionGrouper.Group"/> overload — no filesystem access.
     /// Re-runs grouping on the current <c>videos.file_path</c> rows, then
     /// upserts the resulting <c>series_id</c> and <c>episode_no</c> back in
-    /// one transaction. Watched-state/tags/chapters are preserved because they
+    /// one transaction. Watched-state/tags are preserved because they
     /// key off stable video ids; only <c>videos.series_id</c> and
     /// <c>videos.episode_no</c> are updated.
     ///

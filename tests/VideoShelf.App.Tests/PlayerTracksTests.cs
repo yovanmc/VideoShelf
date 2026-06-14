@@ -8,7 +8,7 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.Tests;
 
-public class PlayerTracksAndChaptersTests
+public class PlayerTracksTests
 {
     private static (PlayerViewModel vm, FakePlaybackEngine engine, EpisodeView ep) Make(AppTempDb temp)
     {
@@ -69,49 +69,6 @@ public class PlayerTracksAndChaptersTests
         vm.SelectedAudioTrack = vm.AudioTracks.First(t => t.Id == 1);
 
         engine.GetCurrentAudioTrack().ShouldBe(1);
-    }
-
-    [Fact]
-    public void RefreshTracks_populates_chapters_and_HasChapters()
-    {
-        using var temp = new AppTempDb();
-        var (vm, engine, ep) = Make(temp);
-        engine.Chapters.Add(new ChapterOption(0, "Intro"));
-        engine.Chapters.Add(new ChapterOption(1, "Part 1"));
-        vm.Open(ep);
-
-        vm.RefreshTracks();
-
-        vm.Chapters.Count.ShouldBe(2);
-        vm.HasChapters.ShouldBeTrue();
-    }
-
-    [Fact]
-    public void No_chapters_means_HasChapters_false()
-    {
-        using var temp = new AppTempDb();
-        var (vm, engine, ep) = Make(temp);
-        vm.Open(ep);
-
-        vm.RefreshTracks();
-
-        vm.HasChapters.ShouldBeFalse();
-    }
-
-    [Fact]
-    public void NextChapter_and_PreviousChapter_call_engine()
-    {
-        using var temp = new AppTempDb();
-        var (vm, engine, ep) = Make(temp);
-        engine.Chapters.Add(new ChapterOption(0, "Intro"));
-        vm.Open(ep);
-        vm.RefreshTracks();
-
-        vm.NextChapterCommand.Execute(null);
-        vm.PreviousChapterCommand.Execute(null);
-
-        engine.NextChapterCalls.ShouldBe(1);
-        engine.PreviousChapterCalls.ShouldBe(1);
     }
 
     [Fact]

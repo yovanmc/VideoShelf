@@ -60,11 +60,9 @@ public sealed partial class PlayerViewModel(
 
     public ObservableCollection<TrackOption> AudioTracks { get; } = [];
     public ObservableCollection<TrackOption> SubtitleTracks { get; } = [];
-    public ObservableCollection<ChapterOption> Chapters { get; } = [];
 
     public bool HasMultipleAudioTracks => AudioTracks.Count > 1;
     public bool HasSubtitleTracks => SubtitleTracks.Count > 1;
-    public bool HasChapters => Chapters.Count > 0;
 
     public string? CurrentFilePath => _current?.FilePath;
     public bool CanAddSubtitle => _current is not null;
@@ -228,19 +226,16 @@ public sealed partial class PlayerViewModel(
         if (value is not null) engine.SetSubtitleTrack(value.Id);
     }
 
-    /// <summary>Re-reads live track/chapter lists from the engine (call when media is ready / on demand).</summary>
+    /// <summary>Re-reads live track lists from the engine (call when media is ready / on demand).</summary>
     public void RefreshTracks()
     {
         AudioTracks.Clear();
         foreach (var t in engine.GetAudioTracks()) AudioTracks.Add(t);
         SubtitleTracks.Clear();
         foreach (var t in engine.GetSubtitleTracks()) SubtitleTracks.Add(t);
-        Chapters.Clear();
-        foreach (var c in engine.GetChapters()) Chapters.Add(c);
 
         OnPropertyChanged(nameof(HasMultipleAudioTracks));
         OnPropertyChanged(nameof(HasSubtitleTracks));
-        OnPropertyChanged(nameof(HasChapters));
     }
 
     [RelayCommand]
@@ -255,12 +250,6 @@ public sealed partial class PlayerViewModel(
         SelectedSubtitleTrack = SubtitleTracks.LastOrDefault(t => t.Id != TrackOption.SubtitlesOffId)
                                 ?? SelectedSubtitleTrack;
     }
-
-    [RelayCommand]
-    private void NextChapter() => engine.NextChapter();
-
-    [RelayCommand]
-    private void PreviousChapter() => engine.PreviousChapter();
 
     [RelayCommand]
     private void ToggleFullscreen() => IsFullscreen = !IsFullscreen;

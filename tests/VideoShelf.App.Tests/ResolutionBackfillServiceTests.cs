@@ -1,10 +1,8 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
 using VideoShelf.App.Services;
 using VideoShelf.App.Tests.TestSupport;
-using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.Tests;
@@ -26,7 +24,7 @@ public class ResolutionBackfillServiceTests
 
         var fake = new FakeMediaProbe
         {
-            Result = new MediaProbeResult(null, System.Array.Empty<ChapterRecord>(), Width: 1280, Height: 720)
+            Result = new MediaProbeResult(null, Width: 1280, Height: 720)
         };
 
         var svc = new ResolutionBackfillService(library, fake);
@@ -48,7 +46,7 @@ public class ResolutionBackfillServiceTests
 
         var fake = new FakeMediaProbe
         {
-            Result = new MediaProbeResult(null, System.Array.Empty<ChapterRecord>(), null, null)
+            Result = new MediaProbeResult(null, null, null)
         };
 
         var svc = new ResolutionBackfillService(library, fake);
@@ -71,7 +69,7 @@ public class ResolutionBackfillServiceTests
 
         var fake = new FakeMediaProbe
         {
-            Result = new MediaProbeResult(null, System.Array.Empty<ChapterRecord>(), Width: 3840, Height: 2160)
+            Result = new MediaProbeResult(null, Width: 3840, Height: 2160)
         };
 
         var svc = new ResolutionBackfillService(library, fake);
