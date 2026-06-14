@@ -40,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFolderPicker, FolderPicker>();
         services.AddSingleton<IImagePicker, ImagePicker>();
         services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
+        services.AddSingleton<IVideoFilePicker, VideoFilePicker>();
+        services.AddSingleton<IConfirmService, ConfirmService>();
         services.AddSingleton<CreatorArtRepository>();
         services.AddSingleton<ItemArtRepository>();
         services.AddSingleton<CreatorsViewModel>(sp => new CreatorsViewModel(
@@ -118,6 +120,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<BulkActionBarViewModel>();
+        services.AddSingleton<MaintenanceRepository>();
+        services.AddSingleton<MissingTriageViewModel>();
+        services.AddSingleton<MaintenanceViewModel>();
         services.AddSingleton<MainViewModel>(sp =>
         {
             var lib = sp.GetRequiredService<LibraryRepository>();
@@ -159,7 +164,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<BulkActionBarViewModel>(),
                 palette,
                 sp.GetRequiredService<MultiRenameViewModel>(),
-                sp.GetRequiredService<ResolutionBackfillService>());
+                sp.GetRequiredService<ResolutionBackfillService>(),
+                sp.GetRequiredService<MaintenanceViewModel>());
 
             mainVmBox = mainVm;
             return mainVm;

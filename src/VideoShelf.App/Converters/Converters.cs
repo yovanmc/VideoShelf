@@ -86,6 +86,25 @@ public sealed class NotNullOrEmptyToVisibility : IValueConverter
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
 
+/// <summary>Returns Visible when the bound value is not null; Collapsed otherwise.
+/// Use when binding to an object (e.g. a sub-VM) rather than a string.</summary>
+public sealed class NotNullToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => value is not null ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
+/// <summary>Returns Visible when the bound value is an int greater than zero; Collapsed otherwise.
+/// Treats <see cref="DependencyProperty.UnsetValue"/>, null, and non-int values as Collapsed,
+/// so it is safe to use with <c>{Binding Triage.SomeList.Count}</c> when Triage may be null.</summary>
+public sealed class CountToVisibility : IValueConverter
+{
+    public object Convert(object? value, Type t, object? p, CultureInfo c)
+        => value is int n && n > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
+}
+
 /// <summary>
 /// Converts a string like "Home24" to the corresponding <see cref="SymbolRegular"/> enum value.
 /// Falls back to SymbolRegular.Circle24 when the string is unknown.

@@ -838,4 +838,58 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }
+
+    // ── M18-F: relink helpers ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the source root_path for the source that owns the given video,
+    /// or null if the video or its source is not found. Used by auto-find relink
+    /// to scope the directory walk to the right source folder.
+    /// </summary>
+    public string? GetSourceRootForVideo(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT sr.root_path
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            JOIN sections sc ON sc.id = se.section_id
+            JOIN sources sr ON sr.id = sc.source_id
+            WHERE v.id = $id
+            """;
+        cmd.Parameters.AddWithValue("$id", videoId);
+        var result = cmd.ExecuteScalar();
+        return result is string s ? s : null;
+    }
+
+    /// <summary>
+    /// Repaths a video (relink after manual move) and clears its missing flag in one transaction.
+    /// Watched-state/tags/chapters survive because they key off the stable video id.
+    /// Also updates any path-keyed grouping_overrides for the old path.
+    /// </summary>
+    public void RelinkVideo(long videoId, string oldPath, string newPath)
+    {
+        using var conn = db.Open();
+        using var tx = conn.BeginTransaction();
+
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE videos SET file_path = $new, raw_filename = $raw, missing = 0 WHERE id = $id";
+            cmd.Parameters.AddWithValue("$new", newPath);
+            cmd.Parameters.AddWithValue("$raw", System.IO.Path.GetFileName(newPath));
+            cmd.Parameters.AddWithValue("$id", videoId);
+            cmd.ExecuteNonQuery();
+        }
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE grouping_overrides SET file_path = $new WHERE file_path = $old";
+            cmd.Parameters.AddWithValue("$new", newPath);
+            cmd.Parameters.AddWithValue("$old", oldPath);
+            cmd.ExecuteNonQuery();
+        }
+        tx.Commit();
+    }
 }

@@ -264,13 +264,14 @@ public sealed class MaintenanceRepository(VideoShelfDb db)
 
     // ── D4: Missing/orphan lists + index deletes ──────────────────────────────
 
-    /// <summary>All videos marked missing, with creator and series context for the relink triage list.</summary>
+    /// <summary>All videos marked missing, with creator and series context for the relink triage list.
+    /// Includes size_bytes and duration so the auto-find matcher can compare candidates.</summary>
     public IReadOnlyList<MissingVideo> GetMissingVideos()
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT v.id, v.file_path, sc.display_name, se.base_title
+            SELECT v.id, v.file_path, sc.display_name, se.base_title, v.size_bytes, v.duration
             FROM videos v
             JOIN series se ON se.id = v.series_id
             JOIN sections sc ON sc.id = se.section_id
@@ -280,7 +281,13 @@ public sealed class MaintenanceRepository(VideoShelfDb db)
         var list = new List<MissingVideo>();
         using var r = cmd.ExecuteReader();
         while (r.Read())
-            list.Add(new MissingVideo(r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3)));
+            list.Add(new MissingVideo(
+                r.GetInt64(0),
+                r.GetString(1),
+                r.GetString(2),
+                r.GetString(3),
+                r.IsDBNull(4) ? null : r.GetInt64(4),
+                r.IsDBNull(5) ? null : r.GetDouble(5)));
         return list;
     }
 

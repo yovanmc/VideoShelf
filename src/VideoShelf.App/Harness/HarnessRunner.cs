@@ -104,6 +104,13 @@ public sealed class HarnessRunner
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
             case "History":    _main.ShowHistoryCommand.Execute(null); break;
 
+            // ── M18 surfaces ──────────────────────────────────────────────────────
+
+            // Maintenance / Library Health dashboard.
+            case "Maintenance":
+                _main.ShowMaintenanceCommand.Execute(null);
+                break;
+
             // ── M17 surfaces (I2) ────────────────────────────────────────────────
 
             // Browse with 2 creators pre-selected so the BulkActionBar is visible.
