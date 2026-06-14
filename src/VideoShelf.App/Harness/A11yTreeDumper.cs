@@ -27,6 +27,14 @@ public static class A11yTreeDumper
         sb.AppendLine("=== Container keyboard-nav attrs (visual tree walk) ===");
         AppendContainerNavAttrs(window, sb);
 
+        // ── Live-region section (D2) ──────────────────────────────────────────
+        // Walk the visual tree and print AutomationProperties.LiveSetting for
+        // all TextBlock elements that have a non-Off live-setting, so the a11y-dump
+        // verifies that LiveRegion attached behavior wired the setting correctly.
+        sb.AppendLine();
+        sb.AppendLine("=== Live-region TextBlocks (AutomationProperties.LiveSetting != Off) ===");
+        AppendLiveRegionAttrs(window, sb);
+
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         File.WriteAllText(path, sb.ToString());
     }
@@ -55,6 +63,32 @@ public static class A11yTreeDumper
         if (peer.GetPattern(PatternInterface.Toggle) is not null) found.Add("Toggle");
         if (peer.GetPattern(PatternInterface.SelectionItem) is not null) found.Add("SelectionItem");
         return found.Count == 0 ? "" : " | " + string.Join(",", found);
+    }
+
+    /// <summary>
+    /// Walks the WPF visual tree from <paramref name="root"/> and, for each
+    /// <see cref="TextBlock"/> whose <c>AutomationProperties.LiveSetting</c> is not
+    /// <see cref="AutomationLiveSetting.Off"/>, appends a line showing its text and live-setting.
+    /// Used by the D2 a11y-dump to verify that <c>LiveRegion</c> attached behavior is wired.
+    /// </summary>
+    private static void AppendLiveRegionAttrs(DependencyObject root, StringBuilder sb)
+    {
+        if (root is TextBlock tb)
+        {
+            var liveSetting = AutomationProperties.GetLiveSetting(tb);
+            if (liveSetting != AutomationLiveSetting.Off)
+            {
+                var text = tb.Text ?? "";
+                sb.AppendLine($"  TextBlock text='{text}' | LiveSetting={liveSetting}");
+            }
+        }
+
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            AppendLiveRegionAttrs(child, sb);
+        }
     }
 
     /// <summary>

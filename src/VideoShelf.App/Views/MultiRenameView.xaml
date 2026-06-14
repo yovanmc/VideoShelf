@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             xmlns:acc="clr-namespace:VideoShelf.App.Accessibility">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -38,6 +39,10 @@
             <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}"
                        Style="{StaticResource SecondaryButton}" />
             <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Opacity="0.85" />
+            <!-- D2: Live-region announcer for multi-rename result (mirrors RenameToolView approach). -->
+            <TextBlock Width="0" Height="0" IsHitTestVisible="False"
+                       acc:LiveRegion.Text="{Binding StatusSummary}"
+                       acc:LiveRegion.Politeness="Polite" />
             <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="12,0,0,0"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>

@@ -34,7 +34,17 @@ public sealed partial class PlayerViewModel(
     public IPlaybackEngine Engine => engine;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NowPlayingAnnouncement))]
     private string _title = "";
+
+    /// <summary>
+    /// Screen-reader announcement text for the now-playing live region.
+    /// Produces "Now playing {Title}" when a title is set, or "" when idle.
+    /// Bound via <c>acc:LiveRegion.Text</c> on a dedicated offscreen TextBlock
+    /// in PlayerView so the visible title label is not overwritten by the behavior.
+    /// </summary>
+    public string NowPlayingAnnouncement =>
+        string.IsNullOrEmpty(Title) ? "" : $"Now playing {Title}";
 
     [ObservableProperty]
     private string? _playbackError;

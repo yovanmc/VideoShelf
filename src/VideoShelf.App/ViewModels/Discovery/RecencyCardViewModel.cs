@@ -12,6 +12,15 @@ public sealed partial class RecencyCardViewModel(RecencyItem item) : ObservableO
     public string SeriesTitle => item.SeriesTitle;
     public string EpisodeLabel => item.IsStandalone ? item.SeriesTitle : $"Episode {item.EpisodeNo}";
     public bool Watched => item.Watched;
+
+    /// <summary>Alias for <see cref="Watched"/>: used by VideoCard's watched-checkmark badge
+    /// so the card template can bind a uniform <c>IsWatched</c> property across all card VMs.</summary>
+    public bool IsWatched => item.Watched;
+
+    /// <summary>False for recency cards (no resume position exposed): the progress bar
+    /// and %-text overlay are not applicable here.</summary>
+    public bool HasProgress => false;
+
     public string? ThumbnailSeedPath => item.ThumbnailSeedPath;
     [ObservableProperty] private string? thumbnailPath;
 

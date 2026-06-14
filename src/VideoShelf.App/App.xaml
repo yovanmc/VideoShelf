@@ -22,6 +22,7 @@
             <conv:MissingToOpacity x:Key="MissingToOpacity" />
             <conv:EnumToVisibility x:Key="EnumToVis" />
             <conv:FractionToWidth x:Key="FractionToWidth" />
+            <conv:FractionToPercentText x:Key="FractionToPercentText" />
             <conv:InvertBool x:Key="InverseBoolToBool" />
         </ResourceDictionary>
     </Application.Resources>
