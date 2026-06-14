@@ -428,6 +428,14 @@ public sealed class HarnessRunner
             _postSettleAction = () =>
                 _main.UpNext.ShowUpNext(next, () => { /* harness: don't actually play next */ });
         }
+        else
+        {
+            // No second episode found — the Up-Next card would not render, making an
+            // OK done-signal a silent false positive. Fail loud so the sweep rejects it.
+            throw new InvalidOperationException(
+                "PlayerUpNext harness state requires a seeded next episode but none was found. " +
+                "Seed a multi-episode series or a section with at least two videos.");
+        }
     }
 
     // ---- Helpers wired to the real APIs ----
