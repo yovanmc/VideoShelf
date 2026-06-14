@@ -10,6 +10,8 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:NotNullOrEmptyToVisibility x:Key="NotNullOrEmptyToVis" />
+            <conv:NotNullToVisibility x:Key="NotNullToVis" />
+            <conv:CountToVisibility x:Key="CountToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -173,9 +175,11 @@
 
             <!-- ── M18-F: Missing-file triage ─────────────────────────────── -->
             <!-- Entire triage section hidden when Triage VM is not wired (slim test contexts). -->
-            <StackPanel Visibility="{Binding Triage, Converter={StaticResource NotNullOrEmptyToVis}}">
+            <StackPanel Visibility="{Binding Triage, Converter={StaticResource NotNullToVis}}">
 
-                <TextBlock Text="MISSING FILES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+                <!-- MISSING FILES header + list — only shown when list is non-empty -->
+                <TextBlock Text="MISSING FILES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}"
+                           Visibility="{Binding Triage.MissingVideos.Count, Converter={StaticResource CountToVis}}" />
 
                 <!-- Status message (relink / auto-find feedback) -->
                 <TextBlock Text="{Binding Triage.StatusMessage}"
@@ -185,7 +189,8 @@
                            Visibility="{Binding Triage.StatusMessage, Converter={StaticResource NotNullOrEmptyToVis}}" />
 
                 <!-- Missing video rows -->
-                <ItemsControl ItemsSource="{Binding Triage.MissingVideos}" Margin="0,4,0,0">
+                <ItemsControl ItemsSource="{Binding Triage.MissingVideos}" Margin="0,4,0,0"
+                              Visibility="{Binding Triage.MissingVideos.Count, Converter={StaticResource CountToVis}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,0,0,6" Padding="14,10"
@@ -233,9 +238,12 @@
                 </ItemsControl>
 
                 <!-- ── Orphan series ─────────────────────────────────────── -->
-                <TextBlock Text="ORPHAN SERIES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+                <!-- Header + list only shown when list is non-empty -->
+                <TextBlock Text="ORPHAN SERIES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}"
+                           Visibility="{Binding Triage.OrphanSeries.Count, Converter={StaticResource CountToVis}}" />
 
-                <ItemsControl ItemsSource="{Binding Triage.OrphanSeries}" Margin="0,4,0,0">
+                <ItemsControl ItemsSource="{Binding Triage.OrphanSeries}" Margin="0,4,0,0"
+                              Visibility="{Binding Triage.OrphanSeries.Count, Converter={StaticResource CountToVis}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,0,0,6" Padding="14,10"
@@ -267,9 +275,12 @@
                 </ItemsControl>
 
                 <!-- ── Empty creators ────────────────────────────────────── -->
-                <TextBlock Text="EMPTY CREATORS" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+                <!-- Header + list only shown when list is non-empty -->
+                <TextBlock Text="EMPTY CREATORS" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}"
+                           Visibility="{Binding Triage.EmptyCreators.Count, Converter={StaticResource CountToVis}}" />
 
-                <ItemsControl ItemsSource="{Binding Triage.EmptyCreators}" Margin="0,4,0,0">
+                <ItemsControl ItemsSource="{Binding Triage.EmptyCreators}" Margin="0,4,0,0"
+                              Visibility="{Binding Triage.EmptyCreators.Count, Converter={StaticResource CountToVis}}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,0,0,6" Padding="14,10"
