@@ -30,9 +30,9 @@
                 <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center"
                            Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
 
-                <!-- Action buttons -->
+                <!-- Action buttons — MinWidth/MinHeight="44" for WCAG 2.5.5 hit targets -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <ui:Button Padding="4"
+                    <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Move up"
                                AutomationProperties.Name="Move up"
@@ -40,7 +40,7 @@
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="ChevronUp24" />
                     </ui:Button>
-                    <ui:Button Padding="4"
+                    <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Move down"
                                AutomationProperties.Name="Move down"
@@ -48,7 +48,7 @@
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="ChevronDown24" />
                     </ui:Button>
-                    <ui:Button Padding="4"
+                    <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Play"
                                AutomationProperties.Name="Play this item"
@@ -56,7 +56,7 @@
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="Play24" />
                     </ui:Button>
-                    <ui:Button Padding="4"
+                    <ui:Button Padding="4" MinWidth="44" MinHeight="44"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Remove from queue"
                                AutomationProperties.Name="Remove from queue"

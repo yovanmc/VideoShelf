@@ -8,12 +8,16 @@
          ============================================================ -->
 
     <!-- Transport icon button: TertiaryButton base, compact padding,
-         focus ring via AppFocusVisual. Set on all icon-only transport buttons. -->
+         focus ring via AppFocusVisual. Set on all icon-only transport buttons.
+         MinWidth/MinHeight raised to 44 for WCAG 2.5.5 (44×44 px hit target).
+         PiP layout: the left+right zones collapse via DataTrigger when
+         IsPictureInPicture=True, so the center-row buttons (skip-back / play-pause /
+         skip-fwd) at 44px still fit the compact PiP window without clipping. -->
     <Style x:Key="TransportIconButton" TargetType="ui:Button"
            BasedOn="{StaticResource TertiaryButton}">
         <Setter Property="Padding"          Value="8,6" />
-        <Setter Property="MinHeight"        Value="36" />
-        <Setter Property="MinWidth"         Value="36" />
+        <Setter Property="MinHeight"        Value="44" />
+        <Setter Property="MinWidth"         Value="44" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}" />
     </Style>
 

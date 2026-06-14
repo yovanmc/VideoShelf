@@ -22,6 +22,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <ui:Button Style="{StaticResource TertiaryButton}"
+                                       MinWidth="44" MinHeight="44"
                                        Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                        CommandParameter="{Binding}"
                                        ToolTip="Remove tag"
