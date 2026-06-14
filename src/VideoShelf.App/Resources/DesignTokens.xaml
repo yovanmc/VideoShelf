@@ -263,9 +263,6 @@
     </Style>
 
     <!-- ============================================================
-         IMAGE — shared thumbnail fade-in animation
-         ============================================================ -->
-    <!-- ============================================================
          ANIMATION TOKENS (additive — M21)
          ============================================================ -->
     <Duration x:Key="AnimFast">0:0:0.12</Duration>
@@ -274,6 +271,9 @@
     <CubicEase x:Key="EaseOut" EasingMode="EaseOut"/>
     <CubicEase x:Key="EaseInOut" EasingMode="EaseInOut"/>
 
+    <!-- ============================================================
+         IMAGE — shared thumbnail fade-in animation
+         ============================================================ -->
     <!-- ThumbnailImage: Opacity defaults to 1 so a thumbnail is never stuck
          hidden if TargetUpdated doesn't fire; From=0 adds a fade on source arrival. -->
     <Style x:Key="ThumbnailImage" TargetType="Image">
