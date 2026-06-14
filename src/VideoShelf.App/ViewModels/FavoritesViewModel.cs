@@ -17,6 +17,10 @@ public sealed partial class FavoritesViewModel(CurationRepository curation, Libr
 
     public bool HasFavorites => Favorites.Count > 0;
 
+    /// <summary>True while LoadAsync is in progress; used to show the skeleton overlay.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
 
     /// <summary>Per-page selection state for multi-select over the favorites grid.</summary>
@@ -38,6 +42,9 @@ public sealed partial class FavoritesViewModel(CurationRepository curation, Libr
 
     public async Task LoadAsync()
     {
+        IsLoading = true;
+        try
+        {
         // Unsubscribe from existing cards before clearing.
         foreach (var existing in Favorites)
             existing.PropertyChanged -= OnCardPropertyChanged;
@@ -60,6 +67,11 @@ public sealed partial class FavoritesViewModel(CurationRepository curation, Libr
             Favorites.Add(card);
         }
         OnPropertyChanged(nameof(HasFavorites));
+        } // end try
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)

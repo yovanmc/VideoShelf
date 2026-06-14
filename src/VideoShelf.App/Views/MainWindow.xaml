@@ -6,6 +6,7 @@
                  xmlns:views="clr-namespace:VideoShelf.App.Views"
                  xmlns:conv="clr-namespace:VideoShelf.App.Converters"
                  xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
+                 xmlns:controls="clr-namespace:VideoShelf.App.Views.Controls"
                  Title="VideoShelf"
                  Width="1180"
                  Height="760"
@@ -288,6 +289,13 @@
                                     ToolTip="Clear filter" />
                         </Grid>
                     </StackPanel>
+
+                    <!-- Skeleton loading overlay for the Browse grid (shown while Creators.IsLoading) -->
+                    <controls:SkeletonPanel Grid.Row="1"
+                                            Margin="16,8,16,0"
+                                            VerticalAlignment="Top"
+                                            Visibility="{Binding Creators.IsLoading, Converter={StaticResource BoolToVisibility}}"
+                                            Animate="{Binding AnimationsEnabled}" />
 
                     <!-- Grid view: VirtualizingWrapPanel + A–Z jump strip -->
                     <Grid Grid.Row="1"

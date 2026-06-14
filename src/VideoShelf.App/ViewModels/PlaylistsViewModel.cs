@@ -37,6 +37,11 @@ public sealed partial class PlaylistsViewModel(
     public ObservableCollection<PlaylistListItemViewModel> Playlists { get; } = [];
     public ObservableCollection<PlaylistItemRowViewModel> Items { get; } = [];
 
+    /// <summary>True while Load is in progress; used to show the skeleton overlay.
+    /// Synchronous loads complete so fast this rarely stays true for a visible frame — that's fine.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelected))]
     private PlaylistListItemViewModel? _selected;
@@ -47,10 +52,18 @@ public sealed partial class PlaylistsViewModel(
 
     public void Load()
     {
-        var all = playlists.GetAll();
-        Playlists.Clear();
-        foreach (var p in all)
-            Playlists.Add(new PlaylistListItemViewModel(p.Id, p.Name, p.ItemCount));
+        IsLoading = true;
+        try
+        {
+            var all = playlists.GetAll();
+            Playlists.Clear();
+            foreach (var p in all)
+                Playlists.Add(new PlaylistListItemViewModel(p.Id, p.Name, p.ItemCount));
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // ── Commands ──────────────────────────────────────────────────────────────
