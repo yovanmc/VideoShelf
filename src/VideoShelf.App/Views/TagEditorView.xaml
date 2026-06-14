@@ -16,7 +16,9 @@
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4">
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4"
+                            AutomationProperties.Name="{Binding}"
+                            AutomationProperties.HelpText="Tag">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                             <ui:Button Style="{StaticResource TertiaryButton}"
@@ -37,7 +39,9 @@
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4" Opacity="0.6">
+                    <Border Style="{StaticResource Chip}" Margin="0,0,6,4" Opacity="0.6"
+                            AutomationProperties.Name="{Binding Tag}"
+                            AutomationProperties.HelpText="Inherited tag">
                         <TextBlock VerticalAlignment="Center">
                             <Run Text="{Binding Tag, Mode=OneWay}"/>
                             <Run Text=" · " Foreground="{StaticResource TextFillColorTertiaryBrush}"/>

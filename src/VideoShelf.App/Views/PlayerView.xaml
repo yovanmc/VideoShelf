@@ -503,7 +503,8 @@
                                         <ui:Button Margin="4,0,0,0"
                                                    Command="{Binding PlayQueue.ToggleDrawerCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TransportIconButton}">
+                                                   Style="{StaticResource TransportIconButton}"
+                                                   AutomationProperties.Name="Up next queue">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
                                                 <TextBlock Text="Up next" VerticalAlignment="Center" Foreground="White" />
