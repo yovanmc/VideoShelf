@@ -214,4 +214,54 @@ public class ScanDiffTests
         actual.ShouldNotBeNull();
         actual!.Value.UtcDateTime.ShouldBe(expected.UtcDateTime);
     }
+
+    [Fact]
+    public void GetVideosNeedingResolution_returns_rows_with_null_width()
+    {
+        using var temp = new TempDb();
+        using var dir = new TempDir();
+        dir.Touch("Creator A/Cool Story 1.mp4");
+        dir.Touch("Creator A/Cool Story 2.mp4");
+
+        var lib = new LibraryRepository(temp.Db);
+        var scan = new ScanService(temp.Db, lib);
+        scan.ScanSource(dir.Path, "My Videos");
+
+        var sourceId = lib.GetSources().Single().Id;
+        var section = lib.GetSections(sourceId).Single();
+        var series = lib.GetSeriesForSection(section.Id).Single();
+        var videos = lib.GetVideosForSeries(series.Id);
+        videos.Count.ShouldBe(2);
+
+        // Both rows start with null width (no probe has run)
+        lib.GetVideosNeedingResolution().Count.ShouldBe(2);
+
+        // Fill one; the other still needs it
+        lib.SetResolution(videos[0].Id, 1920, 1080);
+        lib.GetVideosNeedingResolution().Count.ShouldBe(1);
+        lib.GetVideosNeedingResolution()[0].Id.ShouldBe(videos[1].Id);
+    }
+
+    [Fact]
+    public void SetResolution_writes_and_GetVideosNeedingResolution_clears_it()
+    {
+        using var temp = new TempDb();
+        using var dir = new TempDir();
+        dir.Touch("Creator A/Video One.mp4");
+
+        var lib = new LibraryRepository(temp.Db);
+        var scan = new ScanService(temp.Db, lib);
+        scan.ScanSource(dir.Path, "My Videos");
+
+        var sourceId = lib.GetSources().Single().Id;
+        var section = lib.GetSections(sourceId).Single();
+        var series = lib.GetSeriesForSection(section.Id).Single();
+        var video = lib.GetVideosForSeries(series.Id).Single();
+
+        lib.GetVideosNeedingResolution().Count.ShouldBe(1);
+
+        lib.SetResolution(video.Id, 1280, 720);
+
+        lib.GetVideosNeedingResolution().Count.ShouldBe(0);
+    }
 }

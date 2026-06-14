@@ -14,7 +14,7 @@ namespace VideoShelf.App.Services;
 public sealed class LibVlcMediaProbe : IMediaProbe, IDisposable
 {
     private static readonly MediaProbeResult Empty =
-        new MediaProbeResult(null, Array.Empty<ChapterRecord>());
+        new MediaProbeResult(null, Array.Empty<ChapterRecord>(), null, null);
 
     private readonly LibVLC _libVlc;
 
@@ -76,8 +76,45 @@ public sealed class LibVlcMediaProbe : IMediaProbe, IDisposable
                 chapters = new List<ChapterRecord>(0);
             }
 
+            // Read video pixel size via Size(0, ref px, ref py).
+            // Verified via reflection on LibVLCSharp 3.9.7.1:
+            //   bool Size(uint num, ref uint px, ref uint py)
+            // Fallback: media.Tracks, TrackType.Video → .Data.Video.Width/.Height (fields).
+            int? width = null;
+            int? height = null;
+            try
+            {
+                uint px = 0, py = 0;
+                if (player.Size(0, ref px, ref py) && px > 0 && py > 0)
+                {
+                    width = (int)px;
+                    height = (int)py;
+                }
+                else
+                {
+                    // Fallback: parse Tracks from the Media object
+                    var tracks = player.Media?.Tracks;
+                    if (tracks != null)
+                    {
+                        foreach (var t in tracks)
+                        {
+                            if (t.TrackType == TrackType.Video && t.Data.Video.Width > 0 && t.Data.Video.Height > 0)
+                            {
+                                width = (int)t.Data.Video.Width;
+                                height = (int)t.Data.Video.Height;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fail-safe: resolution is optional; never block the probe
+            }
+
             player.Stop();
-            return new MediaProbeResult(durationSeconds, chapters);
+            return new MediaProbeResult(durationSeconds, chapters, width, height);
         }
         catch (OperationCanceledException)
         {

@@ -811,4 +811,31 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.Parameters.AddWithValue("@path", filePath);
         cmd.ExecuteNonQuery();
     }
+
+    // ── M18-C: resolution backfill ────────────────────────────────────────────
+
+    /// <summary>Returns ids+paths for present (non-missing) videos that have no <c>width</c> yet.</summary>
+    public IReadOnlyList<VideoToProbe> GetVideosNeedingResolution()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, file_path FROM videos WHERE width IS NULL AND missing = 0 ORDER BY id";
+        var list = new List<VideoToProbe>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new VideoToProbe(r.GetInt64(0), r.GetString(1)));
+        return list;
+    }
+
+    /// <summary>Writes the probed pixel dimensions for a single video.</summary>
+    public void SetResolution(long videoId, int width, int height)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET width = $w, height = $h WHERE id = $id";
+        cmd.Parameters.AddWithValue("$w", width);
+        cmd.Parameters.AddWithValue("$h", height);
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
 }

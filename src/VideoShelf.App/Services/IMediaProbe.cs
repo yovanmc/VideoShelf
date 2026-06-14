@@ -2,7 +2,11 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.Services;
 
-public sealed record MediaProbeResult(double? DurationSeconds, IReadOnlyList<ChapterRecord> Chapters);
+public sealed record MediaProbeResult(
+    double? DurationSeconds,
+    IReadOnlyList<ChapterRecord> Chapters,
+    int? Width,
+    int? Height);
 
 public interface IMediaProbe
 {
