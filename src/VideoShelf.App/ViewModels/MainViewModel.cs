@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Accessibility;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Models;
@@ -23,6 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ResolutionBackfillService? _resolutionBackfill;
     private readonly PlayQueueViewModel _playQueue;
     private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
+    private readonly IFocusReturnService? _focusReturn;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -47,7 +49,8 @@ public sealed partial class MainViewModel : ObservableObject
         CommandPaletteViewModel? commandPalette = null,
         MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
-        MaintenanceViewModel? maintenance = null)
+        MaintenanceViewModel? maintenance = null,
+        IFocusReturnService? focusReturn = null)
     {
         _sources = sources;
         _library = library;
@@ -58,6 +61,7 @@ public sealed partial class MainViewModel : ObservableObject
         _resolutionBackfill = resolutionBackfill;
         _playQueue = playQueue;
         _libraryRepo = libraryRepo;
+        _focusReturn = focusReturn;
         Maintenance = maintenance;
         SmartViews = smartViews;
         Favorites = favorites;
@@ -252,6 +256,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OpenPlayer(EpisodeView episode)
     {
+        // Capture the focused element only on the FIRST open of a playback sequence.
+        // Auto-next (player→player) must NOT overwrite the original launching card.
+        if (!IsPlayerVisible)
+            _focusReturn?.Capture(System.Windows.Input.Keyboard.FocusedElement);
         IsPlayerVisible = true;
         _player.Open(episode);
     }
@@ -385,6 +393,11 @@ public sealed partial class MainViewModel : ObservableObject
         _player.IsFullscreen = false;
         IsPlayerVisible = false;
         IsPictureInPicture = false;
+        // Restore focus to the card that launched playback.
+        // BeginInvoke so focus lands after the target view is re-realized in the visual tree.
+        var el = _focusReturn?.TakeForRestore();
+        if (el is not null)
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => el.Focus());
     }
 
     /// <summary>Opens the Ctrl+K command palette overlay and resets its state.</summary>

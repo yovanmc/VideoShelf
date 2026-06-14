@@ -174,7 +174,8 @@ public static class ServiceCollectionExtensions
                 palette,
                 sp.GetRequiredService<MultiRenameViewModel>(),
                 sp.GetRequiredService<ResolutionBackfillService>(),
-                sp.GetRequiredService<MaintenanceViewModel>());
+                sp.GetRequiredService<MaintenanceViewModel>(),
+                sp.GetRequiredService<IFocusReturnService>());
 
             mainVmBox = mainVm;
             return mainVm;
