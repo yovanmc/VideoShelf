@@ -5,7 +5,8 @@ param(
     [string]$OutDir   = (Join-Path $PSScriptRoot '..\..\tests\screenshots'),
     [string]$Fixtures = (Join-Path $env:TEMP 'vs-fixtures'),
     [int]$TimeoutSec  = 120,
-    [int]$SettleSeconds = 5   # post-foreground wait so the WPF-UI Mica/Fluent surface composes (capturing too early yields an all-black frame)
+    [int]$SettleSeconds = 5,   # post-foreground wait so the WPF-UI Mica/Fluent surface composes (capturing too early yields an all-black frame)
+    [switch]$A11yDump          # when set, pass --a11y-dump "<OutDir>\a11y-<view>.txt" for each view
 )
 
 $ErrorActionPreference = 'Stop'
@@ -156,6 +157,13 @@ foreach ($name in $views.Keys) {
         $args = @('--folder',$Fixtures,'--data-dir',$dataDir,'--autostart',
                   '--done-signal',$signal) + $viewArgs
     }
+
+    # -A11yDump: append --a11y-dump flag so the harness writes a UIA tree snapshot next
+    # to the PNG.  One file per view; named a11y-<view>.txt in the same shot directory.
+    if ($A11yDump) {
+        $a11yFile = Join-Path $shotDir "a11y-$name.txt"
+        $args += @('--a11y-dump', $a11yFile)
+    }
     Write-Host "Launching '$name'..."
     $proc = Start-Process -FilePath $exe -ArgumentList $args -PassThru
 
@@ -178,3 +186,10 @@ foreach ($name in $views.Keys) {
 Write-Host "`n=== Screenshots written to $shotDir ==="
 $results | ForEach-Object { Write-Host "  $_" }
 Write-Host "`nPNG_DIR=$shotDir"
+
+if ($A11yDump) {
+    $dumpFiles = Get-ChildItem -Path $shotDir -Filter 'a11y-*.txt' -ErrorAction SilentlyContinue
+    Write-Host "`n=== A11y dumps written to $shotDir ==="
+    $dumpFiles | ForEach-Object { Write-Host "  $($_.FullName)" }
+    Write-Host "A11Y_DIR=$shotDir"
+}
