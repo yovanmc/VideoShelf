@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.Accessibility;
 using VideoShelf.App.Motion;
 using VideoShelf.App.ViewModels;
+using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.App.Views;
 using VideoShelf.Core.Discovery;
@@ -32,6 +33,12 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<AppPaths>();
         }
         services.AddSingleton<IMotionPolicy, SystemMotionPolicy>();
+        services.AddSingleton<IToastService>(_ => new ToastService((delay, act) =>
+        {
+            var timer = new System.Windows.Threading.DispatcherTimer { Interval = delay };
+            timer.Tick += (_, _) => { timer.Stop(); act(); };
+            timer.Start();
+        }));
         services.AddSingleton<IFocusReturnService, FocusReturnService>();
         services.AddSingleton<LibraryBootstrap>();
         services.AddSingleton<VideoShelfDb>(sp =>
