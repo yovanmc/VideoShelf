@@ -14,9 +14,6 @@ public sealed partial class ContinueWatchingCardViewModel(ContinueWatchingItem i
     public double ProgressFraction =>
         item.Duration is > 0 ? Math.Clamp(item.ResumePosition / item.Duration.Value, 0, 1) : 0;
 
-    public string? ChapterLabel { get; init; }
-    public bool HasChapter => !string.IsNullOrEmpty(ChapterLabel);
-
     [ObservableProperty] private string? thumbnailPath;
 
     public event EventHandler? PlayInvoked;

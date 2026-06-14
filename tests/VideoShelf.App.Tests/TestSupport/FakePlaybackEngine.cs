@@ -16,16 +16,12 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
     public int SnapshotCount { get; private set; }
     public bool SnapshotShouldFail { get; set; }
     public List<double> Seeks { get; } = new();
-    public int NextChapterCalls { get; private set; }
-    public int PreviousChapterCalls { get; private set; }
-
     public double Position { get; private set; }
     public double Length { get; set; }
     public int Volume { get; set; } = 100;
 
     public List<TrackOption> AudioTracks { get; } = new();
     public List<TrackOption> SubtitleTracks { get; } = new();
-    public List<ChapterOption> Chapters { get; } = new();
 
     private int _currentAudio = -1;
     private int _currentSubtitle = TrackOption.SubtitlesOffId;
@@ -51,10 +47,6 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
         // simulate the new track surfacing in the picker:
         SubtitleTracks.Add(new TrackOption(SubtitleTracks.Count, System.IO.Path.GetFileName(subtitlePath)));
     }
-
-    public IReadOnlyList<ChapterOption> GetChapters() => Chapters;
-    public void NextChapter() => NextChapterCalls++;
-    public void PreviousChapter() => PreviousChapterCalls++;
 
     public bool TrySnapshot(string outputPngPath)
     {

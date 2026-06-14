@@ -43,21 +43,20 @@ public class SchemaMigrationTests
     }
 
     [Fact]
-    public void Migrate_creates_video_chapters_table_and_duration_column()
+    public void Migrate_duration_column_exists_and_video_chapters_table_dropped()
     {
         using var temp = new TempDb();
 
-        // Assert duration column exists in videos table
+        // Assert duration column exists in videos table (duration probe still works)
         var cols = VideoColumns(temp);
         cols.ShouldContain("duration");
 
-        // Assert video_chapters table exists
+        // Assert video_chapters table does NOT exist (M19: chapters removed entirely)
         using var conn = temp.Db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='video_chapters'";
         using var reader = cmd.ExecuteReader();
-        reader.Read().ShouldBeTrue("video_chapters table should exist");
-        reader.GetString(0).ShouldBe("video_chapters");
+        reader.Read().ShouldBeFalse("video_chapters table should have been dropped by M19 migration");
     }
 
     [Fact]

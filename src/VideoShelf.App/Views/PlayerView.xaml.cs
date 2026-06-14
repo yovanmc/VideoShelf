@@ -4,8 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Shapes;
-using System.Windows.Media;
 using System.Windows.Threading;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
@@ -45,7 +43,6 @@ public partial class PlayerView : UserControl
         SeekBar.AddHandler(Thumb.DragCompletedEvent, new DragCompletedEventHandler(OnSeekDragCompleted));
 
         ApplyPipState();
-        RenderChapterTicks();
         ShowControls();
         Focus();
     }
@@ -91,8 +88,6 @@ public partial class PlayerView : UserControl
 
     private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(PlayerViewModel.LengthSeconds) or nameof(PlayerViewModel.HasChapters))
-            RenderChapterTicks();
     }
 
     private void OnMainPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -130,22 +125,6 @@ public partial class PlayerView : UserControl
         SeekPreview.Margin = new Thickness(Math.Max(0, x), 0, 0, 86);
     }
 
-    private void RenderChapterTicks()
-    {
-        ChapterTicks.Children.Clear();
-        if (_main is null) return;
-        var length = _main.Player.LengthSeconds;
-        if (length <= 0 || SeekBar.ActualWidth <= 0) return;
-        foreach (var ch in _main.Player.Chapters)
-        {
-            if (ch.StartSeconds <= 0 || ch.StartSeconds >= length) continue;
-            var x = (ch.StartSeconds / length) * SeekBar.ActualWidth;
-            var tick = new Rectangle { Width = 2, Height = 6, Fill = Brushes.White, Opacity = 0.7 };
-            Canvas.SetLeft(tick, x);
-            ChapterTicks.Children.Add(tick);
-        }
-    }
-
     private void ApplyPipState()
     {
         if (_main is null) return;
@@ -169,7 +148,6 @@ public partial class PlayerView : UserControl
             }
         }
         ShowControls();
-        Dispatcher.BeginInvoke(new Action(RenderChapterTicks), DispatcherPriority.Loaded);
     }
 
     private Point _dragStart;

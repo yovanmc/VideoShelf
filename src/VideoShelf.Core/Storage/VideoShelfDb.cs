@@ -57,6 +57,13 @@ public sealed class VideoShelfDb : IDisposable
         // M18-A: per-source last-scan timestamp (ISO8601 "o")
         EnsureColumn(conn, "sources", "last_scan_utc", "TEXT");
         CreateAddedAtIndex(conn);
+        // M19: chapters removed entirely. video_chapters held only DERIVED chapter metadata
+        // probed from the files (no user-authored data) — dropping it loses nothing recoverable.
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = "DROP TABLE IF EXISTS video_chapters;";
+            cmd.ExecuteNonQuery();
+        }
     }
 
     private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
@@ -148,14 +155,6 @@ public sealed class VideoShelfDb : IDisposable
         CREATE TABLE IF NOT EXISTS creator_art (
             section_id INTEGER NOT NULL PRIMARY KEY REFERENCES sections(id) ON DELETE CASCADE,
             image_path TEXT NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS video_chapters (
-            video_id      INTEGER NOT NULL,
-            idx           INTEGER NOT NULL,
-            name          TEXT    NOT NULL DEFAULT '',
-            start_seconds REAL    NOT NULL DEFAULT 0,
-            PRIMARY KEY (video_id, idx),
-            FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
         );
         CREATE TABLE IF NOT EXISTS series_tags (
             series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,

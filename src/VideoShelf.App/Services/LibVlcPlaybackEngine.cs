@@ -130,24 +130,6 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     public int GetCurrentSubtitleTrack() { try { return _player.Spu; } catch { return TrackOption.SubtitlesOffId; } }
     public void SetSubtitleTrack(int id) { try { _player.SetSpu(id); } catch { } }
 
-    public IReadOnlyList<ChapterOption> GetChapters()
-    {
-        var list = new List<ChapterOption>();
-        try
-        {
-            var chapters = _player.FullChapterDescriptions();
-            if (chapters is not null)
-                for (var i = 0; i < chapters.Length; i++)
-                    list.Add(new ChapterOption(i, chapters[i].Name ?? $"Chapter {i + 1}",
-                                               chapters[i].TimeOffset / 1000.0));
-        }
-        catch { }
-        return list;
-    }
-
-    public void NextChapter() { try { _player.NextChapter(); } catch { } }
-    public void PreviousChapter() { try { _player.PreviousChapter(); } catch { } }
-
     public bool TrySnapshot(string outputPngPath)
     {
         try
