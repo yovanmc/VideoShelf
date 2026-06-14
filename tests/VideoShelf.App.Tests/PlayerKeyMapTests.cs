@@ -8,8 +8,9 @@ public class PlayerKeyMapTests
 {
     [Theory]
     [InlineData(Key.Space, ModifierKeys.None, PlayerCommand.TogglePlayPause)]
-    [InlineData(Key.Left, ModifierKeys.None, PlayerCommand.SeekBackward)]
-    [InlineData(Key.Right, ModifierKeys.None, PlayerCommand.SeekForward)]
+    // Left/Right now route through the VM skip commands (E3: fires skip feedback + single clamped source)
+    [InlineData(Key.Left, ModifierKeys.None, PlayerCommand.SkipBack)]
+    [InlineData(Key.Right, ModifierKeys.None, PlayerCommand.SkipForward)]
     [InlineData(Key.F, ModifierKeys.None, PlayerCommand.ToggleFullscreen)]
     [InlineData(Key.Escape, ModifierKeys.None, PlayerCommand.ExitFullscreen)]
     [InlineData(Key.E, ModifierKeys.Control, PlayerCommand.Screenshot)]
