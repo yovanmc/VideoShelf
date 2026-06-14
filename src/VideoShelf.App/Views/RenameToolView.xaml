@@ -28,7 +28,8 @@
             <ui:Button Content="Apply rename" Command="{Binding ApplyCommand}"
                        Style="{StaticResource PrimaryButton}" />
             <ui:Button Content="Undo last rename" Margin="8,0,0,0" Command="{Binding UndoCommand}"
-                       Style="{StaticResource SecondaryButton}" />
+                       Style="{StaticResource SecondaryButton}"
+                       AutomationProperties.Name="Undo last rename" />
             <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}"
                        Style="{StaticResource SecondaryButton}" />
             <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Opacity="0.85" />
