@@ -323,6 +323,7 @@ public sealed partial class PlayerViewModel(
         SeekPreviewPath = null;
         Title = episode.Title;
         CanResume = false;
+        IsMuted = false;
         ResumePositionSeconds = library.GetResumePosition(episode.VideoId) ?? 0;
 
         engine.PositionChanged -= OnPositionChanged;
