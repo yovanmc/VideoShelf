@@ -116,6 +116,10 @@ public sealed partial class MainViewModel : ObservableObject
         Watchlist.PlayRequested += (_, e) => PlayEpisode(e);
         History.PlayRequested += (_, e) => PlayEpisode(e);
         Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
+
+        // E2: After undo-remove re-adds a source, trigger a full scan+reload so the library
+        // reflects the restored source without requiring a manual "Scan" press.
+        Sources.OnSourceRestored = () => _ = ScanAndReloadCommand.ExecuteAsync(null);
     }
 
     /// <summary>Up-Next countdown card state machine; exposed so PlayerView can bind to it.</summary>

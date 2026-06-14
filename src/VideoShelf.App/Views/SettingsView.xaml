@@ -64,7 +64,9 @@
                                        Command="{Binding DataContext.Sources.RemoveSourceCommand,
                                                  RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                        CommandParameter="{Binding}"
-                                       Style="{StaticResource SecondaryButton}" />
+                                       Style="{StaticResource SecondaryButton}"
+                                       MinWidth="44" MinHeight="44"
+                                       AutomationProperties.Name="Remove source" />
                             <TextBlock Text="{Binding DisplayName}"
                                        VerticalAlignment="Center"
                                        Opacity="0.85" />
@@ -72,6 +74,15 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- Undo remove: visible only after a source was removed this session -->
+            <ui:Button Content="Undo remove source"
+                       Command="{Binding Sources.UndoRemoveCommand}"
+                       Style="{StaticResource SecondaryButton}"
+                       Margin="0,0,0,8"
+                       MinWidth="44" MinHeight="44"
+                       AutomationProperties.Name="Undo remove source"
+                       Visibility="{Binding Sources.CanUndoRemove, Converter={StaticResource BoolToVisibility}}" />
 
             <!-- PLAYBACK section -->
             <TextBlock Text="PLAYBACK" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />

@@ -253,6 +253,16 @@
     </Style>
 
     <!-- ============================================================
+         HIT TARGETS — minimum interactive size (WCAG 2.5.5, 44×44 px)
+         Apply via BasedOn="{StaticResource HitTarget}" or directly on
+         controls that lack a shared base style.
+         ============================================================ -->
+    <Style x:Key="HitTarget" TargetType="Control">
+        <Setter Property="MinWidth"  Value="44"/>
+        <Setter Property="MinHeight" Value="44"/>
+    </Style>
+
+    <!-- ============================================================
          IMAGE — shared thumbnail fade-in animation
          ============================================================ -->
     <!-- ThumbnailImage: Opacity defaults to 1 so a thumbnail is never stuck
