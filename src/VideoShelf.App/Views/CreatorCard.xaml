@@ -10,7 +10,9 @@
     </UserControl.Resources>
     <Button Command="{Binding OpenCommand}" Width="{StaticResource CardWidth}" Padding="0"
             Background="Transparent" BorderThickness="0" Cursor="Hand"
-            HorizontalContentAlignment="Stretch">
+            HorizontalContentAlignment="Stretch"
+            AutomationProperties.Name="{Binding Name}"
+            AutomationProperties.HelpText="{Binding VideoCountLabel}">
         <StackPanel>
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"

@@ -10,7 +10,9 @@
     </UserControl.Resources>
     <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
             Background="Transparent" BorderThickness="0" Width="{StaticResource CardWidth}" Cursor="Hand"
-            HorizontalContentAlignment="Stretch">
+            HorizontalContentAlignment="Stretch"
+            AutomationProperties.Name="{Binding SeriesTitle}"
+            AutomationProperties.HelpText="{Binding EpisodeLabel}">
         <StackPanel>
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"
