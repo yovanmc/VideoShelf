@@ -123,7 +123,7 @@ public sealed partial class RenameToolViewModel : ObservableObject
                 ? $"Renamed {result.Renamed}; {result.Errors.Count} error(s)"
                 : $"Renamed {result.Renamed} file(s)";
 
-            if (result.Renamed > 0)
+            if (result.ManifestPath is not null)
                 _toasts?.Show($"Renamed {result.Renamed} file(s)", undo: () => UndoCommand.Execute(null));
 
             await LoadAsync(_seriesId, _baseTitle, _isStandalone); // reflect disk truth

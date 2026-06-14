@@ -60,8 +60,16 @@ public sealed partial class EpisodeViewModel(
         if (curation is null) return;
         IsFavorite = !IsFavorite;
         curation.SetFavorite(model.VideoId, IsFavorite);
-        toasts?.Show(IsFavorite ? "Added to favorites" : "Removed from favorites",
-                     undo: () => ToggleFavoriteCommand.Execute(null), ToastKind.Success);
+        var wasAdded = IsFavorite; // capture resulting state for undo closure
+        toasts?.Show(wasAdded ? "Added to favorites" : "Removed from favorites",
+                     undo: () => SetFavoriteDirectly(!wasAdded), ToastKind.Success);
+    }
+
+    /// <summary>Direct state+DB inverse used by the undo callback — does NOT show another toast.</summary>
+    private void SetFavoriteDirectly(bool value)
+    {
+        IsFavorite = value;
+        curation?.SetFavorite(model.VideoId, value);
     }
 
     [RelayCommand]
@@ -70,8 +78,16 @@ public sealed partial class EpisodeViewModel(
         if (curation is null) return;
         InWatchlist = !InWatchlist;
         curation.SetWatchlist(model.VideoId, InWatchlist, System.DateTimeOffset.UtcNow);
-        toasts?.Show(InWatchlist ? "Added to watchlist" : "Removed from watchlist",
-                     undo: () => ToggleWatchlistCommand.Execute(null), ToastKind.Success);
+        var wasAdded = InWatchlist; // capture resulting state for undo closure
+        toasts?.Show(wasAdded ? "Added to watchlist" : "Removed from watchlist",
+                     undo: () => SetWatchlistDirectly(!wasAdded), ToastKind.Success);
+    }
+
+    /// <summary>Direct state+DB inverse used by the undo callback — does NOT show another toast.</summary>
+    private void SetWatchlistDirectly(bool value)
+    {
+        InWatchlist = value;
+        curation?.SetWatchlist(model.VideoId, value, System.DateTimeOffset.UtcNow);
     }
 
     [RelayCommand]
