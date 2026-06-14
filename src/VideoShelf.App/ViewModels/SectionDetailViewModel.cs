@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Renaming;
@@ -33,6 +34,9 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     private readonly IRecycleBinService? _recycleBin;
     private readonly IConfirmService? _confirm;
     private readonly IFileSystem? _fs;
+
+    // ── M21-B: toast service (nullable trailing param) ────────────────────────
+    private readonly IToastService? _toasts;
 
     // ── M18-H: grouping override edit (nullable trailing param) ──────────────
     /// <summary>
@@ -60,7 +64,8 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         IRecycleBinService? recycleBin = null,
         IConfirmService? confirm = null,
         IFileSystem? fs = null,
-        GroupingEditViewModel? groupingEdit = null)
+        GroupingEditViewModel? groupingEdit = null,
+        IToastService? toasts = null)
     {
         this.library      = library;
         this.tags         = tags;
@@ -77,6 +82,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         _confirm          = confirm;
         _fs               = fs;
         GroupingEdit      = groupingEdit;
+        _toasts           = toasts;
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
         // In unit tests there is no Application/Dispatcher, and SeriesList is
@@ -364,7 +370,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker, _toasts);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));

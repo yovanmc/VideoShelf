@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.Accessibility;
 using VideoShelf.App.Motion;
 using VideoShelf.App.ViewModels;
-using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.App.Views;
 using VideoShelf.Core.Discovery;
@@ -118,16 +117,33 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IRecycleBinService>(),
             sp.GetRequiredService<IConfirmService>(),
             sp.GetRequiredService<IFileSystem>(),
-            sp.GetRequiredService<GroupingEditViewModel>()));
+            sp.GetRequiredService<GroupingEditViewModel>(),
+            sp.GetRequiredService<IToastService>()));
         services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<SourcesViewModel>();
+        services.AddSingleton<SourcesViewModel>(sp => new SourcesViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<IFolderPicker>(),
+            sp.GetRequiredService<IConfirmService>(),
+            sp.GetRequiredService<IToastService>()));
         services.AddSingleton<LibraryViewModel>();
 
         services.AddSingleton<IFileSystem, RealFileSystem>();
         services.AddSingleton<RenamePlanner>();
         services.AddSingleton<RenameExecutor>();
-        services.AddSingleton<RenameToolViewModel>();
-        services.AddSingleton<MultiRenameViewModel>();
+        services.AddSingleton<RenameToolViewModel>(sp => new RenameToolViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<RenamePlanner>(),
+            sp.GetRequiredService<RenameExecutor>(),
+            sp.GetRequiredService<SettingsRepository>(),
+            sp.GetRequiredService<AppPaths>(),
+            sp.GetRequiredService<IToastService>()));
+        services.AddSingleton<MultiRenameViewModel>(sp => new MultiRenameViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<RenamePlanner>(),
+            sp.GetRequiredService<RenameExecutor>(),
+            sp.GetRequiredService<SettingsRepository>(),
+            sp.GetRequiredService<AppPaths>(),
+            sp.GetRequiredService<IToastService>()));
 
         services.AddSingleton<CreatorCardFactory>();
         services.AddSingleton<SearchViewModel>();
@@ -137,7 +153,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>();
-        services.AddSingleton<BulkActionBarViewModel>();
+        services.AddSingleton<BulkActionBarViewModel>(sp => new BulkActionBarViewModel(
+            sp.GetRequiredService<WatchRepository>(),
+            sp.GetRequiredService<TagRepository>(),
+            sp.GetRequiredService<CurationRepository>(),
+            sp.GetRequiredService<PlaylistRepository>(),
+            sp.GetRequiredService<PlayQueueViewModel>(),
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<IToastService>()));
         services.AddSingleton<MaintenanceRepository>();
         services.AddSingleton<MissingTriageViewModel>();
         services.AddSingleton<MaintenanceViewModel>();

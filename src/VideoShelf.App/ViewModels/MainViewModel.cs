@@ -273,7 +273,18 @@ public sealed partial class MainViewModel : ObservableObject
         if (!IsPlayerVisible)
             _focusReturn?.Capture(System.Windows.Input.Keyboard.FocusedElement);
         IsPlayerVisible = true;
+        // Snapshot resume position BEFORE Open() resets state (Open sets ResumePositionSeconds from DB).
         _player.Open(episode);
+        // Resume toast: raised from MainViewModel so IToastService stays out of PlayerViewModel.
+        // ResumePositionSeconds is set synchronously in Open() from the DB. CanResume is set later
+        // in OnLengthChanged (async engine event). We use ResumePositionSeconds > 0 as the signal
+        // so the toast fires immediately on open when a saved position exists, before the length arrives.
+        var savedPosition = _player.ResumePositionSeconds;
+        if (savedPosition > 0)
+        {
+            var position = System.TimeSpan.FromSeconds(savedPosition);
+            _toasts.Show($"Resumed at {position:hh\\:mm\\:ss}");
+        }
     }
 
     [RelayCommand]

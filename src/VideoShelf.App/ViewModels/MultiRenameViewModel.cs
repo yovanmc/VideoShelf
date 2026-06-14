@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Renaming;
@@ -36,6 +37,7 @@ public sealed partial class MultiRenameViewModel : ObservableObject
     private readonly RenameExecutor _executor;
     private readonly SettingsRepository _settings;
     private readonly string _manifestDirectory;
+    private readonly IToastService? _toasts;
 
     // Full video list across all series (ordered: series then by episode_no within each).
     private IReadOnlyList<Video> _allVideos = Array.Empty<Video>();
@@ -46,13 +48,15 @@ public sealed partial class MultiRenameViewModel : ObservableObject
         RenamePlanner planner,
         RenameExecutor executor,
         SettingsRepository settings,
-        AppPaths paths)
+        AppPaths paths,
+        IToastService? toasts = null)
     {
         _library = library;
         _planner = planner;
         _executor = executor;
         _settings = settings;
         _manifestDirectory = paths.RenameManifestDirectory;
+        _toasts = toasts;
     }
 
     // ── State ──────────────────────────────────────────────────────────────────
@@ -191,6 +195,9 @@ public sealed partial class MultiRenameViewModel : ObservableObject
                 : $"Renamed {result.Renamed} file(s)";
 
             CanUndo = result.ManifestPath is not null;
+
+            if (result.Renamed > 0)
+                _toasts?.Show($"Renamed {result.Renamed} file(s)", undo: () => UndoCommand.Execute(null));
         }
         finally { IsBusy = false; }
     }

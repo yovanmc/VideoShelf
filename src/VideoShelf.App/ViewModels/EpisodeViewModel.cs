@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
@@ -12,7 +13,8 @@ public sealed partial class EpisodeViewModel(
     TagRepository? tags = null,
     CurationRepository? curation = null,
     PlaylistRepository? playlists = null,
-    IReadOnlyList<PlaylistRef>? availablePlaylists = null) : ObservableObject, ISelectableCard
+    IReadOnlyList<PlaylistRef>? availablePlaylists = null,
+    IToastService? toasts = null) : ObservableObject, ISelectableCard
 {
     public TagEditorViewModel? VideoTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -58,6 +60,8 @@ public sealed partial class EpisodeViewModel(
         if (curation is null) return;
         IsFavorite = !IsFavorite;
         curation.SetFavorite(model.VideoId, IsFavorite);
+        toasts?.Show(IsFavorite ? "Added to favorites" : "Removed from favorites",
+                     undo: () => ToggleFavoriteCommand.Execute(null), ToastKind.Success);
     }
 
     [RelayCommand]
@@ -66,6 +70,8 @@ public sealed partial class EpisodeViewModel(
         if (curation is null) return;
         InWatchlist = !InWatchlist;
         curation.SetWatchlist(model.VideoId, InWatchlist, System.DateTimeOffset.UtcNow);
+        toasts?.Show(InWatchlist ? "Added to watchlist" : "Removed from watchlist",
+                     undo: () => ToggleWatchlistCommand.Execute(null), ToastKind.Success);
     }
 
     [RelayCommand]

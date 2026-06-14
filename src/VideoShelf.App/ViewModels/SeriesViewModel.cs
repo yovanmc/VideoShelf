@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
@@ -21,7 +22,8 @@ public sealed partial class SeriesViewModel(
     PlaylistRepository? playlists = null,
     IReadOnlyList<PlaylistRef>? availablePlaylists = null,
     ItemArtRepository? itemArt = null,
-    IImagePicker? imagePicker = null) : ObservableObject
+    IImagePicker? imagePicker = null,
+    IToastService? toasts = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -134,7 +136,7 @@ public sealed partial class SeriesViewModel(
         Episodes.Clear();
         foreach (var row in rows)
         {
-            var ep = new EpisodeViewModel(row, watch, tags, curation, playlists, availablePlaylists);
+            var ep = new EpisodeViewModel(row, watch, tags, curation, playlists, availablePlaylists, toasts);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Episodes.Add(ep);
