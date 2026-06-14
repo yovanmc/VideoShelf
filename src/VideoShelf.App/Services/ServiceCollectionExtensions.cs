@@ -91,6 +91,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DiscoveryRepository>();
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
+        services.AddSingleton<GroupingEditViewModel>();
         services.AddSingleton<SectionDetailViewModel>(sp => new SectionDetailViewModel(
             sp.GetRequiredService<LibraryRepository>(),
             sp.GetRequiredService<TagRepository>(),
@@ -105,7 +106,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<MaintenanceRepository>(),
             sp.GetRequiredService<IRecycleBinService>(),
             sp.GetRequiredService<IConfirmService>(),
-            sp.GetRequiredService<IFileSystem>()));
+            sp.GetRequiredService<IFileSystem>(),
+            sp.GetRequiredService<GroupingEditViewModel>()));
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();

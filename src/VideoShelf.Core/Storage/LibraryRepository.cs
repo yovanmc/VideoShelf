@@ -929,4 +929,88 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.Parameters.AddWithValue("$id", videoId);
         cmd.ExecuteNonQuery();
     }
+
+    // ── M18-H: in-memory regroup (no disk scan) ───────────────────────────────
+
+    /// <summary>
+    /// Re-buckets all videos in a section using the override-aware
+    /// <see cref="Naming.SectionGrouper.Group"/> overload — no filesystem access.
+    /// Re-runs grouping on the current <c>videos.file_path</c> rows, then
+    /// upserts the resulting <c>series_id</c> and <c>episode_no</c> back in
+    /// one transaction. Watched-state/tags/chapters are preserved because they
+    /// key off stable video ids; only <c>videos.series_id</c> and
+    /// <c>videos.episode_no</c> are updated.
+    ///
+    /// <para>Idempotent: running twice produces the same result as running once.
+    /// A subsequent full disk scan calls the same grouper logic and produces
+    /// the same assignment, so RegroupSection and ScanSource are consistent.</para>
+    /// </summary>
+    public void RegroupSection(long sectionId)
+    {
+        // 1. Collect all (video_id, file_path) rows for this section.
+        var videoRows = new List<(long Id, string FilePath)>();
+        using (var conn = db.Open())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = """
+                SELECT v.id, v.file_path
+                FROM videos v
+                JOIN series se ON se.id = v.series_id
+                WHERE se.section_id = @sec
+                """;
+            cmd.Parameters.AddWithValue("@sec", sectionId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+                videoRows.Add((r.GetInt64(0), r.GetString(1)));
+        }
+        if (videoRows.Count == 0) return;
+
+        // 2. Re-run grouping in memory (SectionGrouper takes bare file names).
+        var overrides = GetGroupingOverrides(sectionId);
+        var fileNames = videoRows.Select(v => Path.GetFileName(v.FilePath)).ToList();
+        var grouped   = Naming.SectionGrouper.Group(fileNames, overrides);
+
+        // 3. Build a map: bare_filename -> (new base_title, is_standalone, episode_no)
+        var plan = new Dictionary<string, (string BaseTitle, bool IsStandalone, int EpisodeNo)>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var gs in grouped.Series)
+            foreach (var ge in gs.Episodes)
+                plan[ge.FileName] = (gs.BaseTitle, gs.IsStandalone, ge.EpisodeNumber);
+
+        // 4. Apply in a single transaction: upsert series rows, then update each video.
+        using var txConn = db.Open();
+        using var tx    = txConn.BeginTransaction();
+
+        using (var cmd = txConn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            foreach (var row in videoRows)
+            {
+                var bare = Path.GetFileName(row.FilePath);
+                if (!plan.TryGetValue(bare, out var p)) continue;
+
+                // Ensure the target series row exists (idempotent upsert).
+                cmd.CommandText = """
+                    INSERT INTO series(section_id, base_title, sort_key, is_standalone)
+                    VALUES(@sec, @bt, @sk, @sa)
+                    ON CONFLICT(section_id, base_title) DO UPDATE SET is_standalone=excluded.is_standalone
+                    RETURNING id
+                    """;
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@sec", sectionId);
+                cmd.Parameters.AddWithValue("@bt", p.BaseTitle);
+                cmd.Parameters.AddWithValue("@sk", p.BaseTitle.ToLowerInvariant());
+                cmd.Parameters.AddWithValue("@sa", p.IsStandalone ? 1 : 0);
+                var newSeriesId = (long)cmd.ExecuteScalar()!;
+
+                cmd.CommandText = "UPDATE videos SET series_id = @sid, episode_no = @ep WHERE id = @vid";
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@sid", newSeriesId);
+                cmd.Parameters.AddWithValue("@ep",  p.EpisodeNo);
+                cmd.Parameters.AddWithValue("@vid", row.Id);
+                cmd.ExecuteNonQuery();
+            }
+        }
+        tx.Commit();
+    }
 }
