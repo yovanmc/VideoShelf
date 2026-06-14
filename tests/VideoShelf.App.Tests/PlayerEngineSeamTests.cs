@@ -34,6 +34,18 @@ public class PlayerEngineSeamTests
         return (vm, engine, ep);
     }
 
+    // ── C1: ClampRate pure helper ─────────────────────────────────────────────
+
+    [Fact]
+    public void ClampRate_clamps_out_of_range_values()
+    {
+        LibVlcPlaybackEngine.ClampRate(0.25).ShouldBe(LibVlcPlaybackEngine.MinRate); // below min → min
+        LibVlcPlaybackEngine.ClampRate(3.0).ShouldBe(LibVlcPlaybackEngine.MaxRate);  // above max → max
+        LibVlcPlaybackEngine.ClampRate(1.0).ShouldBe(1.0);                           // in range → unchanged
+        LibVlcPlaybackEngine.ClampRate(0.5).ShouldBe(LibVlcPlaybackEngine.MinRate);  // boundary min
+        LibVlcPlaybackEngine.ClampRate(2.0).ShouldBe(LibVlcPlaybackEngine.MaxRate);  // boundary max
+    }
+
     // ── C1 / C5: Rate round-trip ───────────────────────────────────────────────
 
     [Fact]

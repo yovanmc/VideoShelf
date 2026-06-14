@@ -70,6 +70,8 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
             if (_volumeNormalizeEnabled)
             {
                 media.AddOption(":audio-filter=normvol");
+                // norm-max-level: amplification ceiling for the normvol filter
+                // (2.0 = permissive; the filter's default of 0 disables limiting).
                 media.AddOption(":norm-max-level=2.0");
             }
 
@@ -117,12 +119,18 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     // _player.Rate is get-only (libVLC 3.x); set via _player.SetRate(float).
     // The interface exposes double; we cast to/from float.
     // Clamp is authoritative here; callers outside this assembly are not expected to clamp.
+    internal const double MinRate = 0.5;
+    internal const double MaxRate = 2.0;
+
+    /// <summary>Clamps a rate value to the supported [MinRate, MaxRate] range. Pure helper; unit-testable.</summary>
+    internal static double ClampRate(double value) => Math.Clamp(value, MinRate, MaxRate);
+
     public double Rate
     {
         get { try { return _player.Rate; } catch { return 1.0; } }
         set
         {
-            var clamped = (float)Math.Clamp(value, 0.5, 2.0);
+            var clamped = (float)ClampRate(value);
             try { _player.SetRate(clamped); } catch { }
         }
     }
