@@ -14,13 +14,15 @@
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/PlayerStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:NotNullOrEmptyToVisibility x:Key="NotNullOrEmptyVis" />
         </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid x:Name="RootGrid" Background="Black"
           MouseMove="OnSurfaceMouseMove"
           MouseLeftButtonDown="OnVideoSurfaceMouseDown"
-          MouseLeftButtonUp="OnVideoSurfaceMouseUp">
+          MouseLeftButtonUp="OnVideoSurfaceMouseUp"
+          MouseWheel="OnVideoSurfaceMouseWheel">
         <Border x:Name="PlayerShell" Background="Black">
             <vlc:VideoView x:Name="VideoSurface">
                 <Grid x:Name="OverlayRoot">
@@ -43,6 +45,24 @@
                             <ui:Button Content="Resume" Command="{Binding Player.ResumeCommand}"
                                        Style="{StaticResource PrimaryButton}" />
                         </StackPanel>
+                    </Border>
+
+                    <!-- E3: Skip feedback badge — centered, transient, always on top of controls layer -->
+                    <Border VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Padding="20,10" CornerRadius="8" Background="{StaticResource PlayerPanelBrush}"
+                            Visibility="{Binding Player.SkipFeedback, Converter={StaticResource NotNullOrEmptyVis}}"
+                            IsHitTestVisible="False">
+                        <TextBlock Text="{Binding Player.SkipFeedback}" Foreground="White"
+                                   FontSize="28" FontWeight="SemiBold" />
+                    </Border>
+
+                    <!-- E4: Volume feedback badge — bottom-left, transient -->
+                    <Border VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                            Margin="12,0,0,100" Padding="14,6" CornerRadius="6"
+                            Background="{StaticResource PlayerPanelBrush}"
+                            Visibility="{Binding Player.VolumeFeedback, Converter={StaticResource NotNullOrEmptyVis}}"
+                            IsHitTestVisible="False">
+                        <TextBlock Text="{Binding Player.VolumeFeedback}" Foreground="White" FontSize="14" />
                     </Border>
 
                     <!-- ===== Auto-hiding controls layer ===== -->
@@ -96,6 +116,7 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.PositionSeconds, StringFormat={}{0:0}s}"
@@ -108,6 +129,12 @@
                                     <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}"
                                                Margin="6,0,0,0" FontSize="12" />
+                                    <!-- E1: A-B active indicator chip -->
+                                    <Border Grid.Column="3" Style="{StaticResource Chip}" Margin="6,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Visibility="{Binding Player.IsAbRepeatActive, Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="A-B" Foreground="White" FontSize="11" FontWeight="SemiBold" />
+                                    </Border>
                                 </Grid>
 
                                 <!-- ROW 2: Controls — Left | Center | Right -->
@@ -279,6 +306,17 @@
                                                              BorderThickness="0"
                                                              Foreground="White" />
 
+                                                    <!-- D: Audio normalize toggle (hidden when engine doesn't support it) -->
+                                                    <ToggleButton Margin="0,4,0,0"
+                                                                  IsChecked="{Binding Player.VolumeNormalizeEnabled, Mode=TwoWay}"
+                                                                  Style="{StaticResource ChipToggle}"
+                                                                  HorizontalAlignment="Left"
+                                                                  Visibility="{Binding Player.CanNormalizeVolume, Converter={StaticResource BoolToVisibility}}"
+                                                                  ToolTip="Normalize audio volume"
+                                                                  AutomationProperties.Name="Normalize audio volume">
+                                                        <TextBlock Text="Normalize" Foreground="White" />
+                                                    </ToggleButton>
+
                                                     <Separator Margin="0,6" Background="{StaticResource PlayerPopupBorderBrush}" />
 
                                                     <!-- Subtitle tracks -->
@@ -368,7 +406,93 @@
                                                                        Foreground="White" />
                                                         </StackPanel>
                                                     </ui:Button>
-                                                    <!-- Groups D/E will insert Speed, Aspect, Normalize, A-B repeat rows here -->
+                                                    <Separator Margin="0,4" Background="{StaticResource PlayerPopupBorderBrush}" />
+
+                                                    <!-- D: Speed row — active rate shown, six preset buttons -->
+                                                    <Grid Margin="0,4,0,2">
+                                                        <TextBlock Text="SPEED" Foreground="White" FontSize="11"
+                                                                   FontWeight="SemiBold" Opacity="0.7"
+                                                                   VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Player.RateLabel}"
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                                   Foreground="{StaticResource AccentBrush}" FontSize="12" />
+                                                    </Grid>
+                                                    <WrapPanel Margin="0,0,0,4">
+                                                        <ui:Button Content="0.5×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="0.5"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                        <ui:Button Content="0.75×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="0.75"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                        <ui:Button Content="1×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="1.0"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                        <ui:Button Content="1.25×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="1.25"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                        <ui:Button Content="1.5×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="1.5"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                        <ui:Button Content="2×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="2.0"
+                                                                   Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
+                                                    </WrapPanel>
+
+                                                    <!-- D: Aspect/zoom row — cycle button -->
+                                                    <ui:Button Command="{Binding Player.CycleAspectCommand}"
+                                                               Style="{StaticResource TertiaryButton}"
+                                                               HorizontalAlignment="Left"
+                                                               ToolTip="Cycle aspect ratio"
+                                                               AutomationProperties.Name="Cycle aspect ratio">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="Aspect: " VerticalAlignment="Center"
+                                                                       Foreground="White" Margin="0,0,4,0" FontSize="12" />
+                                                            <TextBlock Text="{Binding Player.SelectedAspect.Label}"
+                                                                       VerticalAlignment="Center" Foreground="{StaticResource AccentBrush}" FontSize="12" />
+                                                        </StackPanel>
+                                                    </ui:Button>
+
+                                                    <Separator Margin="0,4" Background="{StaticResource PlayerPopupBorderBrush}" />
+
+                                                    <!-- E1: A-B repeat row -->
+                                                    <TextBlock Text="A-B REPEAT" Foreground="White" FontSize="11"
+                                                               FontWeight="SemiBold" Opacity="0.7"
+                                                               Margin="0,4,0,4" />
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                        <ui:Button Command="{Binding Player.SetRepeatACommand}"
+                                                                   Style="{StaticResource TertiaryButton}"
+                                                                   Padding="6,3" MinHeight="0"
+                                                                   ToolTip="Set A (start) point"
+                                                                   AutomationProperties.Name="Set A point">
+                                                            <TextBlock Foreground="White" FontSize="12"
+                                                                       Text="{Binding Player.RepeatStartSeconds, StringFormat='A {0:0}s', TargetNullValue='Set A'}" />
+                                                        </ui:Button>
+                                                        <ui:Button Command="{Binding Player.SetRepeatBCommand}"
+                                                                   Style="{StaticResource TertiaryButton}"
+                                                                   Padding="6,3" MinHeight="0"
+                                                                   Margin="4,0,0,0"
+                                                                   ToolTip="Set B (end) point"
+                                                                   AutomationProperties.Name="Set B point">
+                                                            <TextBlock Foreground="White" FontSize="12"
+                                                                       Text="{Binding Player.RepeatEndSeconds, StringFormat='B {0:0}s', TargetNullValue='Set B'}" />
+                                                        </ui:Button>
+                                                        <ui:Button Command="{Binding Player.ClearAbRepeatCommand}"
+                                                                   Style="{StaticResource TertiaryButton}"
+                                                                   Padding="6,3" MinHeight="0"
+                                                                   Margin="4,0,0,0"
+                                                                   ToolTip="Clear A-B repeat"
+                                                                   AutomationProperties.Name="Clear A-B repeat">
+                                                            <ui:SymbolIcon Symbol="Dismiss24" />
+                                                        </ui:Button>
+                                                    </StackPanel>
+
+                                                    <!-- E5: Play from beginning (visible when completed) -->
+                                                    <ui:Button Command="{Binding Player.PlayFromBeginningCommand}"
+                                                               Style="{StaticResource TertiaryButton}"
+                                                               HorizontalAlignment="Left"
+                                                               Visibility="{Binding Player.IsCompleted, Converter={StaticResource BoolToVisibility}}"
+                                                               ToolTip="Play from beginning"
+                                                               AutomationProperties.Name="Play from beginning">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,8,0" />
+                                                            <TextBlock Text="Play from beginning" VerticalAlignment="Center"
+                                                                       Foreground="White" />
+                                                        </StackPanel>
+                                                    </ui:Button>
                                                 </StackPanel>
                                             </Border>
                                         </Popup>

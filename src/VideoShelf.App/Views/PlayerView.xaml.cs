@@ -214,6 +214,18 @@ public partial class PlayerView : UserControl
         // Only handle clicks on the video surface itself, not on control buttons.
         // If the click hits a control in ControlsLayer the event is already Handled.
         if (e.Handled) return;
+
+        // E2: double-click-fullscreen — fires here (ClickCount == 2 on the second MouseDown in a
+        // double-click sequence). Stop the pending single-click timer so the pause toggle does NOT
+        // fire as well, then toggle fullscreen.
+        if (e.ClickCount == 2)
+        {
+            _singleClickTimer.Stop();
+            _main?.Player.ToggleFullscreenCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
         _mouseDownPos = e.GetPosition(this);
     }
 
@@ -283,12 +295,24 @@ public partial class PlayerView : UserControl
         var command = PlayerKeyMap.Resolve(e.Key, Keyboard.Modifiers);
         switch (command)
         {
-            case PlayerCommand.TogglePlayPause: main.Player.TogglePlayPauseCommand.Execute(null); e.Handled = true; break;
-            case PlayerCommand.SeekForward: main.Player.Engine.SeekTo(main.Player.PositionSeconds + 10); e.Handled = true; break;
-            case PlayerCommand.SeekBackward: main.Player.Engine.SeekTo(main.Player.PositionSeconds - 10); e.Handled = true; break;
-            case PlayerCommand.ToggleFullscreen: main.Player.ToggleFullscreenCommand.Execute(null); e.Handled = true; break;
-            case PlayerCommand.ExitFullscreen: main.Player.IsFullscreen = false; e.Handled = true; break;
-            case PlayerCommand.Screenshot: main.Player.ScreenshotCommand.Execute(null); e.Handled = true; break;
+            case PlayerCommand.TogglePlayPause:   main.Player.TogglePlayPauseCommand.Execute(null); e.Handled = true; break;
+            // E3: route Left/Right through the VM skip commands so feedback fires + clamping is single-source
+            case PlayerCommand.SkipBack:          main.Player.SkipBack10Command.Execute(null); e.Handled = true; break;
+            case PlayerCommand.SkipForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
+            // Legacy SeekBackward/SeekForward cases are unused now (enum values kept for compat)
+            case PlayerCommand.SeekForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
+            case PlayerCommand.SeekBackward:      main.Player.SkipBack10Command.Execute(null); e.Handled = true; break;
+            case PlayerCommand.ToggleFullscreen:  main.Player.ToggleFullscreenCommand.Execute(null); e.Handled = true; break;
+            case PlayerCommand.ExitFullscreen:    main.Player.IsFullscreen = false; e.Handled = true; break;
+            case PlayerCommand.Screenshot:        main.Player.ScreenshotCommand.Execute(null); e.Handled = true; break;
         }
+    }
+
+    // ===== E4: volume scroll feedback ==========================================
+
+    private void OnVideoSurfaceMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        _main?.Player.AdjustVolumeByWheel(e.Delta);
+        e.Handled = true;
     }
 }

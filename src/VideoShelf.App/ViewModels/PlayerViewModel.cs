@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
@@ -257,7 +259,11 @@ public sealed partial class PlayerViewModel(
     // ===== B-VM: skip + mute commands =========================================
 
     [RelayCommand]
-    private void SkipBack10() => engine.SeekTo(Math.Max(0, PositionSeconds - 10));
+    private void SkipBack10()
+    {
+        engine.SeekTo(Math.Max(0, PositionSeconds - 10));
+        ShowSkipFeedback("−10s");
+    }
 
     [RelayCommand]
     private void SkipForward30()
@@ -265,6 +271,7 @@ public sealed partial class PlayerViewModel(
         var target = PositionSeconds + 30;
         if (LengthSeconds > 0) target = Math.Min(LengthSeconds, target);
         engine.SeekTo(target);
+        ShowSkipFeedback("+30s");
     }
 
     [ObservableProperty]
@@ -286,6 +293,185 @@ public sealed partial class PlayerViewModel(
             Volume = 0;
             IsMuted = true;
         }
+    }
+
+    // ==========================================================================
+
+    // ===== D-VM: speed / aspect / audio-normalize =============================
+
+    public IReadOnlyList<double> SpeedPresets { get; } = new double[] { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0 };
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RateLabel))]
+    private double _playbackRate = 1.0;
+
+    partial void OnPlaybackRateChanged(double v) => engine.Rate = v;
+
+    /// <summary>Sets the playback rate from a string (e.g. "1.5") or double. Called from XAML button commands.</summary>
+    [RelayCommand]
+    private void SetPlaybackRate(object? v)
+    {
+        PlaybackRate = v switch
+        {
+            double d => d,
+            string s when double.TryParse(s, System.Globalization.NumberStyles.Any,
+                                          System.Globalization.CultureInfo.InvariantCulture, out var d) => d,
+            _ => PlaybackRate,
+        };
+    }
+
+    public string RateLabel => PlaybackRate == 1.0 ? "1×" : $"{PlaybackRate:0.##}×";
+
+    // Aspect/zoom presets
+    public sealed record AspectPreset(string Label, string? Ratio, float Scale);
+
+    private static readonly AspectPreset[] _aspectPresets =
+    {
+        new("Default", null, 0f),
+        new("16:9",    "16:9", 0f),
+        new("4:3",     "4:3",  0f),
+        new("Fill",    null,   1f),
+    };
+
+    public IReadOnlyList<AspectPreset> AspectPresets { get; } = _aspectPresets;
+
+    [ObservableProperty]
+    private AspectPreset _selectedAspect = _aspectPresets[0];
+
+    partial void OnSelectedAspectChanged(AspectPreset p)
+    {
+        engine.AspectRatio = p.Ratio;
+        engine.Scale = p.Scale;
+    }
+
+    [RelayCommand]
+    private void CycleAspect()
+    {
+        var idx = Array.IndexOf(_aspectPresets, SelectedAspect);
+        SelectedAspect = _aspectPresets[(idx + 1) % _aspectPresets.Length];
+    }
+
+    // Audio normalize (only when supported)
+    public bool CanNormalizeVolume => engine.SupportsVolumeNormalize;
+
+    [ObservableProperty]
+    private bool _volumeNormalizeEnabled;
+
+    partial void OnVolumeNormalizeEnabledChanged(bool v) => engine.VolumeNormalizeEnabled = v;
+
+    // ==========================================================================
+
+    // ===== E1: A-B repeat =====================================================
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAbRepeatActive))]
+    private double? _repeatStartSeconds;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAbRepeatActive))]
+    private double? _repeatEndSeconds;
+
+    public bool IsAbRepeatActive =>
+        RepeatStartSeconds is { } a && RepeatEndSeconds is { } b && b > a;
+
+    [RelayCommand]
+    private void SetRepeatA() => RepeatStartSeconds = PositionSeconds;
+
+    [RelayCommand]
+    private void SetRepeatB()
+    {
+        if (RepeatStartSeconds is { } a && PositionSeconds > a)
+            RepeatEndSeconds = PositionSeconds;
+    }
+
+    [RelayCommand]
+    private void ClearAbRepeat()
+    {
+        RepeatStartSeconds = null;
+        RepeatEndSeconds = null;
+    }
+
+    // ==========================================================================
+
+    // ===== E3: skip feedback badge ============================================
+
+    [ObservableProperty]
+    private string? _skipFeedback;
+
+    private DispatcherTimer? _skipFeedbackTimer;
+
+    private void ShowSkipFeedback(string text)
+    {
+        SkipFeedback = text;
+        // Only start a DispatcherTimer when running in a real WPF application.
+        // In unit-test context (no Application.Current), the property is set
+        // synchronously and tests can assert it immediately.
+        if (System.Windows.Application.Current is not null)
+        {
+            if (_skipFeedbackTimer is null)
+            {
+                _skipFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+                _skipFeedbackTimer.Tick += (_, _) =>
+                {
+                    _skipFeedbackTimer.Stop();
+                    SkipFeedback = null;
+                };
+            }
+            _skipFeedbackTimer.Stop();
+            _skipFeedbackTimer.Start();
+        }
+    }
+
+    // ==========================================================================
+
+    // ===== E4: volume-scroll feedback badge ===================================
+
+    [ObservableProperty]
+    private string? _volumeFeedback;
+
+    private DispatcherTimer? _volumeFeedbackTimer;
+
+    /// <summary>Called by the view's MouseWheel handler to adjust volume by ±5 and show feedback.</summary>
+    public void AdjustVolumeByWheel(int delta)
+    {
+        var newVol = Math.Clamp(Volume + (delta > 0 ? 5 : -5), 0, 100);
+        Volume = newVol;
+        VolumeFeedback = $"Volume {newVol}%";
+
+        if (System.Windows.Application.Current is not null)
+        {
+            if (_volumeFeedbackTimer is null)
+            {
+                _volumeFeedbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
+                _volumeFeedbackTimer.Tick += (_, _) =>
+                {
+                    _volumeFeedbackTimer.Stop();
+                    VolumeFeedback = null;
+                };
+            }
+            _volumeFeedbackTimer.Stop();
+            _volumeFeedbackTimer.Start();
+        }
+    }
+
+    // ==========================================================================
+
+    // ===== E5: Play from beginning / IsCompleted ==============================
+
+    /// <summary>True when the video was marked watched (Ended fired or it was already watched when opened).
+    /// Used to surface the "Play from beginning" affordance.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCompleted))]
+    private bool _currentWatched;
+
+    public bool IsCompleted => CurrentWatched;
+
+    [RelayCommand]
+    private void PlayFromBeginning()
+    {
+        engine.SeekTo(0);
+        CanResume = false;
+        CurrentWatched = false;
     }
 
     // ==========================================================================
@@ -326,6 +512,18 @@ public sealed partial class PlayerViewModel(
         IsMuted = false;
         ResumePositionSeconds = library.GetResumePosition(episode.VideoId) ?? 0;
 
+        // D: reset ephemeral playback-speed / aspect per-open
+        PlaybackRate = 1.0;
+        SelectedAspect = AspectPresets[0];
+        VolumeNormalizeEnabled = false;
+
+        // E1: reset A-B repeat per-open
+        RepeatStartSeconds = null;
+        RepeatEndSeconds = null;
+
+        // E5: mark completed if the episode was already watched
+        CurrentWatched = watch.IsWatched(episode.VideoId);
+
         engine.PositionChanged -= OnPositionChanged;
         engine.LengthChanged -= OnLengthChanged;
         engine.Ended -= OnEnded;
@@ -363,6 +561,10 @@ public sealed partial class PlayerViewModel(
             library.SetResumePosition(cur.VideoId, seconds);
             _lastSavedAt = seconds;
         }
+
+        // E1: enforce A-B repeat loop
+        if (IsAbRepeatActive && seconds >= RepeatEndSeconds!.Value)
+            engine.SeekTo(RepeatStartSeconds!.Value);
     }
 
     [RelayCommand]
@@ -393,6 +595,7 @@ public sealed partial class PlayerViewModel(
         IsPlaying = false;
         if (_current is not { } cur) return;
         watch.SetWatched(cur.VideoId, true);
+        CurrentWatched = true;  // E5: surface "Play from beginning" affordance
         PlaybackEnded?.Invoke(this, cur);
     }
 
