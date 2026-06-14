@@ -4,6 +4,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
              xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             xmlns:acc="clr-namespace:VideoShelf.App.Accessibility"
              Focusable="True"
              Background="Black">
     <UserControl.Resources>
@@ -26,6 +27,15 @@
         <Border x:Name="PlayerShell" Background="Black">
             <vlc:VideoView x:Name="VideoSurface">
                 <Grid x:Name="OverlayRoot">
+
+                    <!-- D2: Live-region announcer for now-playing.
+                         This is a dedicated offscreen TextBlock (Width=0, Height=0, IsHitTestVisible=False).
+                         LiveRegion.Text overwrites the element's .Text, so it MUST NOT be the visible
+                         title label — a separate element keeps the visual title intact while SR hears
+                         "Now playing Big Buck Bunny" when the track changes. -->
+                    <TextBlock Width="0" Height="0" IsHitTestVisible="False"
+                               acc:LiveRegion.Text="{Binding Player.NowPlayingAnnouncement}"
+                               acc:LiveRegion.Politeness="Polite" />
 
                     <!-- Error / missing-file banner (additive) -->
                     <Border VerticalAlignment="Center" HorizontalAlignment="Center"
