@@ -23,8 +23,8 @@ public class MainViewModelPlaybackTests
     private sealed class NullScan : IScanCoordinator
     {
         public bool IsBusy => false;
-        public System.Threading.Tasks.Task ScanAllAsync(System.Threading.CancellationToken ct)
-            => System.Threading.Tasks.Task.CompletedTask;
+        public System.Threading.Tasks.Task<VideoShelf.Core.Scanning.ScanResult> ScanAllAsync(System.Threading.CancellationToken ct)
+            => System.Threading.Tasks.Task.FromResult(new VideoShelf.Core.Scanning.ScanResult(0, 0, 0, 0));
     }
 
     private static MainViewModel Make(AppTempDb temp, FakePlaybackEngine engine, out long videoId)

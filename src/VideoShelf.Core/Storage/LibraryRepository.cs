@@ -356,6 +356,28 @@ public sealed class LibraryRepository(VideoShelfDb db)
             r.GetInt64(5) != 0, r.GetInt64(6) != 0);
     }
 
+    /// <summary>Looks up an episode by its file path; returns null when not found.</summary>
+    public EpisodeView? GetEpisodeByPath(string filePath)
+    {
+        using var conn = db.Open();
+        var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            WHERE v.file_path = $p;
+            """;
+        cmd.Parameters.AddWithValue("$p", filePath);
+        using var r = cmd.ExecuteReader();
+        if (!r.Read()) return null;
+        var episodeNo = r.GetInt32(3);
+        var baseTitle = r.GetString(4);
+        var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
+        return new EpisodeView(
+            r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
+            r.GetInt64(5) != 0, r.GetInt64(6) != 0);
+    }
+
     public IReadOnlyList<SearchHit> Search(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -839,6 +861,20 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// Forces <c>missing = 1</c> on a single video by id.
+    /// Harness/seed use only — production code never calls this directly; the scan pipeline
+    /// uses <see cref="MarkAllMissingForSource"/> + <see cref="ClearMissing"/> instead.
+    /// </summary>
+    public void SetVideoMissing(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd  = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET missing = 1 WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
     // ── M18-F: relink helpers ──────────────────────────────────────────────────
 
     /// <summary>
@@ -889,6 +925,105 @@ public sealed class LibraryRepository(VideoShelfDb db)
             cmd.Parameters.AddWithValue("$new", newPath);
             cmd.Parameters.AddWithValue("$old", oldPath);
             cmd.ExecuteNonQuery();
+        }
+        tx.Commit();
+    }
+
+    /// <summary>
+    /// Removes a single video row from the DB index.
+    /// CASCADE FK constraints on the schema clean up <c>video_tags</c>,
+    /// <c>video_chapters</c>, <c>watch_events</c>, and <c>video_art</c> automatically.
+    /// Does NOT touch the filesystem — call <see cref="IRecycleBinService"/> before this.
+    /// </summary>
+    public void DeleteVideoIndexById(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM videos WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
+    // ── M18-H: in-memory regroup (no disk scan) ───────────────────────────────
+
+    /// <summary>
+    /// Re-buckets all videos in a section using the override-aware
+    /// <see cref="Naming.SectionGrouper.Group"/> overload — no filesystem access.
+    /// Re-runs grouping on the current <c>videos.file_path</c> rows, then
+    /// upserts the resulting <c>series_id</c> and <c>episode_no</c> back in
+    /// one transaction. Watched-state/tags/chapters are preserved because they
+    /// key off stable video ids; only <c>videos.series_id</c> and
+    /// <c>videos.episode_no</c> are updated.
+    ///
+    /// <para>Idempotent: running twice produces the same result as running once.
+    /// A subsequent full disk scan calls the same grouper logic and produces
+    /// the same assignment, so RegroupSection and ScanSource are consistent.</para>
+    /// </summary>
+    public void RegroupSection(long sectionId)
+    {
+        // 1. Collect all (video_id, file_path) rows for this section.
+        var videoRows = new List<(long Id, string FilePath)>();
+        using (var conn = db.Open())
+        using (var cmd = conn.CreateCommand())
+        {
+            cmd.CommandText = """
+                SELECT v.id, v.file_path
+                FROM videos v
+                JOIN series se ON se.id = v.series_id
+                WHERE se.section_id = @sec
+                """;
+            cmd.Parameters.AddWithValue("@sec", sectionId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+                videoRows.Add((r.GetInt64(0), r.GetString(1)));
+        }
+        if (videoRows.Count == 0) return;
+
+        // 2. Re-run grouping in memory (SectionGrouper takes bare file names).
+        var overrides = GetGroupingOverrides(sectionId);
+        var fileNames = videoRows.Select(v => Path.GetFileName(v.FilePath)).ToList();
+        var grouped   = Naming.SectionGrouper.Group(fileNames, overrides);
+
+        // 3. Build a map: bare_filename -> (new base_title, is_standalone, episode_no)
+        var plan = new Dictionary<string, (string BaseTitle, bool IsStandalone, int EpisodeNo)>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var gs in grouped.Series)
+            foreach (var ge in gs.Episodes)
+                plan[ge.FileName] = (gs.BaseTitle, gs.IsStandalone, ge.EpisodeNumber);
+
+        // 4. Apply in a single transaction: upsert series rows, then update each video.
+        using var txConn = db.Open();
+        using var tx    = txConn.BeginTransaction();
+
+        using (var cmd = txConn.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            foreach (var row in videoRows)
+            {
+                var bare = Path.GetFileName(row.FilePath);
+                if (!plan.TryGetValue(bare, out var p)) continue;
+
+                // Ensure the target series row exists (idempotent upsert).
+                cmd.CommandText = """
+                    INSERT INTO series(section_id, base_title, sort_key, is_standalone)
+                    VALUES(@sec, @bt, @sk, @sa)
+                    ON CONFLICT(section_id, base_title) DO UPDATE SET is_standalone=excluded.is_standalone
+                    RETURNING id
+                    """;
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@sec", sectionId);
+                cmd.Parameters.AddWithValue("@bt", p.BaseTitle);
+                cmd.Parameters.AddWithValue("@sk", p.BaseTitle.ToLowerInvariant());
+                cmd.Parameters.AddWithValue("@sa", p.IsStandalone ? 1 : 0);
+                var newSeriesId = (long)cmd.ExecuteScalar()!;
+
+                cmd.CommandText = "UPDATE videos SET series_id = @sid, episode_no = @ep WHERE id = @vid";
+                cmd.Parameters.Clear();
+                cmd.Parameters.AddWithValue("@sid", newSeriesId);
+                cmd.Parameters.AddWithValue("@ep",  p.EpisodeNo);
+                cmd.Parameters.AddWithValue("@vid", row.Id);
+                cmd.ExecuteNonQuery();
+            }
         }
         tx.Commit();
     }

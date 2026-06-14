@@ -11,6 +11,8 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:StarSymbolConverter x:Key="StarSymbolConv" />
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:NotNullToVisibility x:Key="NotNullToVis" />
+            <conv:CountToVisibility x:Key="CountToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -222,6 +224,47 @@
                 </ItemsControl>
             </StackPanel>
 
+            <!-- M18-G: POSSIBLE DUPLICATES banner — shown when HasDuplicates is true -->
+            <Border Margin="24,12,24,0" Padding="12,8"
+                    CornerRadius="{StaticResource ControlRadius}"
+                    Background="{StaticResource ChipFillBrush}"
+                    Visibility="{Binding HasDuplicates, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <ui:SymbolIcon Symbol="Warning24" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontSize="13">
+                            <Run Text="Possible duplicates (" />
+                            <Run Text="{Binding PossibleDuplicates.Count, Mode=OneWay}" />
+                            <Run Text=") — review" />
+                        </TextBlock>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding PossibleDuplicates}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <TextBlock FontSize="12"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center">
+                                        <Run Text="{Binding Videos.Count, Mode=OneWay}" />
+                                        <Run Text=" files, " />
+                                        <Run Text="{Binding SizeBytes, Mode=OneWay, StringFormat='{}{0:N0} bytes'}" />
+                                    </TextBlock>
+                                    <ui:Button Margin="8,0,0,0"
+                                               Style="{StaticResource SecondaryButton}"
+                                               Command="{Binding DataContext.OpenResolveCommand,
+                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                               CommandParameter="{Binding}">
+                                        <TextBlock Text="Compare &amp; resolve" FontSize="11" />
+                                    </ui:Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- SERIES GRID (accordion tiles) -->
             <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="24,16,24,8"/>
             <ItemsControl ItemsSource="{Binding SeriesList}" Margin="24,0,24,24">
@@ -382,6 +425,45 @@
                                                     <views:TagEditorView DataContext="{Binding VideoTagEditor}"
                                                                          Margin="0,2,0,4"
                                                                          Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"/>
+                                                    <!-- M18-H: per-episode grouping affordances (Edit mode) -->
+                                                    <StackPanel Margin="0,2,0,6"
+                                                                Visibility="{Binding DataContext.GroupingEdit,
+                                                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                                                    Converter={StaticResource NotNullToVis}}">
+                                                        <StackPanel Visibility="{Binding DataContext.IsEditing,
+                                                                        RelativeSource={RelativeSource AncestorType=UserControl},
+                                                                        Converter={StaticResource BoolToVisibility}}">
+                                                            <!-- Move to series row -->
+                                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                                <ui:TextBox
+                                                                    Text="{Binding DataContext.MoveEpisodeTargetTitle,
+                                                                        RelativeSource={RelativeSource AncestorType=UserControl},
+                                                                        UpdateSourceTrigger=PropertyChanged}"
+                                                                    PlaceholderText="Move to series…"
+                                                                    Width="160" FontSize="11"
+                                                                    AutomationProperties.Name="Target series title for move" />
+                                                                <ui:Button Margin="4,0,0,0"
+                                                                           Style="{StaticResource SecondaryButton}"
+                                                                           Command="{Binding DataContext.MoveEpisodeToSeriesCommand,
+                                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           CommandParameter="{Binding}"
+                                                                           ToolTip="Move this episode to the named series (sets grouping override)"
+                                                                           AutomationProperties.Name="Move episode to series">
+                                                                    <ui:SymbolIcon Symbol="ArrowRight24" />
+                                                                </ui:Button>
+                                                                <!-- Reset override for this single episode -->
+                                                                <ui:Button Margin="4,0,0,0"
+                                                                           Style="{StaticResource TertiaryButton}"
+                                                                           Command="{Binding DataContext.ResetEpisodeGroupingCommand,
+                                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           CommandParameter="{Binding FilePath}"
+                                                                           ToolTip="Clear grouping override for this episode"
+                                                                           AutomationProperties.Name="Reset episode grouping">
+                                                                    <ui:SymbolIcon Symbol="ArrowReset24" />
+                                                                </ui:Button>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -390,6 +472,51 @@
                                                Margin="0,6,0,0" HorizontalAlignment="Left"
                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
                                                Style="{StaticResource SecondaryButton}"/>
+                                    <!-- M18-H: series-level grouping affordances (Edit mode) -->
+                                    <StackPanel Margin="0,6,0,0"
+                                                Visibility="{Binding DataContext.GroupingEdit,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                                    Converter={StaticResource NotNullToVis}}">
+                                        <StackPanel Visibility="{Binding DataContext.IsEditing,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl},
+                                                        Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock Text="MERGE / REGROUP" FontSize="10" Opacity="0.6" Margin="0,0,0,4"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:TextBox
+                                                    Text="{Binding DataContext.MergeTargetTitle,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl},
+                                                        UpdateSourceTrigger=PropertyChanged}"
+                                                    PlaceholderText="Merge into series…"
+                                                    Width="180" FontSize="11"
+                                                    AutomationProperties.Name="Target series title for merge" />
+                                                <ui:Button Margin="4,0,0,0"
+                                                           Style="{StaticResource SecondaryButton}"
+                                                           Command="{Binding DataContext.MergeSeriesIntoCommand,
+                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                           CommandParameter="{Binding}"
+                                                           ToolTip="Merge all episodes of this series into the named series"
+                                                           AutomationProperties.Name="Merge series into">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:SymbolIcon Symbol="ArrowRight24" Margin="0,0,4,0" />
+                                                        <TextBlock Text="Merge" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </ui:Button>
+                                                <ui:Button Margin="8,0,0,0"
+                                                           Style="{StaticResource TertiaryButton}"
+                                                           Command="{Binding DataContext.ResetSeriesGroupingCommand,
+                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                           CommandParameter="{Binding}"
+                                                           ToolTip="Clear all grouping overrides for this series"
+                                                           AutomationProperties.Name="Reset series grouping">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                                        <TextBlock Text="Reset grouping" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </ui:Button>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
                                     <!-- Series cover art actions: only visible in edit mode -->
                                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
                                                 Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">

@@ -13,4 +13,9 @@ public sealed class RealFileSystem : IFileSystem
     public void Move(string sourcePath, string destinationPath) => File.Move(sourcePath, destinationPath);
     public string ReadAllText(string path) => File.ReadAllText(path);
     public void WriteAllText(string path, string contents) => File.WriteAllText(path, contents);
+    public long GetFileLength(string path)
+    {
+        try { return new FileInfo(path).Length; }
+        catch { return -1; }
+    }
 }

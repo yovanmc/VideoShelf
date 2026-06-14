@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
         services.AddSingleton<IVideoFilePicker, VideoFilePicker>();
         services.AddSingleton<IConfirmService, ConfirmService>();
+        services.AddSingleton<IRecycleBinService, RecycleBinService>();
         services.AddSingleton<CreatorArtRepository>();
         services.AddSingleton<ItemArtRepository>();
         services.AddSingleton<CreatorsViewModel>(sp => new CreatorsViewModel(
@@ -90,6 +91,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DiscoveryRepository>();
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
+        services.AddSingleton<GroupingEditViewModel>();
         services.AddSingleton<SectionDetailViewModel>(sp => new SectionDetailViewModel(
             sp.GetRequiredService<LibraryRepository>(),
             sp.GetRequiredService<TagRepository>(),
@@ -100,7 +102,12 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<PlayQueueViewModel>(),
             sp.GetRequiredService<CurationRepository>(),
             sp.GetRequiredService<PlaylistRepository>(),
-            sp.GetRequiredService<ItemArtRepository>()));
+            sp.GetRequiredService<ItemArtRepository>(),
+            sp.GetRequiredService<MaintenanceRepository>(),
+            sp.GetRequiredService<IRecycleBinService>(),
+            sp.GetRequiredService<IConfirmService>(),
+            sp.GetRequiredService<IFileSystem>(),
+            sp.GetRequiredService<GroupingEditViewModel>()));
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>();
         services.AddSingleton<LibraryViewModel>();

@@ -53,6 +53,19 @@ public sealed class SettingsRepository(VideoShelfDb db)
     public void SetLastScanUtc(DateTime utc)
         => SetString(LastScanUtcKey, utc.ToString("o"));
 
+    // ── Last scan summary ─────────────────────────────────────────────────────
+    public const string LastScanSummaryKey = "last_scan_summary";
+
+    /// <summary>Returns the last scan-diff summary string, or null if never scanned.</summary>
+    public string? GetLastScanSummary()
+    {
+        var raw = GetString(LastScanSummaryKey, "");
+        return string.IsNullOrEmpty(raw) ? null : raw;
+    }
+
+    public void SetLastScanSummary(string summary)
+        => SetString(LastScanSummaryKey, summary);
+
     // ── Browse density ────────────────────────────────────────────────────────
     public const string BrowseDensityKey = "browse_density";
 

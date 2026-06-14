@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
+using VideoShelf.Core.Renaming;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
@@ -27,6 +28,19 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     private readonly PlaylistRepository? playlists;
     private readonly ItemArtRepository? itemArt;
 
+    // ── M18-G: duplicate-resolve deps (nullable trailing params) ─────────────
+    private readonly MaintenanceRepository? _maintenance;
+    private readonly IRecycleBinService? _recycleBin;
+    private readonly IConfirmService? _confirm;
+    private readonly IFileSystem? _fs;
+
+    // ── M18-H: grouping override edit (nullable trailing param) ──────────────
+    /// <summary>
+    /// Grouping-override operations for the Edit-mode affordances.
+    /// Null when the caller does not supply it (e.g. lightweight test fixtures).
+    /// </summary>
+    public GroupingEditViewModel? GroupingEdit { get; private set; }
+
     // ── ICollectionView for live series filtering ─────────────────────────────
     // Null in test environments (no WPF Dispatcher).
     private readonly ICollectionView? _seriesView;
@@ -41,7 +55,12 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         PlayQueueViewModel playQueue,
         CurationRepository? curation = null,
         PlaylistRepository? playlists = null,
-        ItemArtRepository? itemArt = null)
+        ItemArtRepository? itemArt = null,
+        MaintenanceRepository? maintenance = null,
+        IRecycleBinService? recycleBin = null,
+        IConfirmService? confirm = null,
+        IFileSystem? fs = null,
+        GroupingEditViewModel? groupingEdit = null)
     {
         this.library      = library;
         this.tags         = tags;
@@ -53,6 +72,11 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         this.curation     = curation;
         this.playlists    = playlists;
         this.itemArt      = itemArt;
+        _maintenance      = maintenance;
+        _recycleBin       = recycleBin;
+        _confirm          = confirm;
+        _fs               = fs;
+        GroupingEdit      = groupingEdit;
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
         // In unit tests there is no Application/Dispatcher, and SeriesList is
@@ -188,6 +212,113 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     public event EventHandler<EpisodeView>? PlayRequested;
     public event EventHandler<SeriesViewModel>? RenameRequested;
 
+    // ── M18-G: possible duplicates banner ─────────────────────────────────────
+
+    /// <summary>Raised when the owner wants to open the resolve screen for a group.</summary>
+    public event EventHandler<DuplicateResolveViewModel>? ResolveRequested;
+
+    /// <summary>Duplicate groups scoped to this creator section. Populated on LoadAsync.</summary>
+    public ObservableCollection<DuplicateGroup> PossibleDuplicates { get; } = new();
+
+    /// <summary>True when <see cref="PossibleDuplicates"/> has entries.</summary>
+    public bool HasDuplicates => PossibleDuplicates.Count > 0;
+
+    /// <summary>Opens the compare/resolve screen for the given group.</summary>
+    [RelayCommand]
+    private void OpenResolve(DuplicateGroup group)
+    {
+        if (_maintenance is null || _recycleBin is null || _confirm is null || _fs is null) return;
+        var vm = new DuplicateResolveViewModel(group, _maintenance, library, _recycleBin, _confirm, _fs);
+        vm.Resolved += (_, _) => RefreshDuplicates();
+        ResolveRequested?.Invoke(this, vm);
+    }
+
+    private void RefreshDuplicates()
+    {
+        PossibleDuplicates.Clear();
+        if (_maintenance is not null)
+            foreach (var g in _maintenance.GetDuplicateGroupsForSection(SectionId))
+                PossibleDuplicates.Add(g);
+        OnPropertyChanged(nameof(HasDuplicates));
+    }
+
+    // ── M18-H: regroup callback ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Called when <see cref="GroupingEdit"/> fires <c>RegroupRequested</c>.
+    /// Reloads the full page so the new series/episode layout is reflected.
+    /// Fire-and-forget: we are on the UI thread (event handler), so we use
+    /// <c>_ = LoadAsync(SectionId)</c> to kick off the task without blocking.
+    /// </summary>
+    private void OnRegroupRequested(object? sender, EventArgs e)
+        => _ = LoadAsync(SectionId);
+
+    // ── M18-H: pass-through commands for grouping override UI ────────────────
+
+    /// <summary>
+    /// Clears the grouping override for a single episode (by its file path) and regroups.
+    /// Bound in XAML via CommandParameter={Binding FilePath}.
+    /// </summary>
+    [RelayCommand]
+    private void ResetEpisodeGrouping(string filePath)
+        => GroupingEdit?.ResetEpisodeGroupingCommand.Execute(filePath);
+
+    /// <summary>
+    /// Clears all grouping overrides for every episode in the given series and regroups.
+    /// Bound in XAML via CommandParameter={Binding} (passes the SeriesViewModel).
+    /// </summary>
+    [RelayCommand]
+    private void ResetSeriesGrouping(SeriesViewModel? series)
+    {
+        if (GroupingEdit is null || series is null) return;
+        // Collect file paths from loaded episodes; also query DB for those not yet loaded.
+        var filePaths = library.GetEpisodes(series.SeriesId)
+                               .Select(e => e.FilePath)
+                               .ToList();
+        GroupingEdit.ResetSeriesGroupingCommand.Execute(filePaths);
+    }
+
+    /// <summary>
+    /// Moves an episode to a target series by setting <c>override_base_title</c>.
+    /// CommandParameter is the <see cref="EpisodeViewModel"/>; the target series title
+    /// is supplied by <see cref="MoveEpisodeTargetTitle"/>.
+    /// </summary>
+    [RelayCommand]
+    private void MoveEpisodeToSeries(EpisodeViewModel? episode)
+    {
+        if (GroupingEdit is null || episode is null) return;
+        var target = MoveEpisodeTargetTitle.Trim();
+        if (target.Length == 0) return;
+        GroupingEdit.MoveEpisodeToSeriesCommand.Execute(new MoveEpisodeArgs(episode.FilePath, target));
+        MoveEpisodeTargetTitle = "";
+    }
+
+    /// <summary>Transient input field for the "Move to series…" title.</summary>
+    [ObservableProperty]
+    private string _moveEpisodeTargetTitle = "";
+
+    /// <summary>
+    /// Merges all episodes of a series into another series whose title is given by
+    /// <see cref="MergeTargetTitle"/>.
+    /// CommandParameter is the <see cref="SeriesViewModel"/> being merged away.
+    /// </summary>
+    [RelayCommand]
+    private void MergeSeriesInto(SeriesViewModel? series)
+    {
+        if (GroupingEdit is null || series is null) return;
+        var target = MergeTargetTitle.Trim();
+        if (target.Length == 0) return;
+        var filePaths = library.GetEpisodes(series.SeriesId)
+                               .Select(e => e.FilePath)
+                               .ToList();
+        GroupingEdit.MergeIntoSeriesCommand.Execute(new MergeSeriesArgs(filePaths, target));
+        MergeTargetTitle = "";
+    }
+
+    /// <summary>Transient input field for the "Merge into…" target series title.</summary>
+    [ObservableProperty]
+    private string _mergeTargetTitle = "";
+
     public async Task LoadAsync(long sectionId)
     {
         SectionId = sectionId;
@@ -195,6 +326,15 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         // Clear ephemeral filter when navigating to a new creator page.
         SeriesFilterText = "";
         IsSeriesFilterVisible = false;
+
+        // M18-H: attach the grouping-edit VM so its commands know the section.
+        if (GroupingEdit is not null)
+        {
+            GroupingEdit.Attach(sectionId);
+            // Reload this page whenever a regroup completes.
+            GroupingEdit.RegroupRequested -= OnRegroupRequested;
+            GroupingEdit.RegroupRequested += OnRegroupRequested;
+        }
 
         // GetSection(long) returns a lean Section without VideoCount/ThumbnailSeedPath;
         // use GetSectionSummaries().First(...) to get the full SectionSummary.
@@ -242,6 +382,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         foreach (var t in sectionTags) Tags.Add(t);
         RefreshSuggestions();
         RefreshCreatorArt();                 // existing: sets CreatorArtPath from the override
+        RefreshDuplicates();                 // M18-G: populate possible-duplicates banner
         await ResolveBackgroundAsync();
     }
 

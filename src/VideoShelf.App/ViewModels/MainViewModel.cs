@@ -10,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History, Maintenance }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -89,6 +89,7 @@ public sealed partial class MainViewModel : ObservableObject
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
+        SectionDetail.ResolveRequested += (_, resolveVm) => OpenDuplicateResolve(resolveVm);
         RenameTool.CloseRequested += (_, _) => GoBack();
         Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
         Search.PlayRequested += (_, e) => PlayEpisode(e);
@@ -141,6 +142,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Maintenance dashboard VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public MaintenanceViewModel? Maintenance { get; }
+
+    /// <summary>
+    /// Current duplicate-resolve VM; set when navigating to the <see cref="AppView.DuplicateResolve"/> view.
+    /// Null otherwise.
+    /// </summary>
+    [ObservableProperty]
+    private DuplicateResolveViewModel? _duplicateResolve;
 
     [ObservableProperty]
     private AppView _currentView = AppView.Home;
@@ -301,6 +309,29 @@ public sealed partial class MainViewModel : ObservableObject
         CurrentView = AppView.Maintenance;
     }
 
+    /// <summary>
+    /// Opens the duplicate compare/resolve screen for the given group.
+    /// Wires the PlayRequested event so the owner can eyeball each clip.
+    /// Returns to the creator page (SectionDetail) on Resolved.
+    /// </summary>
+    private void OpenDuplicateResolve(DuplicateResolveViewModel vm)
+    {
+        vm.PlayRequested += (_, path) =>
+        {
+            // Route through the existing player: look up the episode by path.
+            var ep = _libraryRepo.GetEpisodeByPath(path);
+            if (ep is not null) PlayEpisode(ep);
+        };
+        vm.Resolved += (_, _) =>
+        {
+            DuplicateResolve = null;
+            GoBack();
+        };
+        DuplicateResolve = vm;
+        PushNav(CurrentView);
+        CurrentView = AppView.DuplicateResolve;
+    }
+
     public async Task OpenSectionAsync(long sectionId)
     {
         await SectionDetail.LoadAsync(sectionId);
@@ -397,7 +428,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsScanning = true;
         try
         {
-            await _scanCoordinator.ScanAllAsync(CancellationToken.None);
+            var result = await _scanCoordinator.ScanAllAsync(CancellationToken.None);
             await _backfill.BackfillAsync(CancellationToken.None);
             if (_resolutionBackfill is not null)
                 await _resolutionBackfill.BackfillAsync(CancellationToken.None);
@@ -405,7 +436,11 @@ public sealed partial class MainViewModel : ObservableObject
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();
             await Creators.LoadAsync(CancellationToken.None);
-            Settings.MarkScanned();
+
+            var summary = FormatScanSummary(result);
+            Settings.MarkScanned(summary);
+            Maintenance?.SetScanSummary(summary);
+
             OnPropertyChanged(nameof(IsLibraryEmpty));
         }
         finally
@@ -413,4 +448,11 @@ public sealed partial class MainViewModel : ObservableObject
             IsScanning = false;
         }
     }
+
+    /// <summary>
+    /// Formats a <see cref="VideoShelf.Core.Scanning.ScanResult"/> as a human-readable diff string,
+    /// e.g. "Added 12 · updated 3 · restored 1 · missing 1".
+    /// </summary>
+    internal static string FormatScanSummary(VideoShelf.Core.Scanning.ScanResult result)
+        => $"Added {result.Added} · updated {result.Updated} · restored {result.Restored} · missing {result.Missing}";
 }

@@ -124,6 +124,10 @@ $views = [ordered]@{
     'browse-filter'   = @('--view','BrowseFilter','--seed-demo')    # in-page filter bar open + Compact density + List mode
     'command-palette' = @('--view','CommandPalette','--seed-demo')  # Ctrl+K palette open with a query
     'multi-rename'    = @('--view','MultiRename','--seed-demo')     # cross-series template rename preview
+    # M18 (Library health) surfaces:
+    'maintenance'         = @('--view','Maintenance','--seed-demo')       # dashboard tiles + per-source cards + scan-diff banner
+    'duplicate-resolve'   = @('--view','DuplicateResolve','--seed-demo')  # compare screen with 2 candidates (size/duration/resolution + Keep)
+    'section-edit-mode'   = @('--view','SectionEditMode','--seed-demo')    # creator page in Edit mode — shows split/merge/reorder affordances (M18-H)
 }
 
 $results = @()

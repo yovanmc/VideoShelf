@@ -30,10 +30,10 @@ public sealed class MaintenanceViewModelTests
     {
         public int ScanCount { get; private set; }
         public bool IsBusy => false;
-        public Task ScanAllAsync(CancellationToken ct)
+        public Task<VideoShelf.Core.Scanning.ScanResult> ScanAllAsync(CancellationToken ct)
         {
             ScanCount++;
-            return Task.CompletedTask;
+            return Task.FromResult(new VideoShelf.Core.Scanning.ScanResult(0, 0, 0, 0));
         }
     }
 
