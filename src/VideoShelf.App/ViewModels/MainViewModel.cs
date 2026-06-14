@@ -428,7 +428,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsScanning = true;
         try
         {
-            await _scanCoordinator.ScanAllAsync(CancellationToken.None);
+            var result = await _scanCoordinator.ScanAllAsync(CancellationToken.None);
             await _backfill.BackfillAsync(CancellationToken.None);
             if (_resolutionBackfill is not null)
                 await _resolutionBackfill.BackfillAsync(CancellationToken.None);
@@ -436,7 +436,11 @@ public sealed partial class MainViewModel : ObservableObject
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();
             await Creators.LoadAsync(CancellationToken.None);
-            Settings.MarkScanned();
+
+            var summary = FormatScanSummary(result);
+            Settings.MarkScanned(summary);
+            Maintenance?.SetScanSummary(summary);
+
             OnPropertyChanged(nameof(IsLibraryEmpty));
         }
         finally
@@ -444,4 +448,11 @@ public sealed partial class MainViewModel : ObservableObject
             IsScanning = false;
         }
     }
+
+    /// <summary>
+    /// Formats a <see cref="VideoShelf.Core.Scanning.ScanResult"/> as a human-readable diff string,
+    /// e.g. "Added 12 · updated 3 · restored 1 · missing 1".
+    /// </summary>
+    internal static string FormatScanSummary(VideoShelf.Core.Scanning.ScanResult result)
+        => $"Added {result.Added} · updated {result.Updated} · restored {result.Restored} · missing {result.Missing}";
 }

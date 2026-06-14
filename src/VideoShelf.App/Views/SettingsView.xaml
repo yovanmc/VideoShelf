@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:NotNullOrEmptyToVisibility x:Key="NotNullOrEmptyToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -41,6 +42,17 @@
                            Margin="12,0,0,0"
                            Opacity="0.75" />
             </StackPanel>
+
+            <!-- Scan-diff summary (shown only when a scan summary is available) -->
+            <Border Margin="0,4,0,8"
+                    Padding="12,8"
+                    CornerRadius="{StaticResource ControlRadius}"
+                    Background="{DynamicResource ChipFillBrush}"
+                    Visibility="{Binding Settings.LastScanSummaryText, Converter={StaticResource NotNullOrEmptyToVis}}">
+                <TextBlock Text="{Binding Settings.LastScanSummaryText}"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           FontSize="12" />
+            </Border>
 
             <!-- Sources list -->
             <ItemsControl ItemsSource="{Binding Sources.Sources}" Margin="0,0,0,8">

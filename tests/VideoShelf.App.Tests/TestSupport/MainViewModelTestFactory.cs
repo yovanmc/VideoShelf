@@ -24,7 +24,8 @@ public static class MainViewModelTestFactory
     private sealed class NullScan : IScanCoordinator
     {
         public bool IsBusy => false;
-        public Task ScanAllAsync(CancellationToken ct) => Task.CompletedTask;
+        public Task<VideoShelf.Core.Scanning.ScanResult> ScanAllAsync(CancellationToken ct)
+            => Task.FromResult(new VideoShelf.Core.Scanning.ScanResult(0, 0, 0, 0));
     }
 
     public static MainViewModel Create(out MainVmContext ctx)
