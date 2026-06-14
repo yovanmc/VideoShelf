@@ -861,6 +861,20 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// Forces <c>missing = 1</c> on a single video by id.
+    /// Harness/seed use only — production code never calls this directly; the scan pipeline
+    /// uses <see cref="MarkAllMissingForSource"/> + <see cref="ClearMissing"/> instead.
+    /// </summary>
+    public void SetVideoMissing(long videoId)
+    {
+        using var conn = db.Open();
+        using var cmd  = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET missing = 1 WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
     // ── M18-F: relink helpers ──────────────────────────────────────────────────
 
     /// <summary>

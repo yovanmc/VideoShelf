@@ -95,6 +95,16 @@ public sealed class HarnessRunner
                 var expandable = _main.SectionDetail.SeriesList.FirstOrDefault(s => !s.IsStandalone);
                 if (expandable is not null) await expandable.ActivateCommand.ExecuteAsync(null);
                 break;
+
+            // ── M18-H: creator page in Edit mode (shows split/merge/reorder affordances) ──
+            case "SectionEditMode":
+                await _main.OpenSectionAsync((await FindRichestSeriesAsync()).SectionId);
+                // Enter edit mode so the grouping-override affordances are visible.
+                _main.SectionDetail.IsEditing = true;
+                // Expand the first non-standalone series so episode rows are visible.
+                var editExpandable = _main.SectionDetail.SeriesList.FirstOrDefault(s => !s.IsStandalone);
+                if (editExpandable is not null) await editExpandable.ActivateCommand.ExecuteAsync(null);
+                break;
             case "RenameTool":
                 await _main.OpenRenameToolAsync((await FindRichestSeriesAsync()).Series); break;
             case "Player": await PlayAsync(_options.Play!, pip: false); break;
@@ -413,7 +423,78 @@ public sealed class HarnessRunner
         // real scanned source above (different source id, different root paths).
         SeedAlphabetCreators();
 
+        // ── M18 (J): seed data for Maintenance + DuplicateResolve sweeps ─────────────
+        //
+        // Seeds: missing videos, orphan series, empty creator, duplicate pairs with
+        // size_bytes + duration + resolution so the new surfaces render with CONTENT.
+        SeedM18MaintenanceData();
+
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Seeds a synthetic "demo-maintenance" source with data for the M18 Maintenance dashboard
+    /// and DuplicateResolve compare screen sweep:
+    /// <list type="bullet">
+    ///   <item><b>Missing videos:</b> two rows with bogus paths + missing=1, so the
+    ///         Maintenance MISSING FILES sub-section renders with content.</item>
+    ///   <item><b>Orphan series:</b> a series whose only video is missing, so it appears
+    ///         in the ORPHAN SERIES sub-section.</item>
+    ///   <item><b>Empty creator:</b> a section with no videos at all, so it appears in
+    ///         the EMPTY CREATORS sub-section.</item>
+    ///   <item><b>Duplicate pair:</b> two videos with identical size_bytes, duration, and
+    ///         resolution so <c>MaintenanceRepository.GetDuplicateGroups()</c> returns them
+    ///         and the DuplicateResolve compare screen shows two candidates.</item>
+    /// </list>
+    /// All synthetic paths are non-existent on disk (begins with \DemoMaintenance\).
+    /// Idempotent: UpsertSource/Section/Series/Video are ON CONFLICT DO UPDATE, and
+    /// SetVideoMissing / SetSizeBytes / SetDuration / SetResolution are direct UPDATEs.
+    /// </summary>
+    private void SeedM18MaintenanceData()
+    {
+        var srcId = _library.UpsertSource(@"\DemoMaintenance", "DemoMaintenance");
+
+        // ── 1. Missing videos: two videos marked missing=1 ──────────────────────
+        //    Creator "Ghost Creator" / series "Lost Files" / two missing episodes.
+        var ghostSectionId = _library.UpsertSection(srcId, "Ghost Creator");
+        var lostSeriesId   = _library.UpsertSeries(ghostSectionId, "Lost Files", isStandalone: false);
+
+        var missingVid1 = _library.UpsertVideo(lostSeriesId, @"\DemoMaintenance\GhostCreator\LostFiles\ghost_ep01.mp4", 1, ".mp4");
+        _library.SetVideoMissing(missingVid1);
+
+        var missingVid2 = _library.UpsertVideo(lostSeriesId, @"\DemoMaintenance\GhostCreator\LostFiles\ghost_ep02.mp4", 2, ".mp4");
+        _library.SetVideoMissing(missingVid2);
+
+        // ── 2. Orphan series: "Orphan Series" under Ghost Creator has only missing vids ──
+        //    Same creator, different series — the series has no non-missing videos → orphan.
+        var orphanSeriesId = _library.UpsertSeries(ghostSectionId, "Orphan Series", isStandalone: false);
+        var orphanVid      = _library.UpsertVideo(orphanSeriesId, @"\DemoMaintenance\GhostCreator\OrphanSeries\orphan_ep01.mp4", 1, ".mp4");
+        _library.SetVideoMissing(orphanVid);
+
+        // ── 3. Empty creator: a section with NO videos at all ──────────────────
+        //    UpsertSection creates the row; never add any videos under it.
+        _library.UpsertSection(srcId, "Empty Creator");
+
+        // ── 4. Duplicate pair: two videos with identical size_bytes + duration ──
+        //    They must BOTH be missing=0 (present) for the duplicate query to pick them up.
+        //    They also get resolution so the compare screen renders "1920×1080".
+        //    Creator "Duplicate Studio" / two standalone series, one video each.
+        var dupSectionId  = _library.UpsertSection(srcId, "Duplicate Studio");
+        var dupSeries1    = _library.UpsertSeries(dupSectionId, "Movie Copy A", isStandalone: true);
+        var dupSeries2    = _library.UpsertSeries(dupSectionId, "Movie Copy B", isStandalone: true);
+
+        const long DupSizeBytes = 1_234_567_890L;   // ~1.15 GB — visible in compare screen
+        const double DupDuration = 3600.0;           // 60 min — rounds to 3600 s
+
+        // Insert present (missing=0) videos; supply size_bytes at upsert time.
+        var dupVid1 = _library.UpsertVideo(dupSeries1, @"\DemoMaintenance\DuplicateStudio\movie_copy_a.mp4", 1, ".mp4", DupSizeBytes);
+        var dupVid2 = _library.UpsertVideo(dupSeries2, @"\DemoMaintenance\DuplicateStudio\movie_copy_b.mp4", 1, ".mp4", DupSizeBytes);
+
+        // Write duration + resolution for both (so the compare screen shows all three columns).
+        _library.SetDuration(dupVid1, DupDuration);
+        _library.SetDuration(dupVid2, DupDuration);
+        _library.SetResolution(dupVid1, 1920, 1080);
+        _library.SetResolution(dupVid2, 1920, 1080);
     }
 
     /// <summary>
