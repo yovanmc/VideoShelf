@@ -32,7 +32,7 @@ public class MediaBackfillServiceTests
             {
                 new ChapterRecord(0, "Intro", 0.0),
                 new ChapterRecord(1, "Part 2", 60.0),
-            })
+            }, Width: 1920, Height: 1080)
         };
 
         var svc = new MediaBackfillService(library, fake);
@@ -44,6 +44,9 @@ public class MediaBackfillServiceTests
         // Chapters stored correctly
         var chapters = library.GetChapters(videoId);
         chapters.Count.ShouldBe(2);
+
+        // Resolution also stored (Width/Height present in probe result)
+        library.GetVideosNeedingResolution().ShouldBeEmpty();
 
         // Re-running is a no-op: still 0 pending, still 2 chapters
         await svc.BackfillAsync(CancellationToken.None);

@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PlayerViewModel _player;
     private readonly SettingsViewModel _settings;
     private readonly MediaBackfillService _backfill;
+    private readonly ResolutionBackfillService? _resolutionBackfill;
     private readonly PlayQueueViewModel _playQueue;
     private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
 
@@ -44,7 +45,8 @@ public sealed partial class MainViewModel : ObservableObject
         VideoShelf.Core.Storage.LibraryRepository libraryRepo,
         BulkActionBarViewModel? bulkBar = null,
         CommandPaletteViewModel? commandPalette = null,
-        MultiRenameViewModel? multiRename = null)
+        MultiRenameViewModel? multiRename = null,
+        ResolutionBackfillService? resolutionBackfill = null)
     {
         _sources = sources;
         _library = library;
@@ -52,6 +54,7 @@ public sealed partial class MainViewModel : ObservableObject
         _player = player;
         _settings = settings;
         _backfill = backfill;
+        _resolutionBackfill = resolutionBackfill;
         _playQueue = playQueue;
         _libraryRepo = libraryRepo;
         SmartViews = smartViews;
@@ -383,6 +386,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             await _scanCoordinator.ScanAllAsync(CancellationToken.None);
             await _backfill.BackfillAsync(CancellationToken.None);
+            if (_resolutionBackfill is not null)
+                await _resolutionBackfill.BackfillAsync(CancellationToken.None);
             Sources.Load();
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();

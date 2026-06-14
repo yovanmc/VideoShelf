@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IMediaProbe, LibVlcMediaProbe>();
         services.AddSingleton<MediaBackfillService>();
+        services.AddSingleton<ResolutionBackfillService>();
         services.AddSingleton<IThumbnailSnapshotter, LibVlcThumbnailService>();
         services.AddSingleton<IThumbnailService>(sp =>
             new ThumbnailCache(
@@ -157,7 +158,8 @@ public static class ServiceCollectionExtensions
                 lib,
                 sp.GetRequiredService<BulkActionBarViewModel>(),
                 palette,
-                sp.GetRequiredService<MultiRenameViewModel>());
+                sp.GetRequiredService<MultiRenameViewModel>(),
+                sp.GetRequiredService<ResolutionBackfillService>());
 
             mainVmBox = mainVm;
             return mainVm;

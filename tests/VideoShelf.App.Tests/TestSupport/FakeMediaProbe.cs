@@ -10,9 +10,9 @@ namespace VideoShelf.App.Tests.TestSupport;
 /// Returns the result set on <see cref="Result"/> for every file probed.</summary>
 public sealed class FakeMediaProbe : IMediaProbe
 {
-    /// <summary>The result to return for every ProbeAsync call. Defaults to (null, empty).</summary>
+    /// <summary>The result to return for every ProbeAsync call. Defaults to (null, empty, null, null).</summary>
     public MediaProbeResult Result { get; set; } =
-        new MediaProbeResult(null, System.Array.Empty<ChapterRecord>());
+        new MediaProbeResult(null, System.Array.Empty<ChapterRecord>(), null, null);
 
     public Task<MediaProbeResult> ProbeAsync(string path, CancellationToken cancellationToken)
         => Task.FromResult(Result);

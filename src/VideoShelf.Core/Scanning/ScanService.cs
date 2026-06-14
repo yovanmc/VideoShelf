@@ -34,9 +34,10 @@ public sealed class ScanService(VideoShelfDb db, LibraryRepository library)
         foreach (var section in FolderScanner.Scan(sourceRoot))
         {
             var sectionId = library.UpsertSection(sourceId, section.FolderName);
-            // NOTE: Group B wires grouping_overrides into the pipeline. Until Group B lands,
-            // GetGroupingOverrides is not called here; the plain Group() overload is used.
-            var grouped = SectionGrouper.Group(section.Files.Select(f => f.FileName).ToList());
+            // M18-B: load per-section grouping overrides (keyed by bare file name) and pass
+            // them to the new overload so split/merge/manual-order survive every rescan.
+            var overrides = library.GetGroupingOverrides(sectionId);
+            var grouped = SectionGrouper.Group(section.Files.Select(f => f.FileName).ToList(), overrides);
 
             foreach (var series in grouped.Series)
             {
