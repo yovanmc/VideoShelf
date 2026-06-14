@@ -50,6 +50,8 @@ public sealed partial class SeriesViewModel(
     public bool HasUnwatched => UnwatchedCount > 0;
 
     public event System.EventHandler? UnwatchedChanged;
+    /// <summary>Raised when all episodes become watched (unwatched count drops to 0).</summary>
+    public event System.EventHandler? SeriesCompleted;
     public event System.EventHandler<EpisodeView>? PlayRequested;
     public event System.EventHandler<SeriesViewModel>? RenameRequested;
     public event System.EventHandler? PlayAllRequested;
@@ -119,6 +121,9 @@ public sealed partial class SeriesViewModel(
     {
         OnPropertyChanged(nameof(HasUnwatched));
         UnwatchedChanged?.Invoke(this, System.EventArgs.Empty);
+        // D5: raise completion event when the series goes from partial→fully watched.
+        if (value == 0 && EpisodeCount > 0)
+            SeriesCompleted?.Invoke(this, System.EventArgs.Empty);
     }
 
     /// <summary>Recomputes the unwatched badge from the DB (after a watched toggle).</summary>

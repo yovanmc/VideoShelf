@@ -378,6 +378,11 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
             svm.MarkWatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, true); svm.Refresh(); };
             svm.MarkUnwatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, false); svm.Refresh(); };
+            // D5: celebrate when all episodes in a series become watched.
+            svm.SeriesCompleted += (_, _) =>
+            {
+                _toasts?.Show($"🎉 Finished {svm.BaseTitle}!", kind: ToastKind.Success);
+            };
             // Subscribe to episodes as they lazy-load so each episode feeds the section-level Selection.
             svm.Episodes.CollectionChanged += OnSeriesEpisodesChanged;
             SeriesList.Add(svm);
