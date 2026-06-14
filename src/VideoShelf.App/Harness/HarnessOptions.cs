@@ -15,6 +15,7 @@ public sealed record HarnessOptions
     public string View { get; init; } = "Home";
     public string? Play { get; init; }
     public string? DoneSignal { get; init; }
+    public string? A11yDumpPath { get; init; }
     public bool SeedDemo { get; init; }
 
     /// <summary>True when the app was launched by the harness (any core hook present).</summary>
@@ -22,7 +23,7 @@ public sealed record HarnessOptions
 
     public static HarnessOptions Parse(IReadOnlyList<string> args)
     {
-        string? folder = null, dataDir = null, play = null, doneSignal = null;
+        string? folder = null, dataDir = null, play = null, doneSignal = null, a11yDumpPath = null;
         string view = "Home";
         bool autoStart = false, seedDemo = false;
 
@@ -38,6 +39,7 @@ public sealed record HarnessOptions
                 case "--view": view = Next() ?? view; break;
                 case "--play": play = Next(); break;
                 case "--done-signal": doneSignal = Next(); break;
+                case "--a11y-dump": a11yDumpPath = Next(); break;
                 case "--autostart": autoStart = true; break;
                 case "--seed-demo": seedDemo = true; break;
                 default: break; // ignore unknown
@@ -47,7 +49,8 @@ public sealed record HarnessOptions
         return new HarnessOptions
         {
             Folder = folder, DataDir = dataDir, View = view, Play = play,
-            DoneSignal = doneSignal, AutoStart = autoStart, SeedDemo = seedDemo,
+            DoneSignal = doneSignal, A11yDumpPath = a11yDumpPath,
+            AutoStart = autoStart, SeedDemo = seedDemo,
         };
     }
 }

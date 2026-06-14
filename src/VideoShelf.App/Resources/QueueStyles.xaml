@@ -12,7 +12,8 @@
     <DataTemplate x:Key="QueueItemTemplate">
         <Border Padding="8,6" Margin="0,0,0,4"
                 CornerRadius="{StaticResource ControlRadius}"
-                Background="{StaticResource SubtleFillBrush}">
+                Background="{StaticResource SubtleFillBrush}"
+                AutomationProperties.Name="{Binding Title}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="4"/>
@@ -50,7 +51,7 @@
                     <ui:Button Padding="4"
                                Style="{StaticResource TertiaryButton}"
                                ToolTip="Play"
-                               AutomationProperties.Name="Play"
+                               AutomationProperties.Name="Play this item"
                                Command="{Binding DataContext.JumpToCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                CommandParameter="{Binding}">
                         <ui:SymbolIcon Symbol="Play24" />

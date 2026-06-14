@@ -124,7 +124,9 @@
                                     <Grid Grid.Column="1">
                                         <Slider x:Name="SeekBar" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="{Binding Player.LengthSeconds}"
-                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}" />
+                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}"
+                                                AutomationProperties.Name="Seek"
+                                                AutomationProperties.ItemStatus="{Binding Player.PositionText}" />
                                     </Grid>
                                     <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}"
@@ -501,7 +503,8 @@
                                         <ui:Button Margin="4,0,0,0"
                                                    Command="{Binding PlayQueue.ToggleDrawerCommand}"
                                                    Visibility="{Binding PlayQueue.HasQueue, Converter={StaticResource BoolToVisibility}}"
-                                                   Style="{StaticResource TransportIconButton}">
+                                                   Style="{StaticResource TransportIconButton}"
+                                                   AutomationProperties.Name="Up next queue">
                                             <StackPanel Orientation="Horizontal">
                                                 <ui:SymbolIcon Symbol="List24" Margin="0,0,4,0" />
                                                 <TextBlock Text="Up next" VerticalAlignment="Center" Foreground="White" />

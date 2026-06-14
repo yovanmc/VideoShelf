@@ -46,10 +46,16 @@ public sealed partial class PlayerViewModel(
     partial void OnPlaybackErrorChanged(string? value) => OnPropertyChanged(nameof(HasError));
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PositionText))]
     private double _positionSeconds;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PositionText))]
     private double _lengthSeconds;
+
+    /// <summary>Human-readable seek position for UIA ItemStatus (e.g. "5s of 120s").
+    /// Changes whenever PositionSeconds or LengthSeconds changes.</summary>
+    public string PositionText => $"{(int)PositionSeconds}s of {(int)LengthSeconds}s";
 
     [ObservableProperty]
     private bool _isPlaying;
