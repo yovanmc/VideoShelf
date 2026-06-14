@@ -40,7 +40,9 @@
             <StackPanel Visibility="{Binding HasContinueWatching, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="Continue watching" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding ContinueWatching}">
+                    <ItemsControl ItemsSource="{Binding ContinueWatching}"
+                                  KeyboardNavigation.TabNavigation="Once"
+                                  KeyboardNavigation.DirectionalNavigation="Contained">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -72,7 +74,9 @@
                         Visibility="{Binding HasRecommendedCreators, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding RecommendedCreators}">
+                    <ItemsControl ItemsSource="{Binding RecommendedCreators}"
+                                  KeyboardNavigation.TabNavigation="Once"
+                                  KeyboardNavigation.DirectionalNavigation="Contained">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -90,7 +94,9 @@
                         Visibility="{Binding HasRecommendedVideos, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="More to watch" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding RecommendedVideos}">
+                    <ItemsControl ItemsSource="{Binding RecommendedVideos}"
+                                  KeyboardNavigation.TabNavigation="Once"
+                                  KeyboardNavigation.DirectionalNavigation="Contained">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -122,7 +128,9 @@
                         Visibility="{Binding HasRecentlyAdded, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="Recently added" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding RecentlyAdded}">
+                    <ItemsControl ItemsSource="{Binding RecentlyAdded}"
+                                  KeyboardNavigation.TabNavigation="Once"
+                                  KeyboardNavigation.DirectionalNavigation="Contained">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -154,7 +162,9 @@
                         Visibility="{Binding HasRecentlyWatched, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="Recently watched" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding RecentlyWatched}">
+                    <ItemsControl ItemsSource="{Binding RecentlyWatched}"
+                                  KeyboardNavigation.TabNavigation="Once"
+                                  KeyboardNavigation.DirectionalNavigation="Contained">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"/>
@@ -194,7 +204,9 @@
                             <StackPanel Margin="0,0,0,24">
                                 <TextBlock Text="{Binding Name}" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
                                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                    <ItemsControl ItemsSource="{Binding Items}">
+                                    <ItemsControl ItemsSource="{Binding Items}"
+                                                  KeyboardNavigation.TabNavigation="Once"
+                                                  KeyboardNavigation.DirectionalNavigation="Contained">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel Orientation="Horizontal"/>

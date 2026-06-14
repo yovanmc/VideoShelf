@@ -313,7 +313,11 @@
                                  VirtualizingPanel.IsVirtualizing="True"
                                  VirtualizingPanel.VirtualizationMode="Recycling"
                                  Style="{StaticResource PlainListBox}"
-                                 Margin="16,0,16,16">
+                                 Margin="16,0,16,16"
+                                 IsTextSearchEnabled="True"
+                                 TextSearch.TextPath="Name"
+                                 KeyboardNavigation.TabNavigation="Once"
+                                 KeyboardNavigation.DirectionalNavigation="Contained">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />
