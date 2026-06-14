@@ -14,6 +14,8 @@
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/SelectionStyles.xaml" />
                 <!-- Queue item template + styles (declares xmlns:ui for WPF-UI buttons). -->
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/QueueStyles.xaml" />
+                <!-- Player transport styles: TransportIconButton, PlayerFlyoutBorder. -->
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/PlayerStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!-- App-wide converters shared by all views. -->
             <conv:BoolToVisibility x:Key="BoolToVisibility" />

@@ -15,6 +15,14 @@ public partial class PlayerView : UserControl
     private readonly DispatcherTimer _autoHide;
     private MainViewModel? _main;
 
+    // Click-to-pause: single/double-click discriminator.
+    // A short timer fires the pause only if no second click arrives within the window.
+    // Group E's double-click-fullscreen handler should call _singleClickTimer.Stop() +
+    // e.Handled = true on ClickCount == 2 before the timer fires.
+    private readonly DispatcherTimer _singleClickTimer;
+    private const double DragThresholdPx = 4.0;
+    private Point _mouseDownPos;
+
     private FrameworkElement? Host => this.Parent as FrameworkElement;
 
     public PlayerView()
@@ -22,6 +30,10 @@ public partial class PlayerView : UserControl
         InitializeComponent();
         _autoHide = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         _autoHide.Tick += OnAutoHideTick;
+
+        _singleClickTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(220) };
+        _singleClickTimer.Tick += OnSingleClickTimerTick;
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         KeyDown += OnKeyDown;
@@ -50,6 +62,7 @@ public partial class PlayerView : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _autoHide.Stop();
+        _singleClickTimer.Stop();
         if (_main is not null)
         {
             _main.Player.PropertyChanged -= OnPlayerPropertyChanged;
@@ -74,6 +87,8 @@ public partial class PlayerView : UserControl
         if (_main is not null) _main.Player.AreControlsVisible = true;
         _autoHide.Stop();
         _autoHide.Start();
+        // Restore cursor when controls become visible
+        Cursor = Cursors.Arrow;
     }
 
     private void OnAutoHideTick(object? sender, EventArgs e)
@@ -83,11 +98,25 @@ public partial class PlayerView : UserControl
         if (_main.Player.AutoHideSuppressed || !_main.Player.IsPlaying ||
             _main.Player.IsScrubbing || _main.Player.HasError || _main.Player.CanResume)
             return;
+        // Close any open flyouts before the controls layer collapses, so they don't
+        // float as orphaned HWNDs above the video.
+        VolumeFlyout.IsOpen = false;
+        TracksFlyout.IsOpen = false;
+        MoreFlyout.IsOpen = false;
         _main.Player.AreControlsVisible = false;
+        // Also hide the mouse cursor over the video
+        Cursor = Cursors.None;
     }
 
     private void OnPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // Restore cursor + controls when an error banner or resume offer appears so
+        // the user can interact with them even if auto-hide already fired.
+        if ((e.PropertyName == nameof(PlayerViewModel.HasError) && (_main?.Player.HasError ?? false)) ||
+            (e.PropertyName == nameof(PlayerViewModel.CanResume) && (_main?.Player.CanResume ?? false)))
+        {
+            ShowControls();
+        }
     }
 
     private void OnMainPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -122,7 +151,7 @@ public partial class PlayerView : UserControl
         var frac = Math.Clamp(seconds / length, 0, 1);
         var x = SeekBar.TranslatePoint(new Point(0, 0), RootGrid).X
                 + frac * SeekBar.ActualWidth - SeekPreview.Width / 2;
-        SeekPreview.Margin = new Thickness(Math.Max(0, x), 0, 0, 86);
+        SeekPreview.Margin = new Thickness(Math.Max(0, x), 0, 0, 96);
     }
 
     private void ApplyPipState()
@@ -149,6 +178,66 @@ public partial class PlayerView : UserControl
         }
         ShowControls();
     }
+
+    // ===== Popup flyout handlers (view concern) ================================
+
+    private void OnVolumeButtonClick(object sender, RoutedEventArgs e)
+    {
+        TracksFlyout.IsOpen = false;
+        MoreFlyout.IsOpen = false;
+        VolumeFlyout.IsOpen = !VolumeFlyout.IsOpen;
+    }
+
+    private void OnTracksButtonClick(object sender, RoutedEventArgs e)
+    {
+        VolumeFlyout.IsOpen = false;
+        MoreFlyout.IsOpen = false;
+        TracksFlyout.IsOpen = !TracksFlyout.IsOpen;
+    }
+
+    private void OnMoreButtonClick(object sender, RoutedEventArgs e)
+    {
+        VolumeFlyout.IsOpen = false;
+        TracksFlyout.IsOpen = false;
+        MoreFlyout.IsOpen = !MoreFlyout.IsOpen;
+    }
+
+    // ===== Click-to-pause with single/double discriminator ====================
+    // MouseDown records the position; MouseUp checks for click vs. drag,
+    // then arms the single-click timer. The timer fires the pause after
+    // 220 ms — long enough for a double-click (typically < 200 ms) to stop it.
+    // Group E's double-click-fullscreen handler should set e.Handled = true and
+    // call _singleClickTimer.Stop() when ClickCount == 2.
+
+    private void OnVideoSurfaceMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        // Only handle clicks on the video surface itself, not on control buttons.
+        // If the click hits a control in ControlsLayer the event is already Handled.
+        if (e.Handled) return;
+        _mouseDownPos = e.GetPosition(this);
+    }
+
+    private void OnVideoSurfaceMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.Handled) return;
+        // Ignore if released far from where button went down (drag gesture).
+        var upPos = e.GetPosition(this);
+        var dx = upPos.X - _mouseDownPos.X;
+        var dy = upPos.Y - _mouseDownPos.Y;
+        if (Math.Sqrt(dx * dx + dy * dy) > DragThresholdPx) return;
+
+        // Arm the single-click timer; it fires the pause unless a double-click cancels it.
+        _singleClickTimer.Stop();
+        _singleClickTimer.Start();
+    }
+
+    private void OnSingleClickTimerTick(object? sender, EventArgs e)
+    {
+        _singleClickTimer.Stop();
+        _main?.Player.TogglePlayPauseCommand.Execute(null);
+    }
+
+    // ==========================================================================
 
     private Point _dragStart;
     private bool _dragging;
