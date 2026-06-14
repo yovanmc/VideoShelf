@@ -178,13 +178,6 @@ public sealed partial class DiscoveryViewModel(
         foreach (var i in items) target.Add(make(i));
     }
 
-    private static void Fill<TItem, TExtra, TCard>(
-        ObservableCollection<TCard> target, IReadOnlyList<TItem> items, IReadOnlyList<TExtra> extras, Func<TItem, TExtra, TCard> make)
-    {
-        target.Clear();
-        for (var idx = 0; idx < items.Count; idx++) target.Add(make(items[idx], extras[idx]));
-    }
-
     private void RaiseAllHasFlags()
     {
         OnPropertyChanged(nameof(HasContinueWatching));

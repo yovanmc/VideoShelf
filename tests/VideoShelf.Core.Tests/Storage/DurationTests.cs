@@ -5,7 +5,7 @@ using VideoShelf.Core.Tests.TestSupport;
 
 namespace VideoShelf.Core.Tests.Storage;
 
-public class DurationAndChapterTests
+public class DurationTests
 {
     [Fact]
     public void GetVideosNeedingDuration_returns_only_null_duration_present_videos()
