@@ -17,7 +17,8 @@
             <Border CornerRadius="{StaticResource CardImageRadius}"
                     Background="{StaticResource ThumbPlaceholderBrush}"
                     Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
-                <Image Source="{Binding ImagePath, IsAsync=True}" Stretch="UniformToFill" />
+                <Image Source="{Binding ImagePath, IsAsync=True, NotifyOnTargetUpdated=True}"
+                       Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
             </Border>
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="2,8,2,0"
                        TextTrimming="CharacterEllipsis" />

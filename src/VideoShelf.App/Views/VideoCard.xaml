@@ -21,7 +21,8 @@
                 <Border CornerRadius="{StaticResource CardImageRadius}"
                         Background="{StaticResource ThumbPlaceholderBrush}"
                         Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
-                    <Image Source="{Binding ThumbnailPath}" Stretch="UniformToFill" />
+                    <Image Source="{Binding ThumbnailPath, NotifyOnTargetUpdated=True}"
+                           Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
                 </Border>
                 <!-- Watched checkmark badge: top-right chip overlay, visible when IsWatched=True.
                      Uses ChipFillBrush (~25% alpha white) for contrast on both dark and light art.
