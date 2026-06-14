@@ -141,6 +141,11 @@ public class MainViewModelPlaybackTests
         vm.PlayEpisode(ep1);
         vm.Player.RaisePlaybackEndedForTest(ep1);
 
+        // After PlaybackEnded the Up-Next card is shown (gate in front of OpenPlayer).
+        // Tick the countdown to 0 to simulate auto-advance completing.
+        vm.UpNext.IsUpNextVisible.ShouldBeTrue();
+        for (int i = 0; i < 10; i++) vm.UpNext.TickCountdown();
+
         vm.Player.Title.ShouldBe(ep2.Title);
     }
 }

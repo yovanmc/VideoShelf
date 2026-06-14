@@ -515,6 +515,85 @@
                         </Border>
                     </Grid>
 
+                    <!-- ===== F: Up-Next countdown card — bottom-right overlay ===== -->
+                    <!-- Visible when IsUpNextVisible; opaque panel using PlayerPanelBrush.
+                         Text countdown only (motion/ring polish deferred to M21). -->
+                    <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                            Margin="0,0,16,100"
+                            Width="260"
+                            CornerRadius="8"
+                            Background="{StaticResource PlayerPanelBrush}"
+                            BorderBrush="{StaticResource PlayerPopupBorderBrush}"
+                            BorderThickness="1"
+                            IsHitTestVisible="True"
+                            Visibility="{Binding UpNext.IsUpNextVisible, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Margin="12,10">
+
+                            <!-- Header row: "Up next" label + countdown number -->
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="UP NEXT" Foreground="White" FontSize="11"
+                                           FontWeight="SemiBold" Opacity="0.7"
+                                           VerticalAlignment="Center" />
+                                <Border HorizontalAlignment="Right" CornerRadius="12"
+                                        Background="{StaticResource AccentBrush}"
+                                        Padding="8,2">
+                                    <TextBlock Text="{Binding UpNext.CountdownSeconds}"
+                                               Foreground="#FF000000" FontSize="12" FontWeight="SemiBold" />
+                                </Border>
+                            </Grid>
+
+                            <!-- Thumbnail placeholder + title row -->
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="80" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Thumbnail slot: shows art when available, placeholder fill otherwise.
+                                     Known limitation: UpNextThumbnailPath is always null (RecencyCard
+                                     thumbnail path is never populated — video_art persists but not wired
+                                     on cards). The placeholder fill (ThumbPlaceholderBrush) is always shown. -->
+                                <Border Grid.Column="0" Height="45" CornerRadius="4"
+                                        Background="{StaticResource ThumbPlaceholderBrush}"
+                                        Margin="0,0,10,0">
+                                    <Image Source="{Binding UpNext.UpNextThumbnailPath}"
+                                           Stretch="UniformToFill" />
+                                </Border>
+
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding UpNext.UpNextTitle}"
+                                           Foreground="White" FontSize="13" FontWeight="SemiBold"
+                                           TextWrapping="Wrap" TextTrimming="None"
+                                           MaxHeight="60"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Action buttons row -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ui:Button Command="{Binding UpNext.DismissUpNextCommand}"
+                                           Style="{StaticResource TertiaryButton}"
+                                           Padding="10,4" MinHeight="28"
+                                           ToolTip="Dismiss"
+                                           AutomationProperties.Name="Dismiss up next">
+                                    <TextBlock Text="Dismiss" Foreground="White" FontSize="12" />
+                                </ui:Button>
+                                <ui:Button Command="{Binding UpNext.PlayNextNowCommand}"
+                                           Style="{StaticResource PrimaryButton}"
+                                           Padding="10,4" MinHeight="28"
+                                           Margin="6,0,0,0"
+                                           ToolTip="Play now"
+                                           AutomationProperties.Name="Play now">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Play24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Play now" VerticalAlignment="Center"
+                                                   FontSize="12" />
+                                    </StackPanel>
+                                </ui:Button>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </Border>
+
                     <!-- ===== Queue drawer: right-side overlay, collapsed in PiP ===== -->
                     <Border x:Name="QueueDrawer"
                             HorizontalAlignment="Right" VerticalAlignment="Stretch"

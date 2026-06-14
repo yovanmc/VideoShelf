@@ -76,8 +76,13 @@ public sealed partial class MainViewModel : ObservableObject
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
         _player.PlaybackEnded += (_, finished) =>
         {
+            // Single next-decider invariant (M14): GetNextAfterEnd is the sole source of
+            // truth for what plays next. The Up-Next countdown is a GATE inserted in front
+            // of the existing OpenPlayer call — the decider logic is untouched.
             var next = _playQueue.GetNextAfterEnd(finished);
-            if (next is not null) OpenPlayer(next);
+            if (next is not null)
+                UpNext.ShowUpNext(next, () => OpenPlayer(next));
+            // When next == null, existing end behavior is preserved (nothing happens).
         };
 
         Discovery = discovery;
@@ -108,6 +113,9 @@ public sealed partial class MainViewModel : ObservableObject
         History.PlayRequested += (_, e) => PlayEpisode(e);
         Sources.Sources.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsLibraryEmpty));
     }
+
+    /// <summary>Up-Next countdown card state machine; exposed so PlayerView can bind to it.</summary>
+    public UpNextViewModel UpNext { get; } = new();
 
     public string Title => "VideoShelf";
 
