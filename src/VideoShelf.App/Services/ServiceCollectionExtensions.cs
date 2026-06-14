@@ -208,7 +208,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<ResolutionBackfillService>(),
                 sp.GetRequiredService<MaintenanceViewModel>(),
                 sp.GetRequiredService<IFocusReturnService>(),
-                sp.GetRequiredService<IToastService>());
+                sp.GetRequiredService<IToastService>(),
+                sp.GetRequiredService<IMotionPolicy>());
 
             mainVmBox = mainVm;
             return mainVm;

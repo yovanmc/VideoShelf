@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.ViewModels.Discovery;
@@ -28,7 +29,7 @@ public static class MainViewModelTestFactory
             => Task.FromResult(new VideoShelf.Core.Scanning.ScanResult(0, 0, 0, 0));
     }
 
-    public static MainViewModel Create(out MainVmContext ctx)
+    public static MainViewModel Create(out MainVmContext ctx, IMotionPolicy? motion = null)
     {
         var temp = new AppTempDb();
         var lib = new LibraryRepository(temp.Db);
@@ -75,7 +76,7 @@ public static class MainViewModelTestFactory
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
             new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
-            playlistsVm, historyVm, lib);
+            playlistsVm, historyVm, lib, motion: motion);
 
         ctx = new MainVmContext(temp, sectionId);
         return vm;

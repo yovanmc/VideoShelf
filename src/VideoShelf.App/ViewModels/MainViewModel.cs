@@ -27,6 +27,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
     private readonly IFocusReturnService? _focusReturn;
     private readonly IToastService _toasts;
+    private readonly IMotionPolicy? _motion;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -53,7 +54,8 @@ public sealed partial class MainViewModel : ObservableObject
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
         IFocusReturnService? focusReturn = null,
-        IToastService? toasts = null)
+        IToastService? toasts = null,
+        IMotionPolicy? motion = null)
     {
         _sources = sources;
         _library = library;
@@ -66,6 +68,7 @@ public sealed partial class MainViewModel : ObservableObject
         _libraryRepo = libraryRepo;
         _focusReturn = focusReturn;
         _toasts = toasts ?? new ToastService((_, _) => { }); // no-op timer in test contexts
+        _motion = motion;
         Maintenance = maintenance;
         SmartViews = smartViews;
         Favorites = favorites;
@@ -132,6 +135,22 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Toast service; exposed so the ToastHost overlay can bind to Toasts.Toasts
     /// and so B4 harness can call Show() directly.</summary>
     public IToastService Toasts => _toasts;
+
+    /// <summary>
+    /// True when UI animations should play. Reads <see cref="IMotionPolicy.ShouldAnimate"/>;
+    /// falls back to true (animate) when no policy is injected (test contexts).
+    /// Bind skeleton-panel Animate, shimmer Storyboard gates, etc. to this property.
+    /// </summary>
+    public bool AnimationsEnabled => _motion?.ShouldAnimate ?? true;
+
+    /// <summary>
+    /// Human-readable scan phase label shown next to the progress ring while <see cref="IsScanning"/>
+    /// is true.  Updated at each phase transition ("Scanning library…" → "Probing durations…").
+    /// NOTE: no real incremental file-count callback exists in the scan pipeline; only honest
+    /// phase labels are surfaced here (C2 honesty gate — no fabricated numbers).
+    /// </summary>
+    [ObservableProperty]
+    private string _scanStatusText = string.Empty;
 
     public string Title => "VideoShelf";
 
@@ -476,18 +495,23 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task ScanAndReload()
     {
         IsScanning = true;
+        ScanStatusText = "Scanning library…";
         try
         {
             var result = await _scanCoordinator.ScanAllAsync(CancellationToken.None);
+
+            ScanStatusText = "Probing durations…";
             await _backfill.BackfillAsync(CancellationToken.None);
             if (_resolutionBackfill is not null)
                 await _resolutionBackfill.BackfillAsync(CancellationToken.None);
+
             Sources.Load();
             await Library.LoadSectionsAsync();
             await Discovery.LoadAsync();
             await Creators.LoadAsync(CancellationToken.None);
 
             var summary = FormatScanSummary(result);
+            ScanStatusText = summary;
             Settings.MarkScanned(summary);
             Maintenance?.SetScanSummary(summary);
 
@@ -496,6 +520,8 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             IsScanning = false;
+            // Leave ScanStatusText as the final summary (or clear it after a brief delay — keep
+            // the summary visible so the user can read the result; MarkScanned persists it anyway).
         }
     }
 

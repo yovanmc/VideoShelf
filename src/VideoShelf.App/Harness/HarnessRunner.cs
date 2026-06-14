@@ -200,6 +200,15 @@ public sealed class HarnessRunner
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
             case "History":    _main.ShowHistoryCommand.Execute(null); break;
 
+            // ── C3: skeleton loading state ────────────────────────────────────────
+            // Shows Favorites with IsLoading=true (skeleton placeholder visible) so the
+            // sweep can confirm the overlay renders. IsLoading is NOT cleared — the screen
+            // stays frozen in the loading state for the screenshot sweep.
+            case "FavoritesLoading":
+                _main.ShowFavoritesCommand.Execute(null);
+                _postSettleAction = () => _main.Favorites.IsLoading = true;
+                break;
+
             // ── M18 surfaces ──────────────────────────────────────────────────────
 
             // Maintenance / Library Health dashboard.

@@ -1,0 +1,60 @@
+<UserControl x:Class="VideoShelf.App.Views.Controls.SkeletonPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VideoShelf.App.Views.Controls">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <!-- Skeleton placeholder rows — rounded Borders using ThumbPlaceholderBrush.
+         The shimmer sweep is a looping gradient animation driven by Storyboard.
+         When Animate=False (reduced-motion) the DataTrigger leaves the Storyboard unstarted:
+         static placeholder rectangles are the reduced-motion baseline. -->
+    <Grid>
+        <WrapPanel Margin="0,8,0,0" Orientation="Horizontal">
+            <!-- 8 placeholder cards matching VideoCard proportions (160×220 px approx.) -->
+            <Border x:Name="Card0"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card1"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card2"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card3"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card4"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card5"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card6"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+            <Border x:Name="Card7"  Width="160" Height="220" CornerRadius="8" Margin="4"
+                    Background="{StaticResource ThumbPlaceholderBrush}" />
+        </WrapPanel>
+
+        <!-- Shimmer sweep overlay: a translucent gradient rectangle sweeping left→right.
+             Uses a plain DoubleAnimation so Duration can bind to AnimNormal (no KeyTime trap).
+             The animation is started only when Animate=True via a DataTrigger in code-behind,
+             keeping this XAML focused on layout. -->
+        <Rectangle x:Name="ShimmerRect"
+                   Width="120"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Stretch"
+                   Margin="-120,8,0,0"
+                   IsHitTestVisible="False">
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                    <GradientStop Offset="0"   Color="#00FFFFFF" />
+                    <GradientStop Offset="0.5" Color="#18FFFFFF" />
+                    <GradientStop Offset="1"   Color="#00FFFFFF" />
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+            <Rectangle.RenderTransform>
+                <TranslateTransform x:Name="ShimmerTranslate" X="-120" />
+            </Rectangle.RenderTransform>
+        </Rectangle>
+    </Grid>
+</UserControl>

@@ -42,26 +42,38 @@ public sealed partial class HistoryViewModel(HistoryRepository history, LibraryR
 
     public bool HasHistory => Entries.Count > 0;
 
+    /// <summary>True while LoadAsync is in progress; used to show the skeleton overlay.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     /// <summary>Raised when a row's Play is invoked; carries the resolved EpisodeView.</summary>
     public event EventHandler<EpisodeView>? PlayRequested;
 
     public async Task LoadAsync()
     {
-        var rows = await Task.Run(() => history.GetHistory(100));
-
-        Entries.Clear();
-        foreach (var row in rows)
+        IsLoading = true;
+        try
         {
-            var rowVm = new HistoryRowViewModel(row);
-            var capturedId = row.VideoId;
-            rowVm.PlayInvoked += (_, _) =>
+            var rows = await Task.Run(() => history.GetHistory(100));
+
+            Entries.Clear();
+            foreach (var row in rows)
             {
-                var ep = library.GetEpisode(capturedId);
-                if (ep is not null) PlayRequested?.Invoke(this, ep);
-            };
-            Entries.Add(rowVm);
+                var rowVm = new HistoryRowViewModel(row);
+                var capturedId = row.VideoId;
+                rowVm.PlayInvoked += (_, _) =>
+                {
+                    var ep = library.GetEpisode(capturedId);
+                    if (ep is not null) PlayRequested?.Invoke(this, ep);
+                };
+                Entries.Add(rowVm);
+            }
+            OnPropertyChanged(nameof(HasHistory));
         }
-        OnPropertyChanged(nameof(HasHistory));
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     /// <summary>Synchronous wrapper for use from MainViewModel RelayCommand.</summary>

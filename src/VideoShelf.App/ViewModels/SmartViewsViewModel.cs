@@ -92,6 +92,11 @@ public sealed partial class SmartViewsViewModel : ObservableObject
 
     public ObservableCollection<SmartViewListItemViewModel> Views { get; } = new();
 
+    /// <summary>True while Load is in progress; used to show the skeleton overlay.
+    /// Synchronous loads complete so fast this rarely stays true for a visible frame — that's fine.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     // ── Builder state ────────────────────────────────────────────────────────
 
     [ObservableProperty]
@@ -119,9 +124,17 @@ public sealed partial class SmartViewsViewModel : ObservableObject
 
     public void Load()
     {
-        Views.Clear();
-        foreach (var sv in _smartViews.GetAll())
-            Views.Add(new SmartViewListItemViewModel(sv));
+        IsLoading = true;
+        try
+        {
+            Views.Clear();
+            foreach (var sv in _smartViews.GetAll())
+                Views.Add(new SmartViewListItemViewModel(sv));
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     // ── Commands ─────────────────────────────────────────────────────────────

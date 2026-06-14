@@ -17,6 +17,10 @@ public sealed partial class WatchlistViewModel(CurationRepository curation, Libr
 
     public bool HasWatchlist => Watchlist.Count > 0;
 
+    /// <summary>True while LoadAsync is in progress; used to show the skeleton overlay.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
 
     /// <summary>Per-page selection state for multi-select over the watchlist grid.</summary>
@@ -38,28 +42,36 @@ public sealed partial class WatchlistViewModel(CurationRepository curation, Libr
 
     public async Task LoadAsync()
     {
-        // Unsubscribe from existing cards before clearing.
-        foreach (var existing in Watchlist)
-            existing.PropertyChanged -= OnCardPropertyChanged;
-
-        Selection.ExitSelectionModeCommand.Execute(null);
-
-        var items = await Task.Run(() => curation.GetWatchlist(48));
-
-        Watchlist.Clear();
-        foreach (var item in items)
+        IsLoading = true;
+        try
         {
-            var card = new RecencyCardViewModel(item);
-            var capturedId = item.VideoId;
-            card.PlayInvoked += (_, _) =>
+            // Unsubscribe from existing cards before clearing.
+            foreach (var existing in Watchlist)
+                existing.PropertyChanged -= OnCardPropertyChanged;
+
+            Selection.ExitSelectionModeCommand.Execute(null);
+
+            var items = await Task.Run(() => curation.GetWatchlist(48));
+
+            Watchlist.Clear();
+            foreach (var item in items)
             {
-                var ep = library.GetEpisode(capturedId);
-                if (ep is not null) PlayRequested?.Invoke(this, ep);
-            };
-            card.PropertyChanged += OnCardPropertyChanged;
-            Watchlist.Add(card);
+                var card = new RecencyCardViewModel(item);
+                var capturedId = item.VideoId;
+                card.PlayInvoked += (_, _) =>
+                {
+                    var ep = library.GetEpisode(capturedId);
+                    if (ep is not null) PlayRequested?.Invoke(this, ep);
+                };
+                card.PropertyChanged += OnCardPropertyChanged;
+                Watchlist.Add(card);
+            }
+            OnPropertyChanged(nameof(HasWatchlist));
         }
-        OnPropertyChanged(nameof(HasWatchlist));
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)

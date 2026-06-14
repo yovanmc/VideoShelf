@@ -160,6 +160,10 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
         return ids;
     }
 
+    /// <summary>True while LoadAsync is in progress; used to show the skeleton overlay.</summary>
+    [ObservableProperty]
+    private bool _isLoading;
+
     public ObservableCollection<CreatorCardViewModel> Creators { get; } = new();
 
     /// <summary>Per-page selection state (enter/exit mode, selected set, commands).</summary>
@@ -223,35 +227,43 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
 
     public async Task LoadAsync(CancellationToken ct)
     {
-        // Heavy work off the UI thread; resume on the captured context to mutate the UI-bound collection.
-        // NOTE: do NOT use ConfigureAwait(false) on this chain (the Cross-thread ObservableCollection gotcha).
-        // GetArtPath is also resolved in the same background Task.Run to avoid per-card SQLite round-trips
-        // on the UI thread.
-        var cards = await Task.Run(() =>
+        IsLoading = true;
+        try
         {
-            var summaries = _library.GetSectionSummaries();
-            var result = new System.Collections.Generic.List<(VideoShelf.Core.Models.SectionSummary Summary, string? OverridePath)>(summaries.Count);
-            foreach (var s in summaries)
-                result.Add((s, _art.GetArtPath(s.SectionId)));
-            return result;
-        }, ct);
+            // Heavy work off the UI thread; resume on the captured context to mutate the UI-bound collection.
+            // NOTE: do NOT use ConfigureAwait(false) on this chain (the Cross-thread ObservableCollection gotcha).
+            // GetArtPath is also resolved in the same background Task.Run to avoid per-card SQLite round-trips
+            // on the UI thread.
+            var cards = await Task.Run(() =>
+            {
+                var summaries = _library.GetSectionSummaries();
+                var result = new System.Collections.Generic.List<(VideoShelf.Core.Models.SectionSummary Summary, string? OverridePath)>(summaries.Count);
+                foreach (var s in summaries)
+                    result.Add((s, _art.GetArtPath(s.SectionId)));
+                return result;
+            }, ct);
 
-        // Unsubscribe from all existing cards before clearing.
-        foreach (var existing in Creators)
-            existing.PropertyChanged -= OnCardPropertyChanged;
+            // Unsubscribe from all existing cards before clearing.
+            foreach (var existing in Creators)
+                existing.PropertyChanged -= OnCardPropertyChanged;
 
-        Creators.Clear();
-        foreach (var (summary, overridePath) in cards)
-        {
-            var card = new CreatorCardViewModel(summary, overridePath, _thumbnails);
-            card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
-            // Subscribe to route IsSelected changes into the Selection VM (no back-ref in card).
-            card.PropertyChanged += OnCardPropertyChanged;
-            Creators.Add(card);
-            await card.LoadImageAsync(ct);
+            Creators.Clear();
+            foreach (var (summary, overridePath) in cards)
+            {
+                var card = new CreatorCardViewModel(summary, overridePath, _thumbnails);
+                card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
+                // Subscribe to route IsSelected changes into the Selection VM (no back-ref in card).
+                card.PropertyChanged += OnCardPropertyChanged;
+                Creators.Add(card);
+                await card.LoadImageAsync(ct);
+            }
+
+            RefreshAvailableLetters();
         }
-
-        RefreshAvailableLetters();
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private void OnCardPropertyChanged(object? sender, PropertyChangedEventArgs e)

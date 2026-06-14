@@ -37,6 +37,12 @@
                                  Margin="12,0,0,0"
                                  VerticalAlignment="Center"
                                  Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
+                <!-- C2: honest scan phase label shown while scanning (phase labels, not fabricated counts) -->
+                <TextBlock Text="{Binding ScanStatusText}"
+                           VerticalAlignment="Center"
+                           Margin="8,0,0,0"
+                           Opacity="0.75"
+                           Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock Text="{Binding Settings.LastScanText}"
                            VerticalAlignment="Center"
                            Margin="12,0,0,0"
