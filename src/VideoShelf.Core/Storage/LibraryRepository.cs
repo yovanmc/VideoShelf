@@ -5,6 +5,7 @@ using System.IO;
 using Microsoft.Data.Sqlite;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
+using VideoShelf.Core.Naming;
 
 namespace VideoShelf.Core.Storage;
 
@@ -739,5 +740,75 @@ public sealed class LibraryRepository(VideoShelfDb db)
         var result = cmd.ExecuteScalar();
         if (result is null or System.DBNull) return null;
         return DateTimeOffset.Parse((string)result, null, DateTimeStyles.RoundtripKind);
+    }
+
+    // ── M18-B: grouping override CRUD ─────────────────────────────────────────
+
+    /// <summary>
+    /// Returns all grouping overrides for a section, keyed by <b>bare file name</b>
+    /// (<c>Path.GetFileName(file_path)</c>) so <see cref="SectionGrouper.Group"/> can look
+    /// them up without knowing the section's root path.
+    /// </summary>
+    public IReadOnlyDictionary<string, GroupingOverride> GetGroupingOverrides(long sectionId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT file_path, override_base_title, override_episode_no
+            FROM grouping_overrides
+            WHERE section_id = @sec
+            """;
+        cmd.Parameters.AddWithValue("@sec", sectionId);
+        var dict = new Dictionary<string, GroupingOverride>(StringComparer.OrdinalIgnoreCase);
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+        {
+            var filePath = r.GetString(0);
+            var baseTitle = r.IsDBNull(1) ? null : r.GetString(1);
+            var episodeNo = r.IsDBNull(2) ? (int?)null : (int)r.GetInt64(2);
+            var bareFileName = Path.GetFileName(filePath);
+            dict[bareFileName] = new GroupingOverride(filePath, baseTitle, episodeNo);
+        }
+        return dict;
+    }
+
+    /// <summary>
+    /// Upserts a grouping override for a single file within a section.
+    /// Uses <c>INSERT … ON CONFLICT(section_id, file_path) DO UPDATE</c> (@-prefixed params).
+    /// Setting both <paramref name="baseTitle"/> and <paramref name="episodeNo"/> to null
+    /// is semantically equivalent to <see cref="ClearGroupingOverride"/> (the row is kept
+    /// but applies no change during grouping); callers that want to remove the row should use
+    /// <see cref="ClearGroupingOverride"/> instead.
+    /// </summary>
+    public void SetGroupingOverride(long sectionId, string filePath, string? baseTitle, int? episodeNo)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO grouping_overrides(section_id, file_path, override_base_title, override_episode_no)
+            VALUES(@sec, @path, @title, @epno)
+            ON CONFLICT(section_id, file_path) DO UPDATE
+                SET override_base_title = excluded.override_base_title,
+                    override_episode_no  = excluded.override_episode_no
+            """;
+        cmd.Parameters.AddWithValue("@sec",   sectionId);
+        cmd.Parameters.AddWithValue("@path",  filePath);
+        cmd.Parameters.AddWithValue("@title", (object?)baseTitle ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@epno",  (object?)episodeNo ?? DBNull.Value);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Removes a grouping override for a single file, restoring parser-derived grouping for it.</summary>
+    public void ClearGroupingOverride(long sectionId, string filePath)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            DELETE FROM grouping_overrides
+            WHERE section_id = @sec AND file_path = @path
+            """;
+        cmd.Parameters.AddWithValue("@sec",  sectionId);
+        cmd.Parameters.AddWithValue("@path", filePath);
+        cmd.ExecuteNonQuery();
     }
 }
