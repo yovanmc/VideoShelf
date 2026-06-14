@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Renaming;
@@ -25,6 +26,7 @@ public sealed partial class RenameToolViewModel : ObservableObject
     private readonly RenameExecutor _executor;
     private readonly SettingsRepository _settings;
     private readonly string _manifestDirectory;
+    private readonly IToastService? _toasts;
 
     private long _seriesId;
     private bool _isStandalone;
@@ -37,13 +39,15 @@ public sealed partial class RenameToolViewModel : ObservableObject
         RenamePlanner planner,
         RenameExecutor executor,
         SettingsRepository settings,
-        AppPaths paths)
+        AppPaths paths,
+        IToastService? toasts = null)
     {
         _library = library;
         _planner = planner;
         _executor = executor;
         _settings = settings;
         _manifestDirectory = paths.RenameManifestDirectory;
+        _toasts = toasts;
     }
 
     public ObservableCollection<RenameRowViewModel> Rows { get; } = new();
@@ -118,6 +122,9 @@ public sealed partial class RenameToolViewModel : ObservableObject
             StatusSummary = result.Errors.Count > 0
                 ? $"Renamed {result.Renamed}; {result.Errors.Count} error(s)"
                 : $"Renamed {result.Renamed} file(s)";
+
+            if (result.ManifestPath is not null)
+                _toasts?.Show($"Renamed {result.Renamed} file(s)", undo: () => UndoCommand.Execute(null));
 
             await LoadAsync(_seriesId, _baseTitle, _isStandalone); // reflect disk truth
         }

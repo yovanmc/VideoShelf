@@ -228,6 +228,14 @@ public sealed class HarnessRunner
             // MultiRename preview page seeded with the richest creator's series.
             case "MultiRename": await NavigateMultiRenameAsync(); break;
 
+            // ── M21 B4 toast state ────────────────────────────────────────────
+            // Shows the Home page with a toast in the bottom-right corner so the
+            // visual sweep can confirm the overlay renders correctly.
+            case "Toast":
+                _main.CurrentView = AppView.Home;
+                _postSettleAction = () => _main.Toasts.Show("Added to favorites", undo: () => { });
+                break;
+
             default: _main.CurrentView = AppView.Home; break;
         }
     }

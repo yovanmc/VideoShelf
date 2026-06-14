@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
@@ -13,6 +14,7 @@ public sealed partial class SourcesViewModel : ObservableObject
     private readonly LibraryRepository _library;
     private readonly IFolderPicker _picker;
     private readonly IConfirmService _confirm;
+    private readonly IToastService? _toasts;
 
     /// <summary>
     /// <paramref name="confirm"/> is optional so existing test call-sites that pass only
@@ -23,11 +25,13 @@ public sealed partial class SourcesViewModel : ObservableObject
     public SourcesViewModel(
         LibraryRepository library,
         IFolderPicker picker,
-        IConfirmService? confirm = null)
+        IConfirmService? confirm = null,
+        IToastService? toasts = null)
     {
         _library = library;
         _picker  = picker;
         _confirm = confirm ?? AlwaysConfirmService.Instance;
+        _toasts  = toasts;
     }
 
     // ── Private sentinel: always-confirm for legacy test paths ────────────────
@@ -94,6 +98,7 @@ public sealed partial class SourcesViewModel : ObservableObject
         _library.RemoveSource(source.Id);
         Load();
         CanUndoRemove = true;
+        _toasts?.Show("Source removed", undo: () => UndoRemoveCommand.Execute(null), ToastKind.Warning);
     }
 
     [RelayCommand(CanExecute = nameof(CanUndoRemove))]

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Accessibility;
+using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Models;
@@ -25,6 +26,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PlayQueueViewModel _playQueue;
     private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
     private readonly IFocusReturnService? _focusReturn;
+    private readonly IToastService _toasts;
 
     public MainViewModel(
         SourcesViewModel sources,
@@ -50,7 +52,8 @@ public sealed partial class MainViewModel : ObservableObject
         MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
-        IFocusReturnService? focusReturn = null)
+        IFocusReturnService? focusReturn = null,
+        IToastService? toasts = null)
     {
         _sources = sources;
         _library = library;
@@ -62,6 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
         _playQueue = playQueue;
         _libraryRepo = libraryRepo;
         _focusReturn = focusReturn;
+        _toasts = toasts ?? new ToastService((_, _) => { }); // no-op timer in test contexts
         Maintenance = maintenance;
         SmartViews = smartViews;
         Favorites = favorites;
@@ -124,6 +128,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Up-Next countdown card state machine; exposed so PlayerView can bind to it.</summary>
     public UpNextViewModel UpNext { get; } = new();
+
+    /// <summary>Toast service; exposed so the ToastHost overlay can bind to Toasts.Toasts
+    /// and so B4 harness can call Show() directly.</summary>
+    public IToastService Toasts => _toasts;
 
     public string Title => "VideoShelf";
 
@@ -266,6 +274,17 @@ public sealed partial class MainViewModel : ObservableObject
             _focusReturn?.Capture(System.Windows.Input.Keyboard.FocusedElement);
         IsPlayerVisible = true;
         _player.Open(episode);
+        // ResumePositionSeconds is set synchronously inside Open() from the DB; read it immediately after.
+        // Resume toast: raised from MainViewModel so IToastService stays out of PlayerViewModel.
+        // ResumePositionSeconds is set synchronously in Open() from the DB. CanResume is set later
+        // in OnLengthChanged (async engine event). We use ResumePositionSeconds > 0 as the signal
+        // so the toast fires immediately on open when a saved position exists, before the length arrives.
+        var savedPosition = _player.ResumePositionSeconds;
+        if (savedPosition > 0)
+        {
+            var position = System.TimeSpan.FromSeconds(savedPosition);
+            _toasts.Show($"Resumed at {position:hh\\:mm\\:ss}");
+        }
     }
 
     [RelayCommand]
