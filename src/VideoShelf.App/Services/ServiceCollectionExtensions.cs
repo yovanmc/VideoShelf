@@ -118,6 +118,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<BulkActionBarViewModel>();
+        services.AddSingleton<MaintenanceRepository>();
+        services.AddSingleton<MaintenanceViewModel>();
         services.AddSingleton<MainViewModel>(sp =>
         {
             var lib = sp.GetRequiredService<LibraryRepository>();
@@ -159,7 +161,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<BulkActionBarViewModel>(),
                 palette,
                 sp.GetRequiredService<MultiRenameViewModel>(),
-                sp.GetRequiredService<ResolutionBackfillService>());
+                sp.GetRequiredService<ResolutionBackfillService>(),
+                sp.GetRequiredService<MaintenanceViewModel>());
 
             mainVmBox = mainVm;
             return mainVm;

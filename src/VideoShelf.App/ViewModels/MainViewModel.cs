@@ -10,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History, Maintenance }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -46,7 +46,8 @@ public sealed partial class MainViewModel : ObservableObject
         BulkActionBarViewModel? bulkBar = null,
         CommandPaletteViewModel? commandPalette = null,
         MultiRenameViewModel? multiRename = null,
-        ResolutionBackfillService? resolutionBackfill = null)
+        ResolutionBackfillService? resolutionBackfill = null,
+        MaintenanceViewModel? maintenance = null)
     {
         _sources = sources;
         _library = library;
@@ -57,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
         _resolutionBackfill = resolutionBackfill;
         _playQueue = playQueue;
         _libraryRepo = libraryRepo;
+        Maintenance = maintenance;
         SmartViews = smartViews;
         Favorites = favorites;
         Watchlist = watchlist;
@@ -136,6 +138,9 @@ public sealed partial class MainViewModel : ObservableObject
     public RenameToolViewModel RenameTool { get; }
     public CreatorsViewModel Creators { get; }
     public SearchViewModel Search { get; }
+
+    /// <summary>Maintenance dashboard VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
+    public MaintenanceViewModel? Maintenance { get; }
 
     [ObservableProperty]
     private AppView _currentView = AppView.Home;
@@ -286,6 +291,14 @@ public sealed partial class MainViewModel : ObservableObject
         History.Load();
         PushNav(CurrentView);
         CurrentView = AppView.History;
+    }
+
+    [RelayCommand]
+    private void ShowMaintenance()
+    {
+        Maintenance?.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Maintenance;
     }
 
     public async Task OpenSectionAsync(long sectionId)

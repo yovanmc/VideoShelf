@@ -109,10 +109,12 @@
                                 <MenuItem Header="History"     Command="{Binding ShowHistoryCommand}" />
                                 <Separator />
                                 <MenuItem Header="Surprise me 🎲" Command="{Binding SurpriseMeCommand}" />
+                                <Separator />
+                                <MenuItem Header="Library Health" Command="{Binding ShowMaintenanceCommand}" />
                             </MenuItem>
                         </Menu>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
-                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='SmartViews,Playlists,Watchlist,Favorites,History'}" />
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='SmartViews,Playlists,Watchlist,Favorites,History,Maintenance'}" />
                     </Grid>
                     <ui:TextBox Grid.Column="4" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
@@ -513,6 +515,11 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=History}" />
 
+                <!-- Maintenance (Library Health) page — M18-E -->
+                <views:MaintenanceView DataContext="{Binding DataContext.Maintenance, RelativeSource={RelativeSource AncestorType=Window}}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Maintenance}" />
+
                 <!-- Bulk-action bar: docked at the bottom of the content area.
                      Visible when the Browse creator selection is non-empty.
                      Overlays the bottom of content (not the nav bar). -->
@@ -667,3 +674,4 @@
         </Grid>
     </Grid>
 </ui:FluentWindow>
+
