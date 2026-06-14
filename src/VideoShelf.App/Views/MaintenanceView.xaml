@@ -171,6 +171,133 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <!-- ── M18-F: Missing-file triage ─────────────────────────────── -->
+            <!-- Entire triage section hidden when Triage VM is not wired (slim test contexts). -->
+            <StackPanel Visibility="{Binding Triage, Converter={StaticResource NotNullOrEmptyToVis}}">
+
+                <TextBlock Text="MISSING FILES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+
+                <!-- Status message (relink / auto-find feedback) -->
+                <TextBlock Text="{Binding Triage.StatusMessage}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="12"
+                           Margin="0,0,0,8"
+                           Visibility="{Binding Triage.StatusMessage, Converter={StaticResource NotNullOrEmptyToVis}}" />
+
+                <!-- Missing video rows -->
+                <ItemsControl ItemsSource="{Binding Triage.MissingVideos}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,6" Padding="14,10"
+                                    CornerRadius="{StaticResource ControlRadius}"
+                                    Background="{DynamicResource SurfaceBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FileName}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding CreatorName, Mode=OneWay}" />
+                                            <Run Text=" — " />
+                                            <Run Text="{Binding SeriesTitle, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding FilePath}"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Opacity="0.6"
+                                                   Margin="0,2,0,0"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                VerticalAlignment="Center" Margin="12,0,0,0">
+                                        <ui:Button Content="Auto-find"
+                                                   Command="{Binding AutoFindCommand}"
+                                                   Style="{StaticResource SecondaryButton}"
+                                                   Margin="0,0,6,0" />
+                                        <ui:Button Content="Relink…"
+                                                   Command="{Binding RelinkCommand}"
+                                                   Style="{StaticResource SecondaryButton}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- ── Orphan series ─────────────────────────────────────── -->
+                <TextBlock Text="ORPHAN SERIES" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+
+                <ItemsControl ItemsSource="{Binding Triage.OrphanSeries}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,6" Padding="14,10"
+                                    CornerRadius="{StaticResource ControlRadius}"
+                                    Background="{DynamicResource SurfaceBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{Binding CreatorName}"
+                                                   FontSize="11"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <ui:Button Grid.Column="1"
+                                               Content="Remove from library"
+                                               Command="{Binding RemoveFromLibraryCommand}"
+                                               Style="{StaticResource SecondaryButton}"
+                                               VerticalAlignment="Center" Margin="12,0,0,0" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- ── Empty creators ────────────────────────────────────── -->
+                <TextBlock Text="EMPTY CREATORS" Style="{StaticResource SectionHeader}" Margin="{StaticResource SectionGap}" />
+
+                <ItemsControl ItemsSource="{Binding Triage.EmptyCreators}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,6" Padding="14,10"
+                                    CornerRadius="{StaticResource ControlRadius}"
+                                    Background="{DynamicResource SurfaceBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding CreatorName}"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <ui:Button Grid.Column="1"
+                                               Content="Remove from library"
+                                               Command="{Binding RemoveFromLibraryCommand}"
+                                               Style="{StaticResource SecondaryButton}"
+                                               VerticalAlignment="Center" Margin="12,0,0,0" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

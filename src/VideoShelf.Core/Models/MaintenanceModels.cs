@@ -32,7 +32,9 @@ public sealed record MissingVideo(
     long Id,
     string FilePath,
     string CreatorName,
-    string SeriesTitle);
+    string SeriesTitle,
+    long? SizeBytes = null,
+    double? DurationSeconds = null);
 
 public sealed record OrphanEntry(
     long Id,

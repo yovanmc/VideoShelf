@@ -40,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFolderPicker, FolderPicker>();
         services.AddSingleton<IImagePicker, ImagePicker>();
         services.AddSingleton<ISubtitleFilePicker, SubtitleFilePicker>();
+        services.AddSingleton<IVideoFilePicker, VideoFilePicker>();
+        services.AddSingleton<IConfirmService, ConfirmService>();
         services.AddSingleton<CreatorArtRepository>();
         services.AddSingleton<ItemArtRepository>();
         services.AddSingleton<CreatorsViewModel>(sp => new CreatorsViewModel(
@@ -119,6 +121,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<BulkActionBarViewModel>();
         services.AddSingleton<MaintenanceRepository>();
+        services.AddSingleton<MissingTriageViewModel>();
         services.AddSingleton<MaintenanceViewModel>();
         services.AddSingleton<MainViewModel>(sp =>
         {

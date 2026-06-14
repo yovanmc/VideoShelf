@@ -78,6 +78,14 @@ public sealed partial class MaintenanceViewModel : ObservableObject
     private readonly LibraryRepository _library;
     private readonly IScanCoordinator _coordinator;
 
+    // ── M18-F: missing triage sub-VM (nullable trailing param) ────────────────
+
+    /// <summary>
+    /// Missing-file triage sub-view. Null when the optional triage deps are not provided
+    /// (slim test contexts), real instance in production DI.
+    /// </summary>
+    public MissingTriageViewModel? Triage { get; }
+
     // ── Summary tile properties ───────────────────────────────────────────────
 
     [ObservableProperty] private int _missingCount;
@@ -94,11 +102,15 @@ public sealed partial class MaintenanceViewModel : ObservableObject
     public MaintenanceViewModel(
         MaintenanceRepository maintenance,
         LibraryRepository library,
-        IScanCoordinator coordinator)
+        IScanCoordinator coordinator,
+        MissingTriageViewModel? triage = null)
     {
         _maintenance = maintenance;
         _library = library;
         _coordinator = coordinator;
+        Triage = triage;
+        if (Triage is not null)
+            Triage.TriageChanged += (_, _) => Load(); // refresh tiles after relink/removal
     }
 
     /// <summary>Loads (or refreshes) all maintenance data. Call on navigation.</summary>
