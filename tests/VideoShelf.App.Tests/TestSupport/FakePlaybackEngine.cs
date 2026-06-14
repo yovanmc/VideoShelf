@@ -64,16 +64,31 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
         return Task.FromResult(true);
     }
 
+    // ----- C1: playback speed -----
+    public double Rate { get; set; } = 1.0;
+
+    // ----- C1: aspect ratio / zoom -----
+    public string? AspectRatio { get; set; }
+    public float Scale { get; set; }
+
+    // ----- C1: volume normalization -----
+    // Always returns true in the fake so VM tests exercise the toggle path.
+    public bool SupportsVolumeNormalize => true;
+    public bool VolumeNormalizeEnabled { get; set; }
+
     public event EventHandler<double>? PositionChanged;
     public event EventHandler<double>? LengthChanged;
     public event EventHandler? Ended;
     public event EventHandler? EncounteredError;
+    public event EventHandler? TracksChanged;
 
     // ----- test drivers -----
     public void RaisePosition(double seconds) { Position = seconds; PositionChanged?.Invoke(this, seconds); }
     public void RaiseLength(double seconds) { Length = seconds; LengthChanged?.Invoke(this, seconds); }
     public void RaiseEnded() { IsPlaying = false; Ended?.Invoke(this, EventArgs.Empty); }
     public void RaiseError() => EncounteredError?.Invoke(this, EventArgs.Empty);
+    /// <summary>Fires TracksChanged so VM tests can assert RefreshTracks is called.</summary>
+    public void RaiseTracksChanged() => TracksChanged?.Invoke(this, EventArgs.Empty);
 
     public void Dispose() => Disposed = true;
 }

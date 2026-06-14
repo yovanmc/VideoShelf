@@ -21,6 +21,7 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     private readonly Dispatcher _dispatcher;
     private MediaPlayer? _previewPlayer;
     private string? _previewMediaPath;
+    private bool _volumeNormalizeEnabled;
 
     /// <summary>The underlying libVLC player, for the VideoView to host. App-internal use only.</summary>
     public MediaPlayer MediaPlayer => _player;
@@ -40,7 +41,13 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
         _player.LengthChanged += (_, e) => Raise(() => LengthChanged?.Invoke(this, e.Length / 1000.0));
         _player.EndReached += (_, _) => Raise(() => Ended?.Invoke(this, EventArgs.Empty));
         _player.EncounteredError += (_, _) => Raise(() => EncounteredError?.Invoke(this, EventArgs.Empty));
+        // ESAdded fires on a libVLC thread. We forward raw (no dispatch) so each subscriber
+        // marshals to its own thread — the VM does BeginInvoke in its handler (C4).
+        _player.ESAdded += OnESAdded;
     }
+
+    private void OnESAdded(object? sender, LibVLCSharp.Shared.MediaPlayerESAddedEventArgs e)
+        => TracksChanged?.Invoke(this, EventArgs.Empty);
 
     /// <summary>Runs an action on the UI dispatcher thread (async, non-blocking).</summary>
     private void Raise(Action action)
@@ -56,6 +63,16 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
         try
         {
             var media = new Media(_libVlc, new Uri(filePath));
+
+            // Volume normalization: apply the normvol audio filter at Load time.
+            // This must be a media option (not a runtime MediaPlayer property); applying it here
+            // before assigning media to _player ensures the filter is active for this media.
+            if (_volumeNormalizeEnabled)
+            {
+                media.AddOption(":audio-filter=normvol");
+                media.AddOption(":norm-max-level=2.0");
+            }
+
             _player.Media = media;
             try
             {
@@ -94,6 +111,46 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     {
         get => _player.Volume;
         set { try { _player.Volume = Math.Clamp(value, 0, 100); } catch { } }
+    }
+
+    // ----- C1: playback speed -----
+    // _player.Rate is get-only (libVLC 3.x); set via _player.SetRate(float).
+    // The interface exposes double; we cast to/from float.
+    // Clamp is authoritative here; callers outside this assembly are not expected to clamp.
+    public double Rate
+    {
+        get { try { return _player.Rate; } catch { return 1.0; } }
+        set
+        {
+            var clamped = (float)Math.Clamp(value, 0.5, 2.0);
+            try { _player.SetRate(clamped); } catch { }
+        }
+    }
+
+    // ----- C1: aspect ratio / zoom -----
+    public string? AspectRatio
+    {
+        get { try { return _player.AspectRatio; } catch { return null; } }
+        set { try { _player.AspectRatio = value ?? string.Empty; } catch { } }
+    }
+
+    public float Scale
+    {
+        get { try { return _player.Scale; } catch { return 0f; } }
+        set { try { _player.Scale = value; } catch { } }
+    }
+
+    // ----- C1: volume normalization -----
+    // normvol is a libVLC audio filter applied at media-load time (not a runtime property).
+    // SupportsVolumeNormalize = true means the Media.AddOption approach is wired and applied
+    // on the next Load. AUDIBLE EFFECT ON WINDOWS OUTPUT IS UNVERIFIED — requires owner listening test.
+    // If the owner reports no audible effect, flip this to => false to hide the Group D toggle.
+    public bool SupportsVolumeNormalize => true;
+
+    public bool VolumeNormalizeEnabled
+    {
+        get => _volumeNormalizeEnabled;
+        set => _volumeNormalizeEnabled = value;
     }
 
     public IReadOnlyList<TrackOption> GetAudioTracks()
@@ -196,9 +253,11 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     public event EventHandler<double>? LengthChanged;
     public event EventHandler? Ended;
     public event EventHandler? EncounteredError;
+    public event EventHandler? TracksChanged;
 
     public void Dispose()
     {
+        try { _player.ESAdded -= OnESAdded; } catch { }
         try { _previewPlayer?.Dispose(); } catch { }
         try { _player.Dispose(); } catch { }
         try { _libVlc.Dispose(); } catch { }
