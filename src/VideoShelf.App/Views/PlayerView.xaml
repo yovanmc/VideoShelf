@@ -124,7 +124,9 @@
                                     <Grid Grid.Column="1">
                                         <Slider x:Name="SeekBar" VerticalAlignment="Center"
                                                 Minimum="0" Maximum="{Binding Player.LengthSeconds}"
-                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}" />
+                                                Value="{Binding Player.ScrubPosition, Mode=TwoWay}"
+                                                AutomationProperties.Name="Seek"
+                                                AutomationProperties.ItemStatus="{Binding Player.PositionText}" />
                                     </Grid>
                                     <TextBlock Grid.Column="2" Foreground="White" VerticalAlignment="Center"
                                                Text="{Binding Player.LengthSeconds, StringFormat={}{0:0}s}"
