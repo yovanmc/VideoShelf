@@ -10,6 +10,7 @@ namespace VideoShelf.App.Tests.Harness;
 /// Tests for the M17 I2 additions to HarnessOptions (new --view values) and the
 /// SeedAlphabetCreators logic that produces ≥30 creators spanning the alphabet plus
 /// one creator with ≥40 series.
+/// Also covers the M19 G-3 player sub-state harness tokens.
 /// </summary>
 public class HarnessViewsAndSeedTests
 {
@@ -24,6 +25,40 @@ public class HarnessViewsAndSeedTests
     {
         var opts = HarnessOptions.Parse(new[] { "--view", viewName, "--done-signal", @"C:\s.txt" });
         opts.View.ShouldBe(viewName);
+        opts.IsHarness.ShouldBeTrue();
+    }
+
+    // ── G-3 (M19): new player sub-state --view tokens ────────────────────────
+
+    [Theory]
+    [InlineData("PlayerMore")]
+    [InlineData("PlayerTracks")]
+    [InlineData("PlayerVolume")]
+    [InlineData("PlayerSpeed")]
+    [InlineData("PlayerAspect")]
+    [InlineData("PlayerAbRepeat")]
+    [InlineData("PlayerSkipFeedback")]
+    [InlineData("PlayerUpNext")]
+    public void Parse_NewM19PlayerViewValues_AreAccepted(string viewName)
+    {
+        var opts = HarnessOptions.Parse(new[] { "--view", viewName, "--done-signal", @"C:\s.txt" });
+        opts.View.ShouldBe(viewName);
+        opts.IsHarness.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Parse_PlayerSubStates_SetSeedDemo()
+    {
+        // Verify that --seed-demo + player sub-state tokens both parse correctly together
+        // (as the sweep always passes --seed-demo so a real DB is populated).
+        var opts = HarnessOptions.Parse(new[]
+        {
+            "--view", "PlayerMore",
+            "--seed-demo",
+            "--done-signal", @"C:\s.txt"
+        });
+        opts.View.ShouldBe("PlayerMore");
+        opts.SeedDemo.ShouldBeTrue();
         opts.IsHarness.ShouldBeTrue();
     }
 

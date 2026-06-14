@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Threading;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
+using VideoShelf.App.Views;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
@@ -58,6 +59,13 @@ public sealed class HarnessRunner
         _maintenance = maintenance;
     }
 
+    /// <summary>
+    /// Optional action executed AFTER the main SettleAsync (post-settle).
+    /// Set by NavigateAsync for player sub-states that need the PlayerView to be
+    /// fully loaded before opening flyouts or showing feedback badges.
+    /// </summary>
+    private Action? _postSettleAction;
+
     public async Task RunAsync()
     {
         try
@@ -73,8 +81,26 @@ public sealed class HarnessRunner
                 await ScanAndReloadAsync();
             }
 
+            // M19 player sub-states always need the full video settle (player in tree).
+            var isPlayerState = _options.View is
+                "Player" or "PiP" or "PlayerQueue" or
+                "PlayerMore" or "PlayerTracks" or "PlayerVolume" or
+                "PlayerSpeed" or "PlayerAspect" or "PlayerAbRepeat" or
+                "PlayerSkipFeedback" or "PlayerUpNext";
+
             await NavigateAsync(_options.View);
-            await SettleAsync(isVideo: _options.View is "Player" or "PiP" or "PlayerQueue");
+            await SettleAsync(isVideo: isPlayerState);
+
+            // Run any post-settle action (e.g. open a flyout after the PlayerView is loaded).
+            if (_postSettleAction is { } postAction)
+            {
+                _postSettleAction = null;
+                await Application.Current.Dispatcher.InvokeAsync(postAction, DispatcherPriority.Render);
+                // Short extra settle so the flyout/badge is visible before capture.
+                await Task.Delay(300);
+                await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+            }
+
             WriteDoneSignal($"OK view={_options.View}");
         }
         catch (Exception ex)
@@ -112,6 +138,62 @@ public sealed class HarnessRunner
             case "Search": await NavigateSearchAsync(); break;
             case "Queue": await ShowQueueAsync(); break;
             case "PlayerQueue": await PlayWithQueueDrawerAsync(); break;
+
+            // ── M19 player sub-states ─────────────────────────────────────────────
+            // Each starts playback then sets a post-settle action to put the player
+            // into the target state once the PlayerView is fully in the visual tree.
+
+            // "⋯ More" overflow flyout open (speed row, aspect row, A-B row, set-cover, screenshot).
+            case "PlayerMore":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => OpenPlayerFlyout("More");
+                break;
+
+            // Tracks flyout open (audio list, subtitle list, "+ Sub", normalize toggle).
+            case "PlayerTracks":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => OpenPlayerFlyout("Tracks");
+                break;
+
+            // Volume flyout open (volume slider + mute button).
+            case "PlayerVolume":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => OpenPlayerFlyout("Volume");
+                break;
+
+            // Speed set to 1.5× so RateLabel shows "1.5×".
+            case "PlayerSpeed":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => _main.Player.SetPlaybackRateCommand.Execute(1.5);
+                break;
+
+            // Aspect cycled to 16:9 (second preset — Default→16:9→4:3→Fill).
+            case "PlayerAspect":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => _main.Player.CycleAspectCommand.Execute(null);
+                break;
+
+            // A-B repeat active: set A at ~3 s, B at ~8 s so the bar chip lights up.
+            case "PlayerAbRepeat":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () =>
+                {
+                    _main.Player.RepeatStartSeconds = 3.0;
+                    _main.Player.RepeatEndSeconds   = 8.0;
+                };
+                break;
+
+            // Skip-feedback badge visible: "−10s" badge shown after SkipBack10.
+            case "PlayerSkipFeedback":
+                await PlayAsync(_options.Play!, pip: false);
+                _postSettleAction = () => _main.Player.SkipBack10Command.Execute(null);
+                break;
+
+            // Up-Next countdown card visible: seed a 2-item queue, then call ShowUpNext directly
+            // with the second episode so the card renders with a title and 10-second countdown.
+            case "PlayerUpNext":
+                await NavigatePlayerUpNextAsync();
+                break;
             case "SmartViews": _main.ShowSmartViewsCommand.Execute(null); break;
             case "Playlists":  _main.ShowPlaylistsCommand.Execute(null); break;
             case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
@@ -297,6 +379,55 @@ public sealed class HarnessRunner
         if (_options.DoneSignal is null) return;
         try { File.WriteAllText(_options.DoneSignal, message + Environment.NewLine); }
         catch { }
+    }
+
+    // ── M19 player-state helpers ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Opens a named Popup flyout on the live <see cref="PlayerView"/> via the
+    /// <see cref="PlayerView.OpenFlyoutForHarness"/> harness hook.
+    /// No-op when the <see cref="MainWindow"/> or <see cref="PlayerView"/> are not available
+    /// (belt-and-suspenders safety; the settle should always ensure both are live).
+    /// </summary>
+    private static void OpenPlayerFlyout(string which)
+    {
+        if (Application.Current.MainWindow is MainWindow win)
+            win.GetPlayerView()?.OpenFlyoutForHarness(which);
+    }
+
+    /// <summary>
+    /// Seeds a 2-item play queue and shows the Up-Next card for the second episode
+    /// without waiting for natural end-of-video. This lets the sweep capture the
+    /// countdown card with a real title and the 10-second initial count.
+    ///
+    /// Seed ordering: the synthetic queue items are added AFTER ScanAndReload completed
+    /// (SeedDemoAsync is called before NavigateAsync), so no re-scan can mark them missing.
+    /// </summary>
+    private async Task NavigatePlayerUpNextAsync()
+    {
+        // Start playing the richest available episode (same as PlayAsync).
+        var (sectionId, series) = await FindRichestSeriesAsync();
+        var episodes = _library.GetEpisodes(series.SeriesId);
+        var first    = episodes.FirstOrDefault()
+            ?? throw new InvalidOperationException("Richest series has no episodes to play.");
+
+        _main.Player.AutoHideSuppressed = true;
+        _main.PlayEpisode(first);
+
+        // Find a "next" episode for the card: prefer the second episode in the same series;
+        // fall back to the first episode of any other series in the same section.
+        var next = episodes.Count > 1
+            ? episodes[1]
+            : _library.GetEpisodesForSection(sectionId)
+                      .FirstOrDefault(e => e.VideoId != first.VideoId);
+
+        if (next is not null)
+        {
+            // Schedule ShowUpNext as a post-settle action so the PlayerView is live
+            // and the card's Visibility binding fires on a rendered overlay.
+            _postSettleAction = () =>
+                _main.UpNext.ShowUpNext(next, () => { /* harness: don't actually play next */ });
+        }
     }
 
     // ---- Helpers wired to the real APIs ----

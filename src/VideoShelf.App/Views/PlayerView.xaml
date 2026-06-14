@@ -538,7 +538,7 @@
                                         Background="{StaticResource AccentBrush}"
                                         Padding="8,2">
                                     <TextBlock Text="{Binding UpNext.CountdownSeconds}"
-                                               Foreground="#FF000000" FontSize="12" FontWeight="SemiBold" />
+                                               Foreground="White" FontSize="12" FontWeight="SemiBold" />
                                 </Border>
                             </Grid>
 
