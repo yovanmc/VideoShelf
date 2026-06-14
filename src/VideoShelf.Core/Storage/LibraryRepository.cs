@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using Microsoft.Data.Sqlite;
 using VideoShelf.Core.Discovery;
@@ -53,18 +55,38 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return (long)cmd.ExecuteScalar()!;
     }
 
-    public long UpsertVideo(long seriesId, string filePath, int episodeNo, string format)
+    /// <summary>
+    /// Upserts a video row keyed by <paramref name="filePath"/>.
+    /// <paramref name="sizeBytes"/> is optional (nullable-trailing pattern); when non-null it is
+    /// written to <c>size_bytes</c> on both INSERT and UPDATE so the column stays current.
+    /// </summary>
+    public long UpsertVideo(long seriesId, string filePath, int episodeNo, string format, long? sizeBytes = null)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            INSERT INTO videos(series_id, file_path, episode_no, raw_filename, format, added_at, missing)
-            VALUES($s, $p, $e, $r, $f, $at, 0)
-            ON CONFLICT(file_path) DO UPDATE SET series_id=excluded.series_id,
-                episode_no=excluded.episode_no, raw_filename=excluded.raw_filename,
-                format=excluded.format
-            RETURNING id;
-            """;
+        if (sizeBytes.HasValue)
+        {
+            cmd.CommandText = """
+                INSERT INTO videos(series_id, file_path, episode_no, raw_filename, format, added_at, missing, size_bytes)
+                VALUES($s, $p, $e, $r, $f, $at, 0, $sz)
+                ON CONFLICT(file_path) DO UPDATE SET series_id=excluded.series_id,
+                    episode_no=excluded.episode_no, raw_filename=excluded.raw_filename,
+                    format=excluded.format, size_bytes=excluded.size_bytes
+                RETURNING id;
+                """;
+            cmd.Parameters.AddWithValue("$sz", sizeBytes.Value);
+        }
+        else
+        {
+            cmd.CommandText = """
+                INSERT INTO videos(series_id, file_path, episode_no, raw_filename, format, added_at, missing)
+                VALUES($s, $p, $e, $r, $f, $at, 0)
+                ON CONFLICT(file_path) DO UPDATE SET series_id=excluded.series_id,
+                    episode_no=excluded.episode_no, raw_filename=excluded.raw_filename,
+                    format=excluded.format
+                RETURNING id;
+                """;
+        }
         cmd.Parameters.AddWithValue("$s", seriesId);
         cmd.Parameters.AddWithValue("$p", filePath);
         cmd.Parameters.AddWithValue("$e", episodeNo);
@@ -91,7 +113,7 @@ public sealed class LibraryRepository(VideoShelfDb db)
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             SELECT id, series_id, file_path, episode_no, raw_filename, format, duration,
-                   thumbnail_path, watched, added_at, missing
+                   thumbnail_path, watched, added_at, missing, size_bytes
             FROM videos WHERE series_id=$s ORDER BY episode_no
             """;
         cmd.Parameters.AddWithValue("$s", seriesId);
@@ -102,7 +124,8 @@ public sealed class LibraryRepository(VideoShelfDb db)
                 r.GetInt64(0), r.GetInt64(1), r.GetString(2), r.GetInt32(3), r.GetString(4),
                 r.GetString(5), r.IsDBNull(6) ? null : r.GetDouble(6),
                 r.IsDBNull(7) ? null : r.GetString(7), r.GetInt64(8) != 0,
-                r.IsDBNull(9) ? "" : r.GetString(9), r.GetInt64(10) != 0));
+                r.IsDBNull(9) ? "" : r.GetString(9), r.GetInt64(10) != 0,
+                r.IsDBNull(11) ? null : r.GetInt64(11)));
         return list;
     }
 
@@ -626,5 +649,95 @@ public sealed class LibraryRepository(VideoShelfDb db)
             cmd.ExecuteNonQuery();
         }
         tx.Commit();
+    }
+
+    // ── M18-A: size_bytes backfill ─────────────────────────────────────────────
+
+    /// <summary>Returns ids+paths for present (non-missing) videos that have no <c>size_bytes</c> yet.</summary>
+    public IReadOnlyList<VideoToProbe> GetVideosNeedingSize()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, file_path FROM videos WHERE size_bytes IS NULL AND missing = 0 ORDER BY id";
+        var list = new List<VideoToProbe>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new VideoToProbe(r.GetInt64(0), r.GetString(1)));
+        return list;
+    }
+
+    /// <summary>Writes the file-system size in bytes for a single video.</summary>
+    public void SetSizeBytes(long videoId, long bytes)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET size_bytes = $b WHERE id = $id";
+        cmd.Parameters.AddWithValue("$b", bytes);
+        cmd.Parameters.AddWithValue("$id", videoId);
+        cmd.ExecuteNonQuery();
+    }
+
+    // ── M18-A: scan-diff helpers ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Snapshot of path → wasMissing for all videos under a source, taken BEFORE
+    /// <see cref="MarkAllMissingForSource"/> is called. Used by <c>ScanService</c> to
+    /// classify each re-found file as Added / Restored / Updated.
+    /// </summary>
+    public Dictionary<string, bool> GetVideoPathStates(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT v.file_path, v.missing
+            FROM videos v
+            JOIN series se ON se.id = v.series_id
+            JOIN sections sc ON sc.id = se.section_id
+            WHERE sc.source_id = $src
+            """;
+        cmd.Parameters.AddWithValue("$src", sourceId);
+        var dict = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            dict[r.GetString(0)] = r.GetInt64(1) != 0;
+        return dict;
+    }
+
+    /// <summary>Count of videos still marked missing under a source after the scan walk.</summary>
+    public int CountMissingForSource(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT COUNT(*) FROM videos v
+            JOIN series se ON se.id = v.series_id
+            JOIN sections sc ON sc.id = se.section_id
+            WHERE sc.source_id = $src AND v.missing = 1
+            """;
+        cmd.Parameters.AddWithValue("$src", sourceId);
+        return (int)(long)cmd.ExecuteScalar()!;
+    }
+
+    /// <summary>Writes the ISO8601 last-scan timestamp for a source (rounds to nearest second).</summary>
+    public void SetSourceLastScanUtc(long sourceId, DateTimeOffset utc)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE sources SET last_scan_utc = $t WHERE id = $id";
+        cmd.Parameters.AddWithValue("$t", utc.ToString("o"));
+        cmd.Parameters.AddWithValue("$id", sourceId);
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Returns the last-scan UTC timestamp for a source, or null if never scanned.</summary>
+    public DateTimeOffset? GetSourceLastScanUtc(long sourceId)
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT last_scan_utc FROM sources WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", sourceId);
+        var result = cmd.ExecuteScalar();
+        if (result is null or System.DBNull) return null;
+        return DateTimeOffset.Parse((string)result, null, DateTimeStyles.RoundtripKind);
     }
 }
