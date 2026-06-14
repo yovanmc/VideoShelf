@@ -63,4 +63,22 @@ public class FavoritesViewModelTests
         played.ShouldNotBeNull();
         played!.VideoId.ShouldBe(videoId);
     }
+
+    // ── M21 Group C skeleton-loader regression ────────────────────────────────
+
+    /// <summary>IsLoading must be false after LoadAsync completes (finally-clause guard).</summary>
+    [Fact]
+    public async Task IsLoading_is_false_after_LoadAsync_completes()
+    {
+        using var temp = new AppTempDb();
+        var (curation, lib, videoId) = Seed(temp);
+        curation.SetFavorite(videoId, true);
+        var vm = new FavoritesViewModel(curation, lib);
+
+        vm.IsLoading.ShouldBeFalse(); // starts false
+
+        await vm.LoadAsync();
+
+        vm.IsLoading.ShouldBeFalse(); // cleared in finally
+    }
 }
