@@ -1,10 +1,14 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
+using VideoShelf.App.Scale;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
@@ -70,6 +74,21 @@ public sealed class HarnessRunner
     {
         try
         {
+            // Stress-library seeding: DB-only rows (no disk files), seeded before any scan/load
+            // so GetSectionSummaries() sees the stress data on the first view load.
+            // After seeding, reload the library VM so the Browse/Home grids reflect the stress data.
+            if (_options.StressSpec is not null)
+            {
+                var (creators, biggest, total) = _options.ParseStressSpec();
+                var plan = StressLibrarySpec.Generate(creators, biggest, total, seed: 20260614);
+                var dataDir = _options.DataDir ?? Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VideoShelf");
+                var stressRoot = Path.Combine(dataDir, "stress");
+                new StressLibrarySeeder(_library).Seed(plan, sourceRoot: stressRoot);
+                // Trigger the library reload command so the MainViewModel/Creators VM refresh.
+                await ScanAndReloadAsync();
+            }
+
             if (_options.Folder is not null)
                 await AddSourceAsync(_options.Folder);
             if (_options.AutoStart || _options.Folder is not null)
@@ -100,6 +119,10 @@ public sealed class HarnessRunner
                 await Task.Delay(300);
                 await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
             }
+
+            // Metrics capture: write after the view is settled and rendered.
+            if (_options.MetricsOut is { } metricsPath)
+                await WriteMetricsAsync(metricsPath, _options.View ?? "");
 
             WriteDoneSignal($"OK view={_options.View}");
         }
@@ -453,6 +476,85 @@ public sealed class HarnessRunner
                 "PlayerUpNext harness state requires a seeded next episode but none was found. " +
                 "Seed a multi-episode series or a section with at least two videos.");
         }
+    }
+
+    // ---- Metrics capture ----
+
+    /// <summary>
+    /// Captures render-scale metrics for the current view and writes them as JSON.
+    /// Counts realized containers in the on-screen ListBox (Browse → CreatorsGridListBox;
+    /// SectionDetail → SeriesGridListBox) via ItemContainerGenerator.
+    /// Falls back to counting 0 if the target ListBox cannot be found in the visual tree
+    /// (acceptable: the bench script will show 0 and the gate won't block the non-WPF path).
+    /// </summary>
+    private async Task WriteMetricsAsync(string metricsPath, string viewName)
+    {
+        var sw = Stopwatch.StartNew();
+
+        // Extra dispatcher flush to ensure the virtualized list has realized its initial containers.
+        await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+        await Task.Delay(200);
+        await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
+
+        sw.Stop();
+
+        int nodes = await Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            // Try to find the target ListBox by name from the MainWindow's named element scope.
+            var win = Application.Current.MainWindow;
+            if (win is null) return 0;
+
+            // For Browse → count CreatorsGridListBox realized containers.
+            // For SectionDetail → count SeriesGridListBox realized containers.
+            var listBoxName = viewName switch
+            {
+                "SectionDetail" => "SeriesGridListBox",
+                _ => "CreatorsGridListBox",
+            };
+
+            // Walk the visual tree to find the named ListBox (FindName only finds within the
+            // same namescope; for UserControl-hosted elements, walk descendants).
+            var lb = FindDescendantByName<ListBox>(win, listBoxName);
+            if (lb is null) return 0;
+
+            // Count realized containers via ItemContainerGenerator.
+            var gen = lb.ItemContainerGenerator;
+            int count = 0;
+            for (int i = 0; i < lb.Items.Count; i++)
+            {
+                if (gen.ContainerFromIndex(i) is not null) count++;
+            }
+            return count;
+        }, DispatcherPriority.Render);
+
+        var metric = new ScaleMetrics
+        {
+            View = viewName,
+            CreatorCount = _library.GetSectionSummaries().Count,
+            RenderedNodeCount = nodes,
+            InitialRenderMs = sw.ElapsedMilliseconds,
+            ManagedHeapBytes = GC.GetTotalMemory(forceFullCollection: true),
+        };
+
+        File.WriteAllText(metricsPath, ScaleMetrics.ToJson(new[] { metric }));
+    }
+
+    /// <summary>
+    /// Walks the visual tree from <paramref name="root"/> to find the first descendant
+    /// of type <typeparamref name="T"/> with <see cref="FrameworkElement.Name"/> == <paramref name="name"/>.
+    /// Returns null if not found.
+    /// </summary>
+    private static T? FindDescendantByName<T>(DependencyObject root, string name) where T : FrameworkElement
+    {
+        int count = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T fe && fe.Name == name) return fe;
+            var found = FindDescendantByName<T>(child, name);
+            if (found is not null) return found;
+        }
+        return null;
     }
 
     // ---- Helpers wired to the real APIs ----
