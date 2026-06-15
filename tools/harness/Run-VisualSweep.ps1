@@ -5,7 +5,8 @@ param(
     [string]$OutDir   = (Join-Path $PSScriptRoot '..\..\tests\screenshots'),
     [string]$Fixtures = (Join-Path $env:TEMP 'vs-fixtures'),
     [int]$TimeoutSec  = 120,
-    [int]$SettleSeconds = 5    # post-foreground wait so the WPF-UI Mica/Fluent surface composes (capturing too early yields an all-black frame)
+    [int]$SettleSeconds = 5,   # post-foreground wait so the WPF-UI Mica/Fluent surface composes (capturing too early yields an all-black frame)
+    [switch]$Scale             # when set, also runs Run-ScaleBench.ps1 after the normal view sweep
 )
 
 $ErrorActionPreference = 'Stop'
@@ -182,3 +183,12 @@ foreach ($name in $views.Keys) {
 Write-Host "`n=== Screenshots written to $shotDir ==="
 $results | ForEach-Object { Write-Host "  $_" }
 Write-Host "`nPNG_DIR=$shotDir"
+
+# Optional scale bench: chain Run-ScaleBench.ps1 after the normal sweep when -Scale is set.
+# Keep them separable: the bench uses its own 500×200×5000 stress fixture (DB-only rows, no
+# disk files), while the normal sweep above uses the small real-clip ffmpeg fixtures.
+if ($Scale) {
+    Write-Host "`n--- Running scale bench (Run-ScaleBench.ps1 -Spec 500x200x5000) ---"
+    & (Join-Path $PSScriptRoot 'Run-ScaleBench.ps1') -Spec '500x200x5000'
+    if ($LASTEXITCODE -ne 0) { throw "Scale bench failed (exit $LASTEXITCODE)." }
+}

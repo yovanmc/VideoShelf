@@ -256,7 +256,45 @@ a one-line note of what shipped + any deferred minor issues.
 
 ---
 
-## 9. One-run checklist (copy this each time)
+## 9. M22 scale verification
+
+M22 (Performance & Scale) ships two extra harness flags and a standalone bench script.
+
+**New harness flags (passed to `VideoShelf.App.exe`):**
+
+| Flag | Purpose |
+|---|---|
+| `--stress <CxBxT>` | Seed a DB-only stress library with C creators, B series in the biggest creator, T total videos. E.g. `--stress 500x200x5000`. No disk files written. |
+| `--metrics-out <path>` | After settle, write a JSON array of `ScaleMetrics` (RenderedNodeCount, InitialRenderMs, ManagedHeapBytes, CreatorCount) to `<path>`. |
+
+`--probe-concurrency` was considered for scan parallelism but is not a public flag — the probe scheduler selects degree internally based on `Environment.ProcessorCount`.
+
+**Standalone bench (Release build required):**
+
+```powershell
+pwsh -File tools/harness/Run-ScaleBench.ps1 -Spec 500x200x5000
+```
+
+Seeded gates:
+- Browse: realized creator containers ≤ 80
+- SectionDetail (biggest creator): realized series containers ≤ 60
+- Initial render: ≤ 1500 ms for both views
+
+Prints `SCALE BENCH PASS` on success; throws on failure.
+
+**Combined sweep + bench (one command):**
+
+```powershell
+pwsh -File tools/harness/Run-VisualSweep.ps1 -Scale
+```
+
+`-Scale` chains `Run-ScaleBench.ps1 -Spec 500x200x5000` after the normal per-view functional sweep. Keep them separable when needed: the bench uses a 500×200×5000 DB-only fixture; the normal sweep uses the small real-clip ffmpeg fixtures under `$env:TEMP\vs-fixtures`.
+
+**Harness exit:** as of M22 the harness process exits cleanly on its own (via `Dispatcher.InvokeShutdown()` immediately after the done-signal is flushed). No manual kill is needed; `Run-ScaleBench.ps1` waits on the process via `| Out-Null` and returns on its own.
+
+---
+
+## 10. One-run checklist (copy this each time)
 
 - [ ] Identified next `[ ]` phase from the Progress Log
 - [ ] Synced main, created worktree + branch, verified green baseline
