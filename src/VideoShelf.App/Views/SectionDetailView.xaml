@@ -517,7 +517,7 @@
                                                                        StaysOpen="False"
                                                                        AllowsTransparency="True"
                                                                        PopupAnimation="Fade">
-                                                                    <Border Background="{DynamicResource ApplicationBackgroundBrush}"
+                                                                    <Border Background="{DynamicResource SurfaceBrush}"
                                                                             BorderBrush="{StaticResource DividerBrush}"
                                                                             BorderThickness="1"
                                                                             CornerRadius="6"
