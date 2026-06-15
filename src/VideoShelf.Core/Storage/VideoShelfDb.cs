@@ -90,7 +90,13 @@ public sealed class VideoShelfDb : IDisposable
         cmd.ExecuteNonQuery();
     }
 
-    public void Dispose() => SqliteConnection.ClearAllPools();
+    public void Dispose()
+    {
+        // ClearAllPools() is process-global and would destroy the connection pools of every
+        // other VideoShelfDb instance (e.g. parallel test runs). Clear only THIS db's pool.
+        using var conn = new SqliteConnection(_connectionString);
+        SqliteConnection.ClearPool(conn);
+    }
 
     private const string Schema = """
         CREATE TABLE IF NOT EXISTS sources (
