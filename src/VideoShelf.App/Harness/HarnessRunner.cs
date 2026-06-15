@@ -396,14 +396,15 @@ public sealed class HarnessRunner
     }
 
     /// <summary>
-    /// Seeds the Search view with a term matching the first scanned creator so the
-    /// Creators section is populated for the screenshot sweep.
+    /// Seeds the Search view with a term that populates ALL THREE result groups
+    /// (Creators / Series / Videos) so the M23 grouped layout + result-count summary
+    /// are exercised by the screenshot sweep. The single letter "b" reliably matches
+    /// the seeded B-creators ("Bella B"/"Bruno Bay"), the real "Big Buck Bunny" series,
+    /// and its "Big Buck Bunny Episode N" videos (all present in the seed-demo fixtures).
     /// </summary>
     private async Task NavigateSearchAsync()
     {
-        var summaries = _library.GetSectionSummaries();
-        var term = summaries.Count > 0 ? summaries[0].DisplayName : "video";
-        _main.Search.Query = term;
+        _main.Search.Query = "b";
         await _main.Search.WaitForIdleAsync();
     }
 

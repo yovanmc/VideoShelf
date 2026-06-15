@@ -34,6 +34,7 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
     }
 
     public ObservableCollection<CreatorCardViewModel> CreatorResults { get; } = [];
+    public ObservableCollection<SeriesResultViewModel> SeriesResults { get; } = [];
     public ObservableCollection<RecencyCardViewModel> VideoResults { get; } = [];
 
     private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
@@ -55,9 +56,31 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
     [ObservableProperty] private string _query = "";
 
     public bool HasCreatorResults => CreatorResults.Count > 0;
+    public bool HasSeriesResults => SeriesResults.Count > 0;
     public bool HasVideoResults => VideoResults.Count > 0;
     public bool HasQuery => !string.IsNullOrWhiteSpace(Query);
-    public bool NoResults => HasQuery && !_searching && !HasCreatorResults && !HasVideoResults;
+    public bool NoResults => HasQuery && !_searching && !HasCreatorResults && !HasSeriesResults && !HasVideoResults;
+
+    /// <summary>
+    /// Summary line shown at the top of search results, e.g. "2 creators · 1 series · 4 videos".
+    /// Recomputed after each search completes.
+    /// </summary>
+    public string ResultSummary
+    {
+        get
+        {
+            var c = CreatorResults.Count;
+            var s = SeriesResults.Count;
+            var v = VideoResults.Count;
+            var creatorsPart = c == 1 ? "1 creator" : $"{c} creators";
+            var seriesPart   = s == 1 ? "1 series"  : $"{s} series";
+            var videosPart   = v == 1 ? "1 video"   : $"{v} videos";
+            return $"{creatorsPart} · {seriesPart} · {videosPart}";
+        }
+    }
+
+    /// <summary>True when there are results to summarize (at least one hit in any group).</summary>
+    public bool HasResults => HasQuery && !_searching && (HasCreatorResults || HasSeriesResults || HasVideoResults);
 
     public event EventHandler<EpisodeView>? PlayRequested;
     public event Action<long>? OpenCreatorRequested;
@@ -78,6 +101,7 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
                 _searching = false;
                 UnsubscribeVideoResults();
                 CreatorResults.Clear();
+                SeriesResults.Clear();
                 VideoResults.Clear();
                 Selection.ExitSelectionModeCommand.Execute(null);
                 RaiseFlags();
@@ -87,13 +111,16 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
             _searching = true;
             RaiseFlags();
             await Task.Delay(150, ct);   // debounce keystrokes
-            var (creators, videos) = await Task.Run(() =>
+            var (creators, seriesList, videos) = await Task.Run(() =>
                 (_library.SearchCreators(query, ResultLimit),
+                 _library.SearchSeries(query, ResultLimit),
                  _library.SearchVideos(query, ResultLimit)), ct);
             ct.ThrowIfCancellationRequested();
 
             CreatorResults.Clear();
             foreach (var c in creators) CreatorResults.Add(MakeCreatorCard(c));
+            SeriesResults.Clear();
+            foreach (var s in seriesList) SeriesResults.Add(MakeSeriesCard(s));
             UnsubscribeVideoResults();
             Selection.ExitSelectionModeCommand.Execute(null);
             VideoResults.Clear();
@@ -136,6 +163,14 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
         return card;
     }
 
+    private SeriesResultViewModel MakeSeriesCard(SeriesResult s)
+    {
+        var card = new SeriesResultViewModel(s, _thumbnails, _imageLoader);
+        card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
+        _ = card.LoadImageAsync(CancellationToken.None);
+        return card;
+    }
+
     private RecencyCardViewModel MakeVideoCard(RecencyItem i)
     {
         var card = new RecencyCardViewModel(i, _thumbnails, _imageLoader);
@@ -153,9 +188,12 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
     private void RaiseFlags()
     {
         OnPropertyChanged(nameof(HasCreatorResults));
+        OnPropertyChanged(nameof(HasSeriesResults));
         OnPropertyChanged(nameof(HasVideoResults));
         OnPropertyChanged(nameof(HasQuery));
         OnPropertyChanged(nameof(NoResults));
+        OnPropertyChanged(nameof(ResultSummary));
+        OnPropertyChanged(nameof(HasResults));
     }
 
     /// Test hook: await the in-flight search.
