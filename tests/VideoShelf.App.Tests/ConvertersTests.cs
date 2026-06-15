@@ -115,4 +115,54 @@ public sealed class ConvertersTests
         Should.Throw<NotSupportedException>(() =>
             conv.ConvertBack(Visibility.Visible, typeof(object), null, CultureInfo.InvariantCulture));
     }
+
+    // ── HalfStarSymbolConverter ───────────────────────────────────────────────
+
+    [Fact]
+    public void HalfStarSymbol_rating3point5_cell4_returns_Half()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(3.5, typeof(object), "4", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.StarHalf24);
+    }
+
+    [Fact]
+    public void HalfStarSymbol_rating3point5_cell3_returns_Full()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(3.5, typeof(object), "3", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.Star24);
+    }
+
+    [Fact]
+    public void HalfStarSymbol_rating3point5_cell5_returns_Empty()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(3.5, typeof(object), "5", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.StarOff24);
+    }
+
+    [Fact]
+    public void HalfStarSymbol_rating5_cell5_returns_Full()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(5.0, typeof(object), "5", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.Star24);
+    }
+
+    [Fact]
+    public void HalfStarSymbol_rating0_cell1_returns_Empty()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(0.0, typeof(object), "1", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.StarOff24);
+    }
+
+    [Fact]
+    public void HalfStarSymbol_rating0point5_cell1_returns_Half()
+    {
+        var conv = new HalfStarSymbolConverter();
+        var result = conv.Convert(0.5, typeof(object), "1", CultureInfo.InvariantCulture);
+        result.ShouldBe(Wpf.Ui.Controls.SymbolRegular.StarHalf24);
+    }
 }

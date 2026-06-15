@@ -1,3 +1,5 @@
+using System.Windows.Controls.Primitives;
+
 namespace VideoShelf.App.Views;
 
 public partial class SectionDetailView : System.Windows.Controls.UserControl
@@ -7,12 +9,26 @@ public partial class SectionDetailView : System.Windows.Controls.UserControl
         InitializeComponent();
     }
 
-    private void AddToPlaylist_Click(object sender, System.Windows.RoutedEventArgs e)
+    /// <summary>
+    /// Closes the rating Popup after a star half-click.
+    /// The ToggleButton's IsChecked (bound to Popup.IsOpen) is set to false.
+    /// </summary>
+    private void RatingPopup_StarClicked(object sender, System.Windows.RoutedEventArgs e)
     {
-        if (sender is System.Windows.FrameworkElement fe && fe.ContextMenu is { } menu)
+        // Walk up to the Popup and close it; the command has already been invoked by the Button.
+        var btn = sender as System.Windows.FrameworkElement;
+        var popup = FindAncestor<Popup>(btn);
+        if (popup is not null)
+            popup.IsOpen = false;
+    }
+
+    private static T? FindAncestor<T>(System.Windows.DependencyObject? obj) where T : System.Windows.DependencyObject
+    {
+        while (obj is not null)
         {
-            menu.PlacementTarget = fe;       // ensure PlacementTarget.Tag bindings resolve
-            menu.IsOpen = true;
+            if (obj is T t) return t;
+            obj = System.Windows.Media.VisualTreeHelper.GetParent(obj);
         }
+        return null;
     }
 }

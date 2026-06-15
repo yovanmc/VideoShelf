@@ -47,21 +47,34 @@ public class EpisodeCurationTests
         var (vm, curation) = Make(temp);
 
         vm.SetRatingCommand.Execute("3");
-        vm.Rating.ShouldBe(3);
+        vm.Rating.ShouldBe(3.0);
 
         // Verify persisted
         var fresh = new CurationRepository(temp.Db);
-        fresh.GetRating(vm.VideoId).ShouldBe(3);
+        fresh.GetRating(vm.VideoId).ShouldBe(3.0);
 
         // Clamp above 5
         vm.SetRatingCommand.Execute("99");
-        vm.Rating.ShouldBe(5);
-        fresh.GetRating(vm.VideoId).ShouldBe(5);
+        vm.Rating.ShouldBe(5.0);
+        fresh.GetRating(vm.VideoId).ShouldBe(5.0);
 
         // Clamp below 0
         vm.SetRatingCommand.Execute("-5");
-        vm.Rating.ShouldBe(0);
-        fresh.GetRating(vm.VideoId).ShouldBe(0);
+        vm.Rating.ShouldBe(0.0);
+        fresh.GetRating(vm.VideoId).ShouldBe(0.0);
+    }
+
+    [Fact]
+    public void SetRating_persists_half_star()
+    {
+        using var temp = new AppTempDb();
+        var (vm, curation) = Make(temp);
+
+        vm.SetRatingCommand.Execute("3.5");
+        vm.Rating.ShouldBe(3.5);
+
+        var fresh = new CurationRepository(temp.Db);
+        fresh.GetRating(vm.VideoId).ShouldBe(3.5);
     }
 
     [Fact]
