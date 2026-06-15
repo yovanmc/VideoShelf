@@ -126,6 +126,41 @@ public sealed class CommandPaletteViewModelTests : IDisposable
         _vm.Results.ShouldContain(r => r.Label == "NatGeo" && r.Kind == PaletteItemKind.Creator);
     }
 
+    // ── Series DB results ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Query_matching_series_title_returns_series_result()
+    {
+        _vm.Query = "Planet";
+        await _vm.WaitForIdleAsync();
+
+        _vm.Results.ShouldContain(r => r.Label == "Planet Earth" && r.Kind == PaletteItemKind.Series);
+    }
+
+    [Fact]
+    public async Task Series_result_has_episode_count_sub_label()
+    {
+        _vm.Query = "Planet Earth";
+        await _vm.WaitForIdleAsync();
+
+        var item = _vm.Results.FirstOrDefault(r => r.Kind == PaletteItemKind.Series);
+        item.ShouldNotBeNull();
+        item!.SubLabel.ShouldNotBeNullOrEmpty();
+        item.SubLabel.ShouldContain("ep");
+    }
+
+    [Fact]
+    public async Task Series_result_appears_between_creator_and_video_in_sort_order()
+    {
+        _vm.Query = "Planet";
+        await _vm.WaitForIdleAsync();
+
+        // Should have at least a series and video result for "Planet Earth".
+        var seriesIdx = _vm.Results.IndexOf(_vm.Results.First(r => r.Kind == PaletteItemKind.Series));
+        var videoIdx  = _vm.Results.IndexOf(_vm.Results.First(r => r.Kind == PaletteItemKind.Video));
+        seriesIdx.ShouldBeLessThan(videoIdx);
+    }
+
     // ── Video DB results ──────────────────────────────────────────────────────
 
     [Fact]
