@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
+using VideoShelf.App.Scale;
 using VideoShelf.App.Services;
 using VideoShelf.App.Tests.TestSupport;
 using VideoShelf.Core.Storage;
@@ -41,5 +42,31 @@ public class MediaBackfillServiceTests
         // Re-running is a no-op: still 0 pending
         await svc.BackfillAsync(CancellationToken.None);
         library.GetVideosNeedingDuration().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Backfill_probes_all_pending_in_parallel_and_persists_each()
+    {
+        using var temp = new AppTempDb();
+        var library = new LibraryRepository(temp.Db);
+
+        // Seed 60 videos across 3 creators × 5 series (using stress seeder)
+        new StressLibrarySeeder(library).Seed(StressLibrarySpec.Generate(3, 5, 60, seed: 2), @"C:\s");
+
+        // Fake probe with delay so concurrent calls actually overlap
+        var fakeProbe = new FakeMediaProbe(durationSeconds: 100, width: 1280, height: 720);
+
+        var (settings, settingsDb) = FakeSettings.WithProbeConcurrency(4);
+        using (settingsDb)
+        {
+            var svc = new MediaBackfillService(library, fakeProbe, settings);
+            await svc.BackfillAsync(CancellationToken.None);
+        }
+
+        // All 60 videos must have a duration written (independent commits, crash-safe)
+        library.CountVideosWithDuration().ShouldBe(60);
+
+        // Parallelism was actually engaged (peak > 1 means at least 2 concurrent probes ran)
+        fakeProbe.MaxObservedConcurrency.ShouldBeGreaterThan(1);
     }
 }

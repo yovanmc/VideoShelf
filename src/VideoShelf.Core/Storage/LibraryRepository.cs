@@ -577,6 +577,15 @@ public sealed class LibraryRepository(VideoShelfDb db)
             r.GetInt64(5) != 0, r.GetInt64(6) != 0);
     }
 
+    /// <summary>Count of present (non-missing) videos that have a duration set. Used by tests and metrics.</summary>
+    public int CountVideosWithDuration()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM videos WHERE duration IS NOT NULL AND missing = 0";
+        return (int)(long)cmd.ExecuteScalar()!;
+    }
+
     /// <summary>Returns all present (non-missing) videos whose duration has not yet been probed.</summary>
     public IReadOnlyList<VideoToProbe> GetVideosNeedingDuration()
     {
