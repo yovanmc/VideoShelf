@@ -51,17 +51,16 @@
          outside a running Application (e.g., XAML designer, unit tests).
          ============================================================ -->
 
-    <!-- App background — matches WPF-UI dark window canvas.
-         StaticResource alias: DesignTokens.xaml is merged after ui:ThemesDictionary
-         and ui:ControlsDictionary in App.xaml, so WPF-UI brush keys are already
-         defined when we alias them here. Views consume these as {DynamicResource SurfaceBrush}
-         or {StaticResource SurfaceBrush} depending on whether theme switching is needed
-         (dark-only app, so StaticResource is fine in views).
-         Confirmed present in WPF-UI 4.3.0 DLL: ApplicationBackgroundBrush,
-         ControlFillColorDefaultBrush, TextFillColorPrimaryBrush, TextFillColorSecondaryBrush. -->
-    <StaticResource x:Key="SurfaceBrush"      ResourceKey="ApplicationBackgroundBrush" />
-    <!-- Card / panel fill — WPF-UI ControlFillColorDefaultBrush (dark: ~#14FFFFFF) -->
-    <StaticResource x:Key="CardSurfaceBrush"  ResourceKey="ControlFillColorDefaultBrush" />
+    <!-- App background — true-black canvas (#070707).
+         M24-A: converted from <StaticResource> aliases (which forward to WPF-UI Mica keys)
+         to DIRECT <SolidColorBrush> values so the color is independent of the window backdrop.
+         Mica is disabled in MainWindow.xaml (WindowBackdropType="None") so these tokens
+         are the sole source of surface colour.
+         Views consume these as {StaticResource SurfaceBrush} / {StaticResource CardSurfaceBrush}
+         (dark-only app, no runtime theme switching needed). -->
+    <SolidColorBrush x:Key="SurfaceBrush"     Color="#FF070707" />
+    <!-- Card / panel fill — slightly lifted above true black to create depth. -->
+    <SolidColorBrush x:Key="CardSurfaceBrush" Color="#FF141414" />
     <!-- Primary / secondary text. Defined as DIRECT brushes (dark-only app) using the
          WPF-UI Fluent dark text values. NOTE: these were previously `<StaticResource>`
          aliases to the WPF-UI TextFillColor*Brush keys, but a nested <StaticResource>

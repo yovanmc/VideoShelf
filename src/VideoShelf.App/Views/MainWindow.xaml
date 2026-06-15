@@ -14,7 +14,8 @@
                  MinWidth="900"
                  MinHeight="600"
                  ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="Mica"
+                 WindowBackdropType="None"
+                 Background="#FF070707"
                  WindowStartupLocation="CenterScreen">
     <ui:FluentWindow.InputBindings>
         <!-- Ctrl+K opens the command palette.
