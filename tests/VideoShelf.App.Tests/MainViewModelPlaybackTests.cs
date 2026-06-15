@@ -45,8 +45,7 @@ public class MainViewModelPlaybackTests
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var smartViews = new SmartViewRepository(temp.Db);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue, smartViews);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
@@ -54,7 +53,6 @@ public class MainViewModelPlaybackTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
-        var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
@@ -62,7 +60,7 @@ public class MainViewModelPlaybackTests
         var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, favoritesVm, watchlistVm,
             playlistsVm, historyVm, lib);
     }
 
@@ -119,15 +117,13 @@ public class MainViewModelPlaybackTests
         var statsRepo = new StatsRepository(temp.Db);
         var tags = new TagRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var smartViews2 = new SmartViewRepository(temp.Db);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue, smartViews2);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
         var renameTool = new RenameToolViewModel(lib, new RenamePlanner(fs), new RenameExecutor(fs, lib), settings, paths);
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
-        var smartViewsVm2 = new SmartViewsViewModel(smartViews2, tags, lib);
         var curation2 = new CurationRepository(temp.Db);
         var favoritesVm2 = new FavoritesViewModel(curation2, lib);
         var watchlistVm2 = new WatchlistViewModel(curation2, lib);
@@ -135,7 +131,7 @@ public class MainViewModelPlaybackTests
         var historyVm2 = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm2, favoritesVm2, watchlistVm2,
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, favoritesVm2, watchlistVm2,
             playlistsVm2, historyVm2, lib);
 
         vm.PlayEpisode(ep1);

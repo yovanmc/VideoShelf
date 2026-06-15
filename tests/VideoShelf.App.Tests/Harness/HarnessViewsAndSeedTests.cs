@@ -18,7 +18,6 @@ public class HarnessViewsAndSeedTests
 
     [Theory]
     [InlineData("BrowseSelection")]
-    [InlineData("CommandPalette")]
     [InlineData("BrowseFilter")]
     [InlineData("MultiRename")]
     public void Parse_NewM17ViewValues_AreAccepted(string viewName)

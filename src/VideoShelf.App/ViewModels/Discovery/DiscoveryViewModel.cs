@@ -13,7 +13,7 @@ namespace VideoShelf.App.ViewModels.Discovery;
 public sealed partial class DiscoveryViewModel(
     DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
     CreatorCardFactory cards, StatsRepository stats, PlayQueueViewModel playQueue,
-    SmartViewRepository smartViews, CurationRepository? curation = null,
+    CurationRepository? curation = null,
     IThumbnailService? thumbnails = null, IImageLoader? imageLoader = null) : ObservableObject
 {
     private const int RailLimit = 24;
@@ -26,8 +26,6 @@ public sealed partial class DiscoveryViewModel(
     public ObservableCollection<TagChipViewModel> AvailableTags { get; } = [];
     public ObservableCollection<CreatorCardViewModel> TagResults { get; } = [];
     public ObservableCollection<CreatorWatchCount> TopCreators { get; } = new();
-    public ObservableCollection<SmartViewShelfViewModel> SmartShelves { get; } = [];
-    public bool HasSmartShelves => SmartShelves.Count > 0;
 
     public ObservableCollection<RecencyCardViewModel> Favorites { get; } = [];
     public bool HasFavorites => Favorites.Count > 0;
@@ -76,11 +74,6 @@ public sealed partial class DiscoveryViewModel(
                 watchItems: curation?.GetWatchlist(RailLimit) ?? []);
         });
 
-        var smartData = await Task.Run(() =>
-            smartViews.GetHomeViews()
-                .Select(v => (view: v, items: smartViews.GetMatchingVideos(v.Definition, RailLimit, now)))
-                .ToList());
-
         _summaryById = data.summaries.ToDictionary(s => s.SectionId);
 
         Fill(ContinueWatching, data.cont, MakeContinueCard);
@@ -102,10 +95,6 @@ public sealed partial class DiscoveryViewModel(
         TopCreators.Clear();
         foreach (var c in data.topCreators) TopCreators.Add(c);
         HasStats = s.TotalVideos > 0;
-
-        SmartShelves.Clear();
-        foreach (var (view, items) in smartData)
-            SmartShelves.Add(new SmartViewShelfViewModel(view.Name, items.Select(MakeRecencyCard)));
 
         RaiseAllHasFlags();
     }
@@ -192,7 +181,6 @@ public sealed partial class DiscoveryViewModel(
         OnPropertyChanged(nameof(HasRecentlyWatched));
         OnPropertyChanged(nameof(HasTags));
         OnPropertyChanged(nameof(HasTagResults));
-        OnPropertyChanged(nameof(HasSmartShelves));
         OnPropertyChanged(nameof(HasFavorites));
         OnPropertyChanged(nameof(HasWatchlist));
         OnPropertyChanged(nameof(IsEmpty));

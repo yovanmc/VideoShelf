@@ -12,7 +12,6 @@ using VideoShelf.App.Scale;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
-using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
@@ -24,9 +23,9 @@ namespace VideoShelf.App.Harness;
 /// Test-only: gated behind HarnessOptions.IsHarness in App.OnStartup.
 /// </summary>
 /// <remarks>
-/// I1 note: MainViewModel's BulkBar/CommandPalette/MultiRename are nullable-trailing-param
+/// I1 note: MainViewModel's BulkBar/MultiRename are nullable-trailing-param
 /// (null in slim test contexts, real instances in production DI and the harness).
-/// The production DI chain in ServiceCollectionExtensions.cs threads all three real
+/// The production DI chain in ServiceCollectionExtensions.cs threads both real
 /// instances; no consolidation is needed here — the pattern is correct as-is.
 /// </remarks>
 public sealed class HarnessRunner
@@ -37,7 +36,6 @@ public sealed class HarnessRunner
     private readonly WatchRepository _watch;
     private readonly TagRepository _tags;
     private readonly CurationRepository _curation;
-    private readonly SmartViewRepository _smartViews;
     private readonly PlaylistRepository _playlists;
     private readonly MaintenanceRepository _maintenance;
 
@@ -48,7 +46,6 @@ public sealed class HarnessRunner
         WatchRepository watch,
         TagRepository tags,
         CurationRepository curation,
-        SmartViewRepository smartViews,
         PlaylistRepository playlists,
         MaintenanceRepository maintenance)
     {
@@ -58,7 +55,6 @@ public sealed class HarnessRunner
         _watch = watch;
         _tags = tags;
         _curation = curation;
-        _smartViews = smartViews;
         _playlists = playlists;
         _maintenance = maintenance;
     }
@@ -217,7 +213,6 @@ public sealed class HarnessRunner
             case "PlayerUpNext":
                 await NavigatePlayerUpNextAsync();
                 break;
-            case "SmartViews": _main.ShowSmartViewsCommand.Execute(null); break;
             case "Playlists":  _main.ShowPlaylistsCommand.Execute(null); break;
             case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
@@ -250,9 +245,6 @@ public sealed class HarnessRunner
 
             // Browse with 2 creators pre-selected so the BulkActionBar is visible.
             case "BrowseSelection": await NavigateBrowseSelectionAsync(); break;
-
-            // Command palette open with a pre-filled query ("home").
-            case "CommandPalette": NavigateCommandPalette(); break;
 
             // Browse with the in-page filter bar visible + Compact density + List mode.
             case "BrowseFilter": NavigateBrowseFilter(); break;
@@ -326,22 +318,6 @@ public sealed class HarnessRunner
 
         // Give the BulkBar binding a render cycle to reflect the selection count.
         await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
-    }
-
-    /// <summary>
-    /// Opens the Ctrl+K command palette with a pre-filled query so the result list
-    /// is populated for the screenshot. Uses "b" which matches B-named creators
-    /// ("Bella B"/"Bruno Bay"), the "Big Buck Bunny" series + its episode videos, and
-    /// the "Browse" action — so the sweep exercises Action/Creator/Series/Video item
-    /// kinds together (the M23 Group D series-results addition).
-    /// </summary>
-    private void NavigateCommandPalette()
-    {
-        _main.CurrentView = AppView.Browse; // show content behind the overlay
-        _main.OpenCommandPaletteCommand.Execute(null);
-        // Set a query after opening so the palette's RunAsync fires and populates Results.
-        if (_main.CommandPalette is not null)
-            _main.CommandPalette.Query = "b";
     }
 
     /// <summary>
@@ -609,7 +585,7 @@ public sealed class HarnessRunner
     /// Seeds demo data for the visual sweep:
     /// <list type="bullet">
     ///   <item>Marks the richest real episode watched + sets resume position (M12 rails).</item>
-    ///   <item>Seeds Favorites/Watchlist/SmartViews/Playlists/History so those pages render non-empty.</item>
+    ///   <item>Seeds Favorites/Watchlist/Playlists/History so those pages render non-empty.</item>
     ///   <item><b>M17 additions (I2):</b> seeds ≥30 synthetic creators spanning letters A–Z and
     ///         one "Alphabet Cinema" creator with exactly 42 series so virtualization, the A–Z
     ///         jump-list, and collapse/expand-all are all exercisable from a single harness run.
@@ -661,7 +637,7 @@ public sealed class HarnessRunner
             // on its own; this keeps the visual check deterministic.)
             _library.SetDuration(resumedId, 60.0);
 
-            // ── M16 organize pages: seed so SmartViews/Playlists/Watchlist/Favorites/History
+            // ── M16 organize pages: seed so Playlists/Watchlist/Favorites/History
             // all render non-empty in the screenshot sweep. Guard on having ≥1 video.
 
             // Favorite + watchlist
@@ -672,15 +648,6 @@ public sealed class HarnessRunner
             // Video + series tags (cascade chips on creator/series pages)
             _tags.AddSeriesTag(richest[0].SeriesId, "demo-series");
             _tags.AddVideoTag(richest[0].VideoId, "demo-video");
-
-            // Demo smart view (show on home) — uses dateAdded/withinDays so it matches any
-            // recently-scanned video, making the SmartViews page + Home smart-shelf non-empty
-            // regardless of whether the watched flag propagated before seeding.
-            _smartViews.Create(
-                "Demo · recent",
-                new SmartViewDefinition("all", new[] { new SmartRule("dateAdded", "withinDays", "3650") }),
-                showOnHome: true,
-                DateTimeOffset.UtcNow);
 
             // Demo playlist with up to two items
             var plId = _playlists.Create("Demo playlist", DateTimeOffset.UtcNow);
