@@ -444,8 +444,10 @@
                                                                     Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
                                                             <!-- Compact display: star icon + numeric label; clicking opens popup -->
                                                             <ToggleButton x:Name="RatingToggle"
-                                                                          Style="{StaticResource TertiaryButton}"
                                                                           Padding="4,2"
+                                                                          Background="Transparent"
+                                                                          BorderThickness="0"
+                                                                          Cursor="Hand"
                                                                           ToolTip="Rate this episode">
                                                                 <StackPanel Orientation="Horizontal">
                                                                     <ui:SymbolIcon>
@@ -486,7 +488,7 @@
                                                                    AllowsTransparency="True"
                                                                    PopupAnimation="Fade">
                                                                 <Border Background="{DynamicResource ApplicationBackgroundBrush}"
-                                                                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                                                        BorderBrush="{StaticResource DividerBrush}"
                                                                         BorderThickness="1"
                                                                         CornerRadius="6"
                                                                         Padding="8,6">
@@ -565,13 +567,13 @@
                                                                                     Click="RatingPopup_StarClicked"/>
                                                                         </Grid>
                                                                         <!-- Clear rating -->
-                                                                        <Button Margin="6,0,0,0" Padding="4,2"
-                                                                                Style="{StaticResource TertiaryButton}"
-                                                                                ToolTip="Clear rating"
-                                                                                Command="{Binding SetRatingCommand}" CommandParameter="0"
-                                                                                Click="RatingPopup_StarClicked">
+                                                                        <ui:Button Margin="6,0,0,0" Padding="4,2"
+                                                                                   Style="{StaticResource TertiaryButton}"
+                                                                                   ToolTip="Clear rating"
+                                                                                   Command="{Binding SetRatingCommand}" CommandParameter="0"
+                                                                                   Click="RatingPopup_StarClicked">
                                                                             <ui:SymbolIcon Symbol="Dismiss16" />
-                                                                        </Button>
+                                                                        </ui:Button>
                                                                     </StackPanel>
                                                                 </Border>
                                                             </Popup>
