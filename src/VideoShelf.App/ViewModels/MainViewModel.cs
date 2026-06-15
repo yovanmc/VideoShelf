@@ -419,14 +419,6 @@ public sealed partial class MainViewModel : ObservableObject
         CurrentView = AppView.MultiRename;
     }
 
-    /// <summary>Picks a random unwatched episode and plays it. No-op when nothing is unwatched.</summary>
-    [RelayCommand]
-    private void SurpriseMe()
-    {
-        var ep = _libraryRepo.GetRandomUnwatchedEpisode();
-        if (ep is not null) PlayEpisode(ep);
-    }
-
     [RelayCommand]
     private void TogglePictureInPicture() => IsPictureInPicture = !IsPictureInPicture;
 

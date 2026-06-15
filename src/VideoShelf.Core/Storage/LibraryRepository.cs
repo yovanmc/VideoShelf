@@ -593,30 +593,6 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
-    /// <summary>Returns a random unwatched, non-missing episode across the whole library,
-    /// or null if every video is watched or missing.</summary>
-    public EpisodeView? GetRandomUnwatchedEpisode()
-    {
-        using var conn = db.Open();
-        var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
-            FROM videos v
-            JOIN series se ON se.id = v.series_id
-            WHERE v.watched = 0 AND v.missing = 0
-            ORDER BY RANDOM()
-            LIMIT 1
-            """;
-        using var r = cmd.ExecuteReader();
-        if (!r.Read()) return null;
-        var episodeNo = r.GetInt32(3);
-        var baseTitle = r.GetString(4);
-        var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
-        return new EpisodeView(
-            r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
-            r.GetInt64(5) != 0, r.GetInt64(6) != 0);
-    }
-
     /// <summary>Returns the next episode after <paramref name="currentEpisodeNo"/> in a series
     /// (ordered by episode_no), or null if there is none or the series is a standalone.</summary>
     public EpisodeView? GetNextEpisode(long seriesId, int currentEpisodeNo)
