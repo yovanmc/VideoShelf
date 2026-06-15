@@ -477,6 +477,42 @@ public sealed class LibraryRepository(VideoShelfDb db)
         return list;
     }
 
+    public IReadOnlyList<SeriesResult> SearchSeries(string query, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return [];
+        var pattern = "%" + query.Trim()
+            .Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            SELECT se.id, se.section_id, se.base_title,
+                   COUNT(v.id) AS episode_count,
+                   (SELECT v2.file_path
+                      FROM videos v2
+                     WHERE v2.series_id = se.id AND v2.missing = 0
+                     ORDER BY v2.episode_no
+                     LIMIT 1) AS thumb_seed
+            FROM series se
+            LEFT JOIN videos v ON v.series_id = se.id AND v.missing = 0
+            WHERE se.base_title LIKE $q ESCAPE '\'
+            GROUP BY se.id, se.section_id, se.base_title
+            HAVING COUNT(v.id) > 0
+            ORDER BY se.base_title
+            LIMIT $limit
+            """;
+        cmd.Parameters.AddWithValue("$q", pattern);
+        cmd.Parameters.AddWithValue("$limit", limit);
+        var list = new List<SeriesResult>();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+            list.Add(new SeriesResult(
+                SeriesId: r.GetInt64(0), SectionId: r.GetInt64(1), Title: r.GetString(2),
+                EpisodeCount: r.GetInt32(3),
+                ThumbnailSeedPath: r.IsDBNull(4) ? null : r.GetString(4)));
+        return list;
+    }
+
     public IReadOnlyList<RecencyItem> SearchVideos(string query, int limit)
     {
         if (string.IsNullOrWhiteSpace(query)) return [];

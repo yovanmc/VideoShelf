@@ -22,3 +22,10 @@ public enum SearchHitKind { Section, Series, Video }
 public sealed record SearchHit(SearchHitKind Kind, long TargetId, long SectionId, string Title);
 
 public enum BrowseSort { Name, DateAdded, RecentlyWatched }
+
+/// <summary>
+/// A series search result: the series identity, its owning section, episode count, and a
+/// thumbnail seed path (first non-missing episode's file_path) for cover loading.
+/// </summary>
+public sealed record SeriesResult(
+    long SeriesId, long SectionId, string Title, int EpisodeCount, string? ThumbnailSeedPath);

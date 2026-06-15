@@ -202,4 +202,112 @@ public sealed class LibrarySearchTests
         item.EpisodeNo.ShouldBe(1);
         item.SectionId.ShouldBe(sec);
     }
+
+    // ─── SearchSeries ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void SearchSeries_matches_by_base_title_substring()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        AddVideo(f, sec, "Breaking Bad", false, 1);
+        AddVideo(f, sec, "Better Call Saul", false, 1);
+
+        var results = f.Lib.SearchSeries("breaking", limit: 10);
+
+        results.Count.ShouldBe(1);
+        results[0].Title.ShouldBe("Breaking Bad");
+    }
+
+    [Fact]
+    public void SearchSeries_returns_episode_count_for_non_missing_videos()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        var seriesId = f.Lib.UpsertSeries(sec, "The Office", false);
+        f.Lib.UpsertVideo(seriesId, @"C:\m\The Office\e01.mkv", 1, "mkv");
+        f.Lib.UpsertVideo(seriesId, @"C:\m\The Office\e02.mkv", 2, "mkv");
+        f.Lib.UpsertVideo(seriesId, @"C:\m\The Office\e03.mkv", 3, "mkv");
+
+        var results = f.Lib.SearchSeries("office", limit: 10);
+
+        results.Count.ShouldBe(1);
+        results[0].EpisodeCount.ShouldBe(3);
+    }
+
+    [Fact]
+    public void SearchSeries_excludes_missing_only_series()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        var seriesId = f.Lib.UpsertSeries(sec, "Lost", false);
+        var videoId = f.Lib.UpsertVideo(seriesId, @"C:\m\Lost\e01.mkv", 1, "mkv");
+
+        // Mark the only video as missing — series should be excluded
+        f.Lib.SetVideoMissing(videoId);
+
+        var results = f.Lib.SearchSeries("lost", limit: 10);
+
+        results.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void SearchSeries_includes_section_id()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "Documentary");
+        AddVideo(f, sec, "Planet Earth", false, 1);
+
+        var results = f.Lib.SearchSeries("planet", limit: 10);
+
+        results.Count.ShouldBe(1);
+        results[0].SectionId.ShouldBe(sec);
+    }
+
+    [Fact]
+    public void SearchSeries_respects_limit()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        AddVideo(f, sec, "Star Trek TOS", false, 1);
+        AddVideo(f, sec, "Star Trek TNG", false, 1);
+        AddVideo(f, sec, "Star Trek DS9", false, 1);
+
+        var results = f.Lib.SearchSeries("star trek", limit: 2);
+
+        results.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public void SearchSeries_empty_query_returns_empty()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        AddVideo(f, sec, "Seinfeld", false, 1);
+
+        f.Lib.SearchSeries("", limit: 10).ShouldBeEmpty();
+        f.Lib.SearchSeries("   ", limit: 10).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void SearchSeries_thumbnail_seed_path_is_first_non_missing_episode()
+    {
+        var f = NewFixture(); using var _d = f.Db;
+        var src = f.Lib.UpsertSource(@"C:\m", "M");
+        var sec = f.Lib.UpsertSection(src, "TV");
+        var seriesId = f.Lib.UpsertSeries(sec, "Friends", false);
+        f.Lib.UpsertVideo(seriesId, @"C:\m\Friends\e01.mkv", 1, "mkv");
+        f.Lib.UpsertVideo(seriesId, @"C:\m\Friends\e02.mkv", 2, "mkv");
+
+        var results = f.Lib.SearchSeries("friends", limit: 10);
+
+        results.Count.ShouldBe(1);
+        results[0].ThumbnailSeedPath.ShouldBe(@"C:\m\Friends\e01.mkv");
+    }
 }
