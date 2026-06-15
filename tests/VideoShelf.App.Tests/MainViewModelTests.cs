@@ -116,6 +116,19 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void BuildActionRegistry_contains_Library_Health_New_Smart_View_and_Add_Source()
+    {
+        var vm = MainViewModelTestFactory.Create(out var ctx);
+        using var _d = ctx.Db;
+
+        var labels = vm.BuildActionRegistry().Select(a => a.Label).ToList();
+
+        labels.ShouldContain("Library Health");
+        labels.ShouldContain("New Smart View");
+        labels.ShouldContain("Add Source…");
+    }
+
+    [Fact]
     public void ShowSmartViewsCommand_GoBack_returns_to_previous_view()
     {
         var vm = MainViewModelTestFactory.Create(out var ctx);

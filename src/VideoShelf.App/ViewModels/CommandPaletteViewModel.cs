@@ -82,10 +82,11 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
 
             // Run DB reads off the UI thread.
             var q = query.Trim();
-            var (creators, videos) = string.IsNullOrEmpty(q)
-                ? ([], [])
+            var (creators, series, videos) = string.IsNullOrEmpty(q)
+                ? ([], [], [])
                 : await Task.Run(
                     () => (_library.SearchCreators(q, DbResultLimit),
+                           _library.SearchSeries(q, DbResultLimit),
                            _library.SearchVideos(q, DbResultLimit)),
                     ct);
 
@@ -130,7 +131,19 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
                     Math.Max(s, 0.01)));  // always include DB hits (already filtered by LIKE)
             }
 
-            // 3. Video DB results.
+            // 3. Series DB results.
+            foreach (var sr in series)
+            {
+                var s = string.IsNullOrEmpty(q) ? 1.0 : PaletteRanker.Score(q, sr.Title);
+                var sectionId = sr.SectionId;
+                items.Add(new PaletteItemViewModel(
+                    sr.Title, "VideoClipMultiple24", PaletteItemKind.Series,
+                    () => _ = _openSection(sectionId),
+                    Math.Max(s, 0.01),
+                    subLabel: $"{sr.EpisodeCount} ep"));
+            }
+
+            // 4. Video DB results.
             foreach (var v in videos)
             {
                 var label = v.IsStandalone ? v.SeriesTitle : $"{v.SeriesTitle} — Ep {v.EpisodeNo}";
@@ -143,7 +156,7 @@ public sealed partial class CommandPaletteViewModel : ObservableObject
                     subLabel: v.IsStandalone ? null : v.SeriesTitle));
             }
 
-            // 4. Sort: actions first (by score desc), then creators, then videos —
+            // 5. Sort: Action < Creator < Series < Video (enum ordinal), then score desc.
             //    within each kind sort by score descending.
             var sorted = items
                 .OrderBy(i => i.Kind)

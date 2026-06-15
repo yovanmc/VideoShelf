@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum PaletteItemKind { Action, Creator, Video }
+public enum PaletteItemKind { Action, Creator, Series, Video }
 
 /// <summary>A single result row in the command palette list.</summary>
 public sealed partial class PaletteItemViewModel : ObservableObject
