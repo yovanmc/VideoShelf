@@ -341,7 +341,6 @@
                             <!-- clickable tile header = Activate (play standalone / toggle expand) -->
                             <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
                                     Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
-                                    IsTabStop="True"
                                     FocusVisualStyle="{StaticResource AppFocusVisual}">
                                 <StackPanel>
                                     <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"

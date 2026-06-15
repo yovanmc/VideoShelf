@@ -79,9 +79,7 @@
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
                          Style="{StaticResource PlainListBox}"
-                         Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}"
-                         KeyboardNavigation.TabNavigation="Once"
-                         KeyboardNavigation.DirectionalNavigation="Contained">
+                         Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />

@@ -14,7 +14,6 @@
     <Button Command="{Binding PlayCommand}" Margin="0,0,12,0" Padding="0"
             Background="Transparent" BorderThickness="0" Width="{StaticResource CardWidth}" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
-            IsTabStop="True"
             FocusVisualStyle="{StaticResource AppFocusVisual}"
             RenderTransformOrigin="0.5,0.5">
         <Button.Effect>
@@ -85,39 +84,12 @@
                                Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
                     </Grid>
                 </Border>
-                <!-- Watched checkmark badge: top-right chip overlay, visible when IsWatched=True.
-                     Uses ChipFillBrush (~25% alpha white) for contrast on both dark and light art.
-                     SymbolIcon is additive (no ControlTemplate override). -->
-                <Border Background="{StaticResource ChipFillBrush}"
-                        CornerRadius="10" Padding="4"
-                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,6,0"
-                        ToolTip="Watched"
-                        Visibility="{Binding IsWatched, Converter={StaticResource BoolToVisibility}}">
-                    <ui:SymbolIcon Symbol="Checkmark24"
-                                   FontSize="12" />
-                </Border>
             </Grid>
             <!-- Continue-watching progress track (color cue, kept) + text label (non-color cue, additive). -->
             <Border Height="4" CornerRadius="2" Margin="0,2,0,0" Background="{StaticResource ThumbPlaceholderBrush}">
                 <Border HorizontalAlignment="Left" CornerRadius="2" Background="{StaticResource AccentBrush}"
                         Width="{Binding ProgressFraction, Converter={StaticResource FractionToWidth}, ConverterParameter=200}" />
             </Border>
-            <!-- Progress percent text: non-color redundant cue, visible only when in-progress (not fully watched).
-                 Opacity 0.6 normally; becomes 1.0 on hover for prominence. Visibility gate preserved. -->
-            <TextBlock Text="{Binding ProgressFraction, Converter={StaticResource FractionToPercentText}}"
-                       Margin="0,1,0,2"
-                       Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
-                        <!-- Hover brightens the progress label: fade from muted to primary on mouseover -->
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
-                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
             <TextBlock Text="{Binding EpisodeLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />

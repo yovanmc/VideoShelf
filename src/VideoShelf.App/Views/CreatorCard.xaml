@@ -15,7 +15,6 @@
     <Button Command="{Binding OpenCommand}" Width="{StaticResource CardWidth}" Padding="0"
             Background="Transparent" BorderThickness="0" Cursor="Hand"
             HorizontalContentAlignment="Stretch"
-            IsTabStop="True"
             FocusVisualStyle="{StaticResource AppFocusVisual}"
             RenderTransformOrigin="0.5,0.5">
         <Button.Effect>

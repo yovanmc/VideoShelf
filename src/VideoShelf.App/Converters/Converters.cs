@@ -188,23 +188,6 @@ public sealed class ViewModeToVisibility : IValueConverter
     public object ConvertBack(object? v, Type t, object? p, CultureInfo c) => throw new NotSupportedException();
 }
 
-/// <summary>
-/// Converts a 0..1 progress fraction to a percentage string (e.g. 0.756 → "76%").
-/// Clamps to [0, 1] before formatting. Used to render a non-color progress label on video cards
-/// so watched/in-progress state is visible without relying on the accent-colored bar alone.
-/// </summary>
-public sealed class FractionToPercentText : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        var f = value is double d ? d : 0.0;
-        f = Math.Max(0.0, Math.Min(1.0, f));
-        return $"{(int)Math.Round(f * 100)}%";
-    }
-    public object ConvertBack(object? value, Type t, object? p, CultureInfo c)
-        => throw new NotSupportedException();
-}
-
 /// <summary>Maps a 0..1 fraction to a pixel width = fraction * ConverterParameter (a track width in DIPs).
 /// Used to render a continue-watching progress fill inside a fixed-width card.</summary>
 public sealed class FractionToWidth : IValueConverter
