@@ -3,6 +3,43 @@ namespace VideoShelf.App.Scale;
 /// <summary>Deterministic synthetic-library plan. No I/O — turned into rows by the seeder.</summary>
 public sealed record StressLibrarySpec(IReadOnlyList<StressCreator> Creators)
 {
+    // 25 first names × 25 last names = 625 unique combos — enough for 500 creators with no suffix.
+    private static readonly string[] FirstNames =
+    [
+        "Alice", "Ben", "Carlos", "Diana", "Ethan",
+        "Fiona", "Gabriel", "Hannah", "Ivan", "Julia",
+        "Kevin", "Laura", "Marcus", "Natalie", "Oscar",
+        "Priya", "Quinn", "Rachel", "Samuel", "Tara",
+        "Umar", "Violet", "Will", "Xena", "Yasmin"
+    ];
+
+    private static readonly string[] LastNames =
+    [
+        "Adams", "Brooks", "Chen", "Davis", "Evans",
+        "Foster", "Garcia", "Harris", "Iyer", "Jones",
+        "Kim", "Lee", "Martin", "Nguyen", "Ortiz",
+        "Patel", "Quinn", "Rivera", "Smith", "Torres",
+        "Ueda", "Vargas", "Wang", "Xavier", "Young"
+    ];
+
+    /// <summary>
+    /// Returns a deterministic person name for creator index <paramref name="c"/>.
+    /// Cycles through FirstNames × LastNames; appends a numeric suffix only if the
+    /// full combo count is exceeded (> 625 creators).
+    /// </summary>
+    private static string CreatorName(int c)
+    {
+        int f = FirstNames.Length;   // 25
+        int l = LastNames.Length;    // 25
+        int combos = f * l;          // 625
+
+        int cycle = c / combos;
+        int idx   = c % combos;
+        string first = FirstNames[idx % f];
+        string last  = LastNames[idx / f % l];
+        return cycle == 0 ? $"{first} {last}" : $"{first} {last} {cycle + 1}";
+    }
+
     public static StressLibrarySpec Generate(int creators, int biggestSeries, int totalVideos, int seed)
     {
         if (creators <= 0 || biggestSeries <= 0 || totalVideos < creators)
@@ -18,7 +55,7 @@ public sealed record StressLibrarySpec(IReadOnlyList<StressCreator> Creators)
             var series = new List<StressSeries>(seriesCount);
             for (int s = 0; s < seriesCount; s++)
                 series.Add(new StressSeries($"C{c:D4}S{s:D3}", new List<StressEpisode>()));
-            list.Add(new StressCreator($"Creator {c:D4}", series));
+            list.Add(new StressCreator(CreatorName(c), series));
         }
 
         // Spread the remaining episodes round-robin across all series until totalVideos is hit.

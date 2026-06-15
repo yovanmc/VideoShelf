@@ -26,4 +26,24 @@ public class StressLibrarySpecTests
         var names = spec.Creators.SelectMany(c => c.Series.SelectMany(s => s.Episodes)).Select(e => e.RelativePath);
         Assert.Equal(names.Count(), names.Distinct().Count());
     }
+
+    [Fact]
+    public void Creator_names_are_person_names_unique_and_stable_across_calls()
+    {
+        // 500 creators — all within the 625-combo pool, so every name is unique and contains no "Creator NNNN" pattern.
+        var spec = StressLibrarySpec.Generate(creators: 500, biggestSeries: 5, totalVideos: 500, seed: 42);
+
+        var names = spec.Creators.Select(c => c.Name).ToList();
+
+        // All names must be unique.
+        Assert.Equal(names.Count, names.Distinct().Count());
+
+        // Names must look like person names (contain a space), not the old "Creator NNNN" format.
+        Assert.All(names, n => Assert.Contains(' ', n));
+        Assert.DoesNotContain(names, n => n.StartsWith("Creator ", StringComparison.Ordinal) && n.Length == 12);
+
+        // Stable across two Generate calls with the same seed.
+        var spec2 = StressLibrarySpec.Generate(500, 5, 500, seed: 42);
+        Assert.Equal(names, spec2.Creators.Select(c => c.Name).ToList());
+    }
 }
