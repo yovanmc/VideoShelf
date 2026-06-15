@@ -7,7 +7,8 @@
                  xmlns:conv="clr-namespace:VideoShelf.App.Converters"
                  xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel"
                  xmlns:controls="clr-namespace:VideoShelf.App.Views.Controls"
-                 Title="VideoShelf"
+                 xmlns:motion="clr-namespace:VideoShelf.App.Motion"
+                 Title="{Binding WindowTitle}"
                  Width="1180"
                  Height="760"
                  MinWidth="900"
@@ -47,7 +48,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="VideoShelf" />
+        <ui:TitleBar x:Name="AppTitleBar" Grid.Row="0" Title="{Binding WindowTitle}" />
 
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
@@ -183,13 +184,15 @@
 
                 <!-- Home view — DiscoveryView -->
                 <views:DiscoveryView DataContext="{Binding Discovery}"
+                                     motion:ViewTransition.Enabled="True"
                                      Visibility="{Binding DataContext.CurrentView,
                                          RelativeSource={RelativeSource AncestorType=Window},
                                          Converter={StaticResource EnumToVis},
                                          ConverterParameter=Home}" />
 
                 <!-- Browse view — virtualized, selectable creator grid -->
-                <Grid Visibility="{Binding DataContext.CurrentView,
+                <Grid motion:ViewTransition.Enabled="True"
+                      Visibility="{Binding DataContext.CurrentView,
                           RelativeSource={RelativeSource AncestorType=Window},
                           Converter={StaticResource EnumToVis},
                           ConverterParameter=Browse}">
@@ -305,7 +308,8 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
+                                  motion:ScrollMemory.ViewKey="Browse">
                         <ListBox x:Name="CreatorsGridListBox"
                                  ItemsSource="{Binding Creators.Creators}"
                                  SelectionMode="Extended"
@@ -452,7 +456,9 @@
                 </Grid>
 
                 <!-- Section detail view -->
-                <views:SectionDetailView DataContext="{Binding SectionDetail}"
+                <views:SectionDetailView x:Name="SectionDetailHost"
+                                         DataContext="{Binding SectionDetail}"
+                                         motion:ViewTransition.Enabled="True"
                                          Visibility="{Binding DataContext.CurrentView,
                                              RelativeSource={RelativeSource AncestorType=Window},
                                              Converter={StaticResource EnumToVis},
@@ -481,6 +487,7 @@
 
                 <!-- Settings view -->
                 <views:SettingsView
+                    motion:ViewTransition.Enabled="True"
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Settings}" />
 
@@ -574,6 +581,11 @@
                 </Style>
             </ContentControl.Style>
         </ContentControl>
+
+        <!-- ── D4 Hero transition overlay — floats above views, below toasts. Hit-test disabled. -->
+        <Canvas x:Name="HeroOverlay"
+                Grid.Row="0" Grid.RowSpan="2"
+                IsHitTestVisible="False" />
 
         <!-- ── Toast overlay — floats above everything, click-through except toast borders. -->
         <!-- DataContext is inherited from the window (MainViewModel). -->

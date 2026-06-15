@@ -66,8 +66,27 @@
                     </Border>
 
                     <!-- ===== Auto-hiding controls layer ===== -->
+                    <!-- D6: in PiP mode fade the chrome in on mouse-over, out on idle.
+                         Opacity starts at 0 in PiP; IsMouseOver trigger brings it to 1.
+                         Non-PiP: opacity stays 1 (normal behaviour unchanged). -->
                     <Grid x:Name="ControlsLayer"
                           Visibility="{Binding Player.AreControlsVisible, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPictureInPicture}" Value="True">
+                                        <Setter Property="Opacity" Value="0" />
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsPictureInPicture}" Value="True" />
+                                            <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ContentControl}, Path=IsMouseOver}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Opacity" Value="1" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
 
                         <!-- Top scrim + title/close (drag strip in PiP) -->
                         <Border x:Name="TopBar" VerticalAlignment="Top" Padding="12,8"

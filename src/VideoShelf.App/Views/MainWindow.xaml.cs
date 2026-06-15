@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using Wpf.Ui.Controls;
+using VideoShelf.App.Motion;
 using VideoShelf.App.ViewModels;
 using VideoShelf.Core.Search;
 
@@ -15,11 +17,16 @@ public partial class MainWindow : FluentWindow
     private readonly MainViewModel _viewModel;
     private PlayerView? _playerView;
 
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, IMotionPolicy? motionPolicy = null)
     {
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
+
+        // D1: wire the static ShouldAnimate gate from the injected IMotionPolicy.
+        if (motionPolicy is not null)
+            ViewTransition.ShouldAnimate = () => motionPolicy.ShouldAnimate;
+
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _viewModel.Player.PropertyChanged += OnPlayerPropertyChanged;
 
@@ -108,6 +115,10 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName == nameof(MainViewModel.IsPlayerVisible))
             UpdatePlayerHost(_viewModel.IsPlayerVisible);
 
+        // D6: animate PiP host width/height on snap-to-corner.
+        if (e.PropertyName == nameof(MainViewModel.IsPictureInPicture))
+            UpdatePiPAnimation(_viewModel.IsPictureInPicture);
+
         // Focus the palette search TextBox whenever the palette opens.
         if (e.PropertyName == nameof(MainViewModel.IsCommandPaletteOpen) &&
             _viewModel.IsCommandPaletteOpen)
@@ -116,6 +127,68 @@ public partial class MainWindow : FluentWindow
             {
                 PaletteSearchBox?.Focus();
             });
+        }
+    }
+
+    /// <summary>
+    /// D6: Animate the PiP host's Width/Height when snapping to/from the corner.
+    /// Animates layout Width/Height ONLY (NOT RenderTransform — never transform an HwndHost).
+    /// The DataTrigger setters in XAML act as the static fallback (reduced-motion + initial state).
+    /// </summary>
+    private void UpdatePiPAnimation(bool pipOn)
+    {
+        const double PipWidth  = 360;
+        const double PipHeight = 203;
+
+        if (_viewModel.AnimationsEnabled)
+        {
+            var dur = (Duration)FindResource("AnimNormal");
+            var ease = (IEasingFunction)FindResource("EaseInOut");
+
+            if (pipOn)
+            {
+                // Animate to corner size.
+                PlayerHost.BeginAnimation(WidthProperty,
+                    new DoubleAnimation(PlayerHost.ActualWidth, PipWidth, dur) { EasingFunction = ease });
+                PlayerHost.BeginAnimation(HeightProperty,
+                    new DoubleAnimation(PlayerHost.ActualHeight, PipHeight, dur) { EasingFunction = ease });
+            }
+            else
+            {
+                // Animate back to full window size.
+                // From: current rendered PiP size (locked by the ongoing hold).
+                // To: the parent container's current available size (the root Grid spans the full window).
+                var fromW = PlayerHost.ActualWidth;
+                var fromH = PlayerHost.ActualHeight;
+
+                // The root Grid (PlayerHost's direct parent) spans the full client area.
+                var fullW = (PlayerHost.Parent is System.Windows.FrameworkElement parent)
+                    ? parent.ActualWidth
+                    : ActualWidth;
+                var fullH = (PlayerHost.Parent is System.Windows.FrameworkElement parentH)
+                    ? parentH.ActualHeight
+                    : ActualHeight;
+
+                var wAnim = new DoubleAnimation(fromW, fullW, dur) { EasingFunction = ease };
+                var hAnim = new DoubleAnimation(fromH, fullH, dur) { EasingFunction = ease };
+
+                // On completion, release the local-value hold so layout/DataTrigger takes over (Stretch).
+                hAnim.Completed += (_, _) =>
+                {
+                    PlayerHost.BeginAnimation(WidthProperty, null);
+                    PlayerHost.BeginAnimation(HeightProperty, null);
+                };
+
+                PlayerHost.BeginAnimation(WidthProperty, wAnim);
+                PlayerHost.BeginAnimation(HeightProperty, hAnim);
+            }
+        }
+        else
+        {
+            // Reduced motion — release any animation holds immediately so the DataTrigger
+            // Setters (or the default Stretch layout) provide the correct static size.
+            PlayerHost.BeginAnimation(WidthProperty, null);
+            PlayerHost.BeginAnimation(HeightProperty, null);
         }
     }
 

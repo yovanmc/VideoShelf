@@ -84,6 +84,13 @@ public sealed partial class MainViewModel : ObservableObject
             MultiRename.CloseRequested += (_, _) => GoBack();
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
+
+        // D7: recompute WindowTitle when the player title changes.
+        _player.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PlayerViewModel.Title))
+                OnPropertyChanged(nameof(WindowTitle));
+        };
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
         _player.PlaybackEnded += (_, finished) =>
         {
@@ -153,6 +160,20 @@ public sealed partial class MainViewModel : ObservableObject
     private string _scanStatusText = string.Empty;
 
     public string Title => "VideoShelf";
+
+    // ── D7: now-playing window title ─────────────────────────────────────────
+
+    /// <summary>Pure helper: composes the window title from the now-playing string.</summary>
+    public static string ComposeWindowTitle(string nowPlaying)
+        => string.IsNullOrEmpty(nowPlaying) ? "VideoShelf" : $"{nowPlaying} — VideoShelf";
+
+    /// <summary>
+    /// Dynamic window title: "Song — VideoShelf" while playing, "VideoShelf" otherwise.
+    /// Recomputed whenever the player title changes or the player opens/closes.
+    /// </summary>
+    public string WindowTitle => IsPlayerVisible
+        ? ComposeWindowTitle(_player.Title)
+        : "VideoShelf";
 
     /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public BulkActionBarViewModel? BulkBar { get; }
@@ -245,7 +266,11 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>The inline player pane is shown only while playing AND not detached into the mini-player.</summary>
     public bool IsInlinePlayerVisible => IsPlayerVisible && !IsPictureInPicture;
 
-    partial void OnIsPlayerVisibleChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
+    partial void OnIsPlayerVisibleChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsInlinePlayerVisible));
+        OnPropertyChanged(nameof(WindowTitle));
+    }
     partial void OnIsPictureInPictureChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
 
     private readonly System.Collections.Generic.Stack<AppView> _backStack = new();

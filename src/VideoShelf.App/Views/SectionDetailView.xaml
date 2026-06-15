@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:views="clr-namespace:VideoShelf.App.Views"
-             xmlns:conv="clr-namespace:VideoShelf.App.Converters">
+             xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+             xmlns:motion="clr-namespace:VideoShelf.App.Motion">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -15,7 +16,8 @@
             <conv:CountToVisibility x:Key="CountToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  motion:ScrollMemory.ViewKey="SectionDetail">
         <StackPanel>
 
             <!-- HERO BANNER: creator art (dimmed) + name + count + tag pills + art actions -->
@@ -302,9 +304,42 @@
                                         </DockPanel>
                                     </StackPanel>
                                 </Button>
-                                <!-- expanded episode list (accordion) -->
+                                <!-- expanded episode list (accordion) — D3: opacity fade-in on expand.
+                                     Height animation into Auto is not possible in WPF — height is instant;
+                                     opacity animates when the panel becomes visible (IsVisibleChanged). -->
                                 <StackPanel Margin="8,0,8,8"
                                             Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <!-- D3: gate the opacity fade-in on BOTH IsExpanded=True AND
+                                                 AnimationsEnabled=True (MainViewModel, via ancestor Window).
+                                                 When reduced-motion is active the panel appears instantly at
+                                                 full opacity — no animation plays. -->
+                                            <Style.Triggers>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsExpanded}" Value="True" />
+                                                        <Condition Binding="{Binding DataContext.AnimationsEnabled,
+                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                   Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <MultiDataTrigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                 From="0" To="1"
+                                                                                 Duration="0:0:0.22">
+                                                                    <DoubleAnimation.EasingFunction>
+                                                                        <CubicEase EasingMode="EaseOut"/>
+                                                                    </DoubleAnimation.EasingFunction>
+                                                                </DoubleAnimation>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </MultiDataTrigger.EnterActions>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
                                     <ItemsControl ItemsSource="{Binding Episodes}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
