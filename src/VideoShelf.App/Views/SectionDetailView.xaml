@@ -311,11 +311,19 @@
                                             Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
                                     <StackPanel.Style>
                                         <Style TargetType="StackPanel">
-                                            <!-- Reduced-motion gate: only show Storyboard when AnimationsEnabled is true.
-                                                 We use a DataTrigger on IsExpanded to trigger the enter animation. -->
+                                            <!-- D3: gate the opacity fade-in on BOTH IsExpanded=True AND
+                                                 AnimationsEnabled=True (MainViewModel, via ancestor Window).
+                                                 When reduced-motion is active the panel appears instantly at
+                                                 full opacity — no animation plays. -->
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
-                                                    <DataTrigger.EnterActions>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsExpanded}" Value="True" />
+                                                        <Condition Binding="{Binding DataContext.AnimationsEnabled,
+                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                   Value="True" />
+                                                    </MultiDataTrigger.Conditions>
+                                                    <MultiDataTrigger.EnterActions>
                                                         <BeginStoryboard>
                                                             <Storyboard>
                                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
@@ -327,8 +335,8 @@
                                                                 </DoubleAnimation>
                                                             </Storyboard>
                                                         </BeginStoryboard>
-                                                    </DataTrigger.EnterActions>
-                                                </DataTrigger>
+                                                    </MultiDataTrigger.EnterActions>
+                                                </MultiDataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </StackPanel.Style>

@@ -155,26 +155,41 @@ public partial class MainWindow : FluentWindow
             }
             else
             {
-                // Animate back to stretch (NaN = Auto-stretch); clear animations so layout takes over.
-                var toFull = new DoubleAnimation { To = double.NaN, Duration = dur, EasingFunction = ease };
-                toFull.Completed += (_, _) =>
+                // Animate back to full window size.
+                // From: current rendered PiP size (locked by the ongoing hold).
+                // To: the parent container's current available size (the root Grid spans the full window).
+                var fromW = PlayerHost.ActualWidth;
+                var fromH = PlayerHost.ActualHeight;
+
+                // The root Grid (PlayerHost's direct parent) spans the full client area.
+                var fullW = (PlayerHost.Parent is System.Windows.FrameworkElement parent)
+                    ? parent.ActualWidth
+                    : ActualWidth;
+                var fullH = (PlayerHost.Parent is System.Windows.FrameworkElement parentH)
+                    ? parentH.ActualHeight
+                    : ActualHeight;
+
+                var wAnim = new DoubleAnimation(fromW, fullW, dur) { EasingFunction = ease };
+                var hAnim = new DoubleAnimation(fromH, fullH, dur) { EasingFunction = ease };
+
+                // On completion, release the local-value hold so layout/DataTrigger takes over (Stretch).
+                hAnim.Completed += (_, _) =>
                 {
                     PlayerHost.BeginAnimation(WidthProperty, null);
                     PlayerHost.BeginAnimation(HeightProperty, null);
                 };
-                PlayerHost.BeginAnimation(WidthProperty,
-                    new DoubleAnimation(PlayerHost.ActualWidth, PlayerHost.ActualWidth, dur) { EasingFunction = ease });
-                PlayerHost.BeginAnimation(HeightProperty,
-                    new DoubleAnimation(PlayerHost.ActualHeight, PlayerHost.ActualHeight, dur) { EasingFunction = ease });
-                // After a brief settle, release animations so the DataTrigger stretch takes over.
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
-                {
-                    PlayerHost.BeginAnimation(WidthProperty, null);
-                    PlayerHost.BeginAnimation(HeightProperty, null);
-                }));
+
+                PlayerHost.BeginAnimation(WidthProperty, wAnim);
+                PlayerHost.BeginAnimation(HeightProperty, hAnim);
             }
         }
-        // Else: reduced motion — the DataTrigger Setters in XAML already set Width=360/Height=203.
+        else
+        {
+            // Reduced motion — release any animation holds immediately so the DataTrigger
+            // Setters (or the default Stretch layout) provide the correct static size.
+            PlayerHost.BeginAnimation(WidthProperty, null);
+            PlayerHost.BeginAnimation(HeightProperty, null);
+        }
     }
 
     /// <summary>
