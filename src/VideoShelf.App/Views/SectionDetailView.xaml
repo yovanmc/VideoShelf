@@ -4,7 +4,8 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:views="clr-namespace:VideoShelf.App.Views"
              xmlns:conv="clr-namespace:VideoShelf.App.Converters"
-             xmlns:motion="clr-namespace:VideoShelf.App.Motion">
+             xmlns:motion="clr-namespace:VideoShelf.App.Motion"
+             xmlns:vwp="clr-namespace:WpfToolkit.Controls;assembly=VirtualizingWrapPanel">
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -16,330 +17,391 @@
             <conv:CountToVisibility x:Key="CountToVis" />
         </ResourceDictionary>
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  motion:ScrollMemory.ViewKey="SectionDetail">
-        <StackPanel>
 
-            <!-- HERO BANNER: creator art (dimmed) + name + count + tag pills + art actions -->
-            <Grid Height="240" ClipToBounds="True">
-                <Image Source="{Binding BackgroundImagePath, IsAsync=True}" Stretch="UniformToFill"/>
-                <!-- additive dim gradient for readability (not a control re-template) -->
-                <Border>
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#22000000" Offset="0"/>
-                            <GradientStop Color="#E6000000" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                </Border>
-                <!-- Edit/Done toggle button (top-right of hero) -->
-                <ui:Button Command="{Binding ToggleEditCommand}"
-                           Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
-                    <ui:Button.Style>
-                        <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
-                            <Setter Property="Content">
-                                <Setter.Value>
-                                    <StackPanel Orientation="Horizontal">
-                                        <ui:SymbolIcon Symbol="Edit24" Margin="0,0,4,0" />
-                                        <TextBlock Text="Edit" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
-                                    <Setter Property="Content">
-                                        <Setter.Value>
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
-                                                <TextBlock Text="Done" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ui:Button.Style>
-                </ui:Button>
-                <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,16">
-                    <TextBlock Text="{Binding DisplayName}" FontSize="28" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
-                        <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
-                    </TextBlock>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
-                        <ui:Button Command="{Binding PlayAllCommand}"
-                                   Style="{StaticResource PrimaryButton}"
-                                   HorizontalAlignment="Left">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
-                                <TextBlock Text="Play all" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ui:Button>
-                        <!-- Mark all watched / unwatched: only visible in edit mode -->
-                        <ui:Button Command="{Binding MarkCreatorWatchedCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}"
-                                   Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Eye24" Margin="0,0,4,0" />
-                                <TextBlock Text="Mark all watched" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ui:Button>
-                        <ui:Button Command="{Binding MarkCreatorUnwatchedCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}"
-                                   Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="EyeOff24" Margin="0,0,4,0" />
-                                <TextBlock Text="Mark all unwatched" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ui:Button>
-                        <!-- Episode multi-select toggle: appears alongside the action bar -->
-                        <ToggleButton IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
-                                      Margin="8,0,0,0"
-                                      Foreground="White"
-                                      Style="{StaticResource ChipToggle}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
-                                <TextBlock Text="Select" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ToggleButton>
-                        <Button Content="Select all"
-                                Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
-                                Command="{Binding Selection.SelectAllCommand}"
-                                Margin="8,0,0,0" Padding="10,4"
-                                Foreground="White"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" />
-                        <Button Content="Clear"
-                                Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
-                                Command="{Binding Selection.ClearSelectionCommand}"
-                                Margin="4,0,0,0" Padding="10,4"
-                                Foreground="White"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand" />
-                        <!-- Collapse / Expand all series accordion tiles -->
-                        <ui:Button Command="{Binding CollapseAllCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="ChevronUp24" Margin="0,0,4,0" />
-                                <TextBlock Text="Collapse all" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ui:Button>
-                        <ui:Button Command="{Binding ExpandAllCommand}" Margin="8,0,0,0"
-                                   Style="{StaticResource SecondaryButton}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="ChevronDown24" Margin="0,0,4,0" />
-                                <TextBlock Text="Expand all" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </ui:Button>
-                        <!-- Series filter toggle (ephemeral in-page filter) -->
-                        <ToggleButton IsChecked="{Binding IsSeriesFilterVisible, Mode=TwoWay}"
-                                      Margin="8,0,0,0"
-                                      Foreground="White"
-                                      Style="{StaticResource ChipToggle}"
-                                      ToolTip="Filter series">
-                            <ui:SymbolIcon Symbol="Filter24" />
-                        </ToggleButton>
-                    </StackPanel>
-                    <!-- Series filter bar: visible only when filter is toggled on -->
-                    <Grid Margin="0,6,0,0"
-                          Visibility="{Binding IsSeriesFilterVisible, Converter={StaticResource BoolToVisibility}}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0"
-                                 Text="{Binding SeriesFilterText, UpdateSourceTrigger=PropertyChanged}"
-                                 PlaceholderText="Filter series…" />
-                        <Button Grid.Column="1"
-                                Content="✕"
-                                Margin="4,0,0,0" Padding="8,4"
-                                Foreground="White"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"
-                                Command="{Binding ClearSeriesFilterCommand}"
-                                ToolTip="Clear filter" />
-                    </Grid>
-                    <StackPanel Orientation="Horizontal">
-                        <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
-                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource Chip}" Margin="0,0,6,0">
+    <!--
+        B1 RESTRUCTURE: replaced ScrollViewer > StackPanel with a two-row Grid so the series
+        ListBox (Row 1, Height="*") has a DEFINITE height → VirtualizingWrapPanel engages.
+
+        Row 0 (Auto)  — hero banner + tag editor + duplicates banner; its own ScrollViewer
+                         so tall edit-mode content can scroll independently.
+        Row 1 (*)     — SeriesGridListBox: virtualizing ListBox + VWP.
+
+        B2 HERO DECISION: the hero stays as a fixed Grid.Row=0 header that does NOT scroll
+        away with the series list. This is the common media-app "sticky creator banner" pattern
+        and avoids the fiddly ListBox ControlTemplate retemplate needed to put a header inside
+        the VWP's scroll area. Document: implement scroll-with-content only on owner request.
+    -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- hero + tag editor + duplicates -->
+            <RowDefinition Height="*"/>     <!-- definite height → virtualization works -->
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ROW 0 — HERO BANNER + TAG EDITOR + DUPLICATES BANNER
+             Scrollable (ScrollViewer) so edit-mode content doesn't get clipped.
+             ═══════════════════════════════════════════════════════════════════ -->
+        <ScrollViewer Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      motion:ScrollMemory.ViewKey="SectionDetailHeader">
+            <StackPanel>
+
+                <!-- HERO BANNER: creator art (dimmed) + name + count + tag pills + art actions -->
+                <Grid Height="240" ClipToBounds="True">
+                    <Image Source="{Binding BackgroundImagePath, IsAsync=True}" Stretch="UniformToFill"/>
+                    <!-- additive dim gradient for readability (not a control re-template) -->
+                    <Border>
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#22000000" Offset="0"/>
+                                <GradientStop Color="#E6000000" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <!-- Edit/Done toggle button (top-right of hero) -->
+                    <ui:Button Command="{Binding ToggleEditCommand}"
+                               Foreground="White" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
+                        <ui:Button.Style>
+                            <Style TargetType="ui:Button" BasedOn="{StaticResource SecondaryButton}">
+                                <Setter Property="Content">
+                                    <Setter.Value>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding}" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                            <ui:Button Style="{StaticResource TertiaryButton}"
-                                                    Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="Remove tag"
-                                                    Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
-                                                <ui:SymbolIcon Symbol="Dismiss24" />
-                                            </ui:Button>
+                                            <ui:SymbolIcon Symbol="Edit24" Margin="0,0,4,0" />
+                                            <TextBlock Text="Edit" VerticalAlignment="Center" />
                                         </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <!-- Art-action buttons: only visible in edit mode -->
-                        <StackPanel Orientation="Horizontal"
-                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                            <ui:Button Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
-                                       Style="{StaticResource SecondaryButton}">
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
+                                                    <TextBlock Text="Done" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ui:Button.Style>
+                    </ui:Button>
+                    <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,16">
+                        <TextBlock Text="{Binding DisplayName}" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
+                            <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
+                            <ui:Button Command="{Binding PlayAllCommand}"
+                                       Style="{StaticResource PrimaryButton}"
+                                       HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
-                                    <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                    <ui:SymbolIcon Symbol="PlayCircle24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Play all" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ui:Button>
-                            <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
-                                       Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
-                                       Style="{StaticResource SecondaryButton}">
+                            <!-- Mark all watched / unwatched: only visible in edit mode -->
+                            <ui:Button Command="{Binding MarkCreatorWatchedCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}"
+                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
                                 <StackPanel Orientation="Horizontal">
-                                    <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
-                                    <TextBlock Text="Use default" VerticalAlignment="Center" />
+                                    <ui:SymbolIcon Symbol="Eye24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Mark all watched" VerticalAlignment="Center" />
                                 </StackPanel>
                             </ui:Button>
+                            <ui:Button Command="{Binding MarkCreatorUnwatchedCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}"
+                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="EyeOff24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Mark all unwatched" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <!-- Episode multi-select toggle: appears alongside the action bar -->
+                            <ToggleButton IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
+                                          Margin="8,0,0,0"
+                                          Foreground="White"
+                                          Style="{StaticResource ChipToggle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Select" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <Button Content="Select all"
+                                    Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding Selection.SelectAllCommand}"
+                                    Margin="8,0,0,0" Padding="10,4"
+                                    Foreground="White"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                            <Button Content="Clear"
+                                    Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding Selection.ClearSelectionCommand}"
+                                    Margin="4,0,0,0" Padding="10,4"
+                                    Foreground="White"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                            <!-- Collapse / Expand all series accordion tiles -->
+                            <ui:Button Command="{Binding CollapseAllCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ChevronUp24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Collapse all" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <ui:Button Command="{Binding ExpandAllCommand}" Margin="8,0,0,0"
+                                       Style="{StaticResource SecondaryButton}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ChevronDown24" Margin="0,0,4,0" />
+                                    <TextBlock Text="Expand all" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ui:Button>
+                            <!-- Series filter toggle (ephemeral in-page filter) -->
+                            <ToggleButton IsChecked="{Binding IsSeriesFilterVisible, Mode=TwoWay}"
+                                          Margin="8,0,0,0"
+                                          Foreground="White"
+                                          Style="{StaticResource ChipToggle}"
+                                          ToolTip="Filter series">
+                                <ui:SymbolIcon Symbol="Filter24" />
+                            </ToggleButton>
+                        </StackPanel>
+                        <!-- Series filter bar: visible only when filter is toggled on -->
+                        <Grid Margin="0,6,0,0"
+                              Visibility="{Binding IsSeriesFilterVisible, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0"
+                                     Text="{Binding SeriesFilterText, UpdateSourceTrigger=PropertyChanged}"
+                                     PlaceholderText="Filter series…" />
+                            <Button Grid.Column="1"
+                                    Content="✕"
+                                    Margin="4,0,0,0" Padding="8,4"
+                                    Foreground="White"
+                                    Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                    Command="{Binding ClearSeriesFilterCommand}"
+                                    ToolTip="Clear filter" />
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource Chip}" Margin="0,0,6,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding}" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                <ui:Button Style="{StaticResource TertiaryButton}"
+                                                        Command="{Binding DataContext.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Remove tag"
+                                                        Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                                    <ui:SymbolIcon Symbol="Dismiss24" />
+                                                </ui:Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <!-- Art-action buttons: only visible in edit mode -->
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                <ui:Button Command="{Binding SetCreatorArtCommand}" Margin="8,0,0,0"
+                                           Style="{StaticResource SecondaryButton}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ui:Button>
+                                <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"
+                                           Visibility="{Binding HasCreatorArt, Converter={StaticResource BoolToVisibility}}"
+                                           Style="{StaticResource SecondaryButton}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                        <TextBlock Text="Use default" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ui:Button>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Grid>
+                </Grid>
 
-            <!-- TAG EDITOR: only visible in edit mode -->
-            <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel Orientation="Horizontal" Margin="24,12,24,0">
-                    <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add tag…" Width="220"/>
-                    <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"
-                               Style="{StaticResource SecondaryButton}"/>
-                </StackPanel>
-                <ItemsControl ItemsSource="{Binding Suggestions}" Margin="24,8,24,0">
-                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Content="{Binding}" Margin="0,0,6,6"
-                                    Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-
-            <!-- M18-G: POSSIBLE DUPLICATES banner — shown when HasDuplicates is true -->
-            <Border Margin="24,12,24,0" Padding="12,8"
-                    CornerRadius="{StaticResource ControlRadius}"
-                    Background="{StaticResource ChipFillBrush}"
-                    Visibility="{Binding HasDuplicates, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                        <ui:SymbolIcon Symbol="Warning24" Margin="0,0,8,0" VerticalAlignment="Center" />
-                        <TextBlock VerticalAlignment="Center"
-                                   Foreground="{StaticResource TextPrimaryBrush}"
-                                   FontSize="13">
-                            <Run Text="Possible duplicates (" />
-                            <Run Text="{Binding PossibleDuplicates.Count, Mode=OneWay}" />
-                            <Run Text=") — review" />
-                        </TextBlock>
+                <!-- TAG EDITOR: only visible in edit mode -->
+                <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Orientation="Horizontal" Margin="24,12,24,0">
+                        <ui:TextBox Text="{Binding TagInput, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add tag…" Width="220"/>
+                        <ui:Button Content="Add tag" Command="{Binding AddTagCommand}" Margin="8,0,0,0"
+                                   Style="{StaticResource SecondaryButton}"/>
                     </StackPanel>
-                    <ItemsControl ItemsSource="{Binding PossibleDuplicates}">
+                    <ItemsControl ItemsSource="{Binding Suggestions}" Margin="24,8,24,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                    <TextBlock FontSize="12"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center">
-                                        <Run Text="{Binding Videos.Count, Mode=OneWay}" />
-                                        <Run Text=" files, " />
-                                        <Run Text="{Binding SizeBytes, Mode=OneWay, StringFormat='{}{0:N0} bytes'}" />
-                                    </TextBlock>
-                                    <ui:Button Margin="8,0,0,0"
-                                               Style="{StaticResource SecondaryButton}"
-                                               Command="{Binding DataContext.OpenResolveCommand,
-                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                               CommandParameter="{Binding}">
-                                        <TextBlock Text="Compare &amp; resolve" FontSize="11" />
-                                    </ui:Button>
-                                </StackPanel>
+                                <Button Content="{Binding}" Margin="0,0,6,6"
+                                        Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </Border>
 
-            <!-- SERIES GRID (accordion tiles) -->
-            <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="24,16,24,8"/>
-            <ItemsControl ItemsSource="{Binding SeriesList}" Margin="24,0,24,24">
-                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Width="{StaticResource CardWidth}" Margin="0,0,12,12" Background="{StaticResource SubtleFillBrush}"
-                                CornerRadius="{StaticResource CardRadius}" VerticalAlignment="Top">
-                            <Border.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Play all" Command="{Binding PlayAllSeriesCommand}"/>
-                                    <MenuItem Header="Play next" Command="{Binding PlaySeriesNextCommand}"/>
-                                    <MenuItem Header="Add to queue" Command="{Binding AddSeriesToQueueCommand}"/>
-                                    <Separator/>
-                                    <MenuItem Header="Mark watched" Command="{Binding MarkSeriesWatchedCommand}"/>
-                                    <MenuItem Header="Mark unwatched" Command="{Binding MarkSeriesUnwatchedCommand}"/>
-                                    <Separator/>
-                                    <MenuItem Header="Rename files…" Command="{Binding RequestRenameCommand}"/>
-                                </ContextMenu>
-                            </Border.ContextMenu>
-                            <StackPanel>
-                                <!-- clickable tile header = Activate (play standalone / toggle expand) -->
-                                <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
-                                        Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
-                                        IsTabStop="True"
-                                        FocusVisualStyle="{StaticResource AppFocusVisual}">
-                                    <StackPanel>
-                                        <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
-                                                CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
-                                            <Image Source="{Binding ThumbnailPath, IsAsync=True}" Stretch="UniformToFill"/>
-                                        </Border>
-                                        <DockPanel Margin="8,6,8,6">
-                                            <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
-                                                    CornerRadius="{StaticResource ControlRadius}" Padding="6,1" VerticalAlignment="Center"
-                                                    Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBlock FontSize="11" Foreground="#101010">
-                                                    <Run Text="{Binding UnwatchedCount, Mode=OneWay}"/><Run Text=" new"/>
-                                                </TextBlock>
-                                            </Border>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding EpisodeCountLabel}" Opacity="0.7" FontSize="12"/>
-                                            </StackPanel>
-                                        </DockPanel>
+                <!-- M18-G: POSSIBLE DUPLICATES banner — shown when HasDuplicates is true -->
+                <Border Margin="24,12,24,0" Padding="12,8"
+                        CornerRadius="{StaticResource ControlRadius}"
+                        Background="{StaticResource ChipFillBrush}"
+                        Visibility="{Binding HasDuplicates, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <ui:SymbolIcon Symbol="Warning24" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="13">
+                                <Run Text="Possible duplicates (" />
+                                <Run Text="{Binding PossibleDuplicates.Count, Mode=OneWay}" />
+                                <Run Text=") — review" />
+                            </TextBlock>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding PossibleDuplicates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBlock FontSize="12"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center">
+                                            <Run Text="{Binding Videos.Count, Mode=OneWay}" />
+                                            <Run Text=" files, " />
+                                            <Run Text="{Binding SizeBytes, Mode=OneWay, StringFormat='{}{0:N0} bytes'}" />
+                                        </TextBlock>
+                                        <ui:Button Margin="8,0,0,0"
+                                                   Style="{StaticResource SecondaryButton}"
+                                                   Command="{Binding DataContext.OpenResolveCommand,
+                                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}">
+                                            <TextBlock Text="Compare &amp; resolve" FontSize="11" />
+                                        </ui:Button>
                                     </StackPanel>
-                                </Button>
-                                <!-- expanded episode list (accordion) — D3: opacity fade-in on expand.
-                                     Height animation into Auto is not possible in WPF — height is instant;
-                                     opacity animates when the panel becomes visible (IsVisibleChanged). -->
-                                <StackPanel Margin="8,0,8,8"
-                                            Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
-                                    <StackPanel.Style>
-                                        <Style TargetType="StackPanel">
-                                            <!-- D3: gate the opacity fade-in on BOTH IsExpanded=True AND
-                                                 AnimationsEnabled=True (MainViewModel, via ancestor Window).
-                                                 When reduced-motion is active the panel appears instantly at
-                                                 full opacity — no animation plays. -->
-                                            <Style.Triggers>
-                                                <MultiDataTrigger>
-                                                    <MultiDataTrigger.Conditions>
-                                                        <Condition Binding="{Binding IsExpanded}" Value="True" />
-                                                        <Condition Binding="{Binding DataContext.AnimationsEnabled,
-                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                   Value="True" />
-                                                    </MultiDataTrigger.Conditions>
-                                                    <MultiDataTrigger.EnterActions>
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                                 From="0" To="1"
-                                                                                 Duration="0:0:0.22">
-                                                                    <DoubleAnimation.EasingFunction>
-                                                                        <CubicEase EasingMode="EaseOut"/>
-                                                                    </DoubleAnimation.EasingFunction>
-                                                                </DoubleAnimation>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </MultiDataTrigger.EnterActions>
-                                                </MultiDataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </StackPanel.Style>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- SERIES section label: sits above the virtualized grid -->
+                <TextBlock Text="SERIES" Style="{StaticResource SectionHeader}" Margin="24,16,24,8"/>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ROW 1 — SERIES GRID (virtualized accordion tiles)
+             ListBox named SeriesGridListBox so the Group A metrics harness can
+             count realized containers via VisualNodeCounter.
+             VirtualizingWrapPanel: ScrollUnit=Pixel (variable-height accordion
+             tiles), VirtualizationMode=Recycling.
+             ═══════════════════════════════════════════════════════════════════ -->
+        <ListBox x:Name="SeriesGridListBox"
+                 Grid.Row="1"
+                 ItemsSource="{Binding SeriesList}"
+                 Style="{StaticResource PlainListBox}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 VirtualizingPanel.ScrollUnit="Pixel"
+                 Margin="24,0,24,0">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <vwp:VirtualizingWrapPanel SpacingMode="Uniform" Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <!-- Strip ListBox selection chrome; the tile keeps its own visuals. -->
+                <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListBoxItem}">
+                    <Setter Property="VerticalAlignment" Value="Top"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Width="{StaticResource CardWidth}" Margin="0,0,12,12" Background="{StaticResource SubtleFillBrush}"
+                            CornerRadius="{StaticResource CardRadius}" VerticalAlignment="Top">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Play all" Command="{Binding PlayAllSeriesCommand}"/>
+                                <MenuItem Header="Play next" Command="{Binding PlaySeriesNextCommand}"/>
+                                <MenuItem Header="Add to queue" Command="{Binding AddSeriesToQueueCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Mark watched" Command="{Binding MarkSeriesWatchedCommand}"/>
+                                <MenuItem Header="Mark unwatched" Command="{Binding MarkSeriesUnwatchedCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Rename files…" Command="{Binding RequestRenameCommand}"/>
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                        <StackPanel>
+                            <!-- clickable tile header = Activate (play standalone / toggle expand) -->
+                            <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
+                                    Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
+                                    IsTabStop="True"
+                                    FocusVisualStyle="{StaticResource AppFocusVisual}">
+                                <StackPanel>
+                                    <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
+                                            CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
+                                        <Image Source="{Binding ThumbnailPath, IsAsync=True}" Stretch="UniformToFill"/>
+                                    </Border>
+                                    <DockPanel Margin="8,6,8,6">
+                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
+                                                CornerRadius="{StaticResource ControlRadius}" Padding="6,1" VerticalAlignment="Center"
+                                                Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}">
+                                            <TextBlock FontSize="11" Foreground="#101010">
+                                                <Run Text="{Binding UnwatchedCount, Mode=OneWay}"/><Run Text=" new"/>
+                                            </TextBlock>
+                                        </Border>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding EpisodeCountLabel}" Opacity="0.7" FontSize="12"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Button>
+                            <!-- expanded episode list (accordion) — D3: opacity fade-in on expand.
+                                 Height animation into Auto is not possible in WPF — height is instant;
+                                 opacity animates when the panel becomes visible (IsVisibleChanged). -->
+                            <StackPanel Margin="8,0,8,8"
+                                        Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <!-- D3: gate the opacity fade-in on BOTH IsExpanded=True AND
+                                             AnimationsEnabled=True (MainViewModel, via ancestor Window).
+                                             When reduced-motion is active the panel appears instantly at
+                                             full opacity — no animation plays. -->
+                                        <Style.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding IsExpanded}" Value="True" />
+                                                    <Condition Binding="{Binding DataContext.AnimationsEnabled,
+                                                                         RelativeSource={RelativeSource AncestorType=Window}}"
+                                                               Value="True" />
+                                                </MultiDataTrigger.Conditions>
+                                                <MultiDataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             From="0" To="1"
+                                                                             Duration="0:0:0.22">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <CubicEase EasingMode="EaseOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </MultiDataTrigger.EnterActions>
+                                            </MultiDataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <!-- B2: bounded scroll so a 200-episode expanded series can't blow up
+                                     the realized item height and defeat per-pixel virtualization. -->
+                                <ScrollViewer MaxHeight="360"
+                                              VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
                                     <ItemsControl ItemsSource="{Binding Episodes}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -488,83 +550,83 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <ui:Button Content="Rename files…" Command="{Binding RequestRenameCommand}"
-                                               Margin="0,6,0,0" HorizontalAlignment="Left"
-                                               Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
-                                               Style="{StaticResource SecondaryButton}"/>
-                                    <!-- M18-H: series-level grouping affordances (Edit mode) -->
-                                    <StackPanel Margin="0,6,0,0"
-                                                Visibility="{Binding DataContext.GroupingEdit,
+                                </ScrollViewer>
+                                <ui:Button Content="Rename files…" Command="{Binding RequestRenameCommand}"
+                                           Margin="0,6,0,0" HorizontalAlignment="Left"
+                                           Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
+                                           Style="{StaticResource SecondaryButton}"/>
+                                <!-- M18-H: series-level grouping affordances (Edit mode) -->
+                                <StackPanel Margin="0,6,0,0"
+                                            Visibility="{Binding DataContext.GroupingEdit,
+                                                RelativeSource={RelativeSource AncestorType=UserControl},
+                                                Converter={StaticResource NotNullToVis}}">
+                                    <StackPanel Visibility="{Binding DataContext.IsEditing,
                                                     RelativeSource={RelativeSource AncestorType=UserControl},
-                                                    Converter={StaticResource NotNullToVis}}">
-                                        <StackPanel Visibility="{Binding DataContext.IsEditing,
-                                                        RelativeSource={RelativeSource AncestorType=UserControl},
-                                                        Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock Text="MERGE / REGROUP" FontSize="10" Opacity="0.6" Margin="0,0,0,4"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:TextBox
-                                                    Text="{Binding DataContext.MergeTargetTitle,
-                                                        RelativeSource={RelativeSource AncestorType=UserControl},
-                                                        UpdateSourceTrigger=PropertyChanged}"
-                                                    PlaceholderText="Merge into series…"
-                                                    Width="180" FontSize="11" />
-                                                <ui:Button Margin="4,0,0,0"
-                                                           Style="{StaticResource SecondaryButton}"
-                                                           Command="{Binding DataContext.MergeSeriesIntoCommand,
-                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                           CommandParameter="{Binding}"
-                                                           ToolTip="Merge all episodes of this series into the named series">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <ui:SymbolIcon Symbol="ArrowRight24" Margin="0,0,4,0" />
-                                                        <TextBlock Text="Merge" VerticalAlignment="Center" />
-                                                    </StackPanel>
-                                                </ui:Button>
-                                                <ui:Button Margin="8,0,0,0"
-                                                           Style="{StaticResource TertiaryButton}"
-                                                           Command="{Binding DataContext.ResetSeriesGroupingCommand,
-                                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                           CommandParameter="{Binding}"
-                                                           ToolTip="Clear all grouping overrides for this series">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
-                                                        <TextBlock Text="Reset grouping" VerticalAlignment="Center" />
-                                                    </StackPanel>
-                                                </ui:Button>
-                                            </StackPanel>
+                                                    Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="MERGE / REGROUP" FontSize="10" Opacity="0.6" Margin="0,0,0,4"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:TextBox
+                                                Text="{Binding DataContext.MergeTargetTitle,
+                                                    RelativeSource={RelativeSource AncestorType=UserControl},
+                                                    UpdateSourceTrigger=PropertyChanged}"
+                                                PlaceholderText="Merge into series…"
+                                                Width="180" FontSize="11" />
+                                            <ui:Button Margin="4,0,0,0"
+                                                       Style="{StaticResource SecondaryButton}"
+                                                       Command="{Binding DataContext.MergeSeriesIntoCommand,
+                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       ToolTip="Merge all episodes of this series into the named series">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="ArrowRight24" Margin="0,0,4,0" />
+                                                    <TextBlock Text="Merge" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </ui:Button>
+                                            <ui:Button Margin="8,0,0,0"
+                                                       Style="{StaticResource TertiaryButton}"
+                                                       Command="{Binding DataContext.ResetSeriesGroupingCommand,
+                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       ToolTip="Clear all grouping overrides for this series">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                                    <TextBlock Text="Reset grouping" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </ui:Button>
                                         </StackPanel>
                                     </StackPanel>
-                                    <!-- Series cover art actions: only visible in edit mode -->
-                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
-                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
-                                        <ui:Button Command="{Binding SetSeriesArtCommand}"
-                                                   Style="{StaticResource SecondaryButton}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
-                                                <TextBlock Text="Set image…" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </ui:Button>
-                                        <ui:Button Command="{Binding ClearSeriesArtCommand}" Margin="8,0,0,0"
-                                                   Style="{StaticResource SecondaryButton}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
-                                                <TextBlock Text="Use default" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </ui:Button>
-                                    </StackPanel>
-                                    <!-- Series tag editor: only in edit mode, only when wired with tags -->
-                                    <StackPanel Margin="0,8,0,0"
-                                                Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="Tags" FontSize="11" Opacity="0.7" Margin="0,0,0,4"/>
-                                        <views:TagEditorView DataContext="{Binding SeriesTagEditor}"/>
-                                    </StackPanel>
+                                </StackPanel>
+                                <!-- Series cover art actions: only visible in edit mode -->
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
+                                            Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                    <ui:Button Command="{Binding SetSeriesArtCommand}"
+                                               Style="{StaticResource SecondaryButton}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
+                                            <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ui:Button>
+                                    <ui:Button Command="{Binding ClearSeriesArtCommand}" Margin="8,0,0,0"
+                                               Style="{StaticResource SecondaryButton}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
+                                            <TextBlock Text="Use default" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ui:Button>
+                                </StackPanel>
+                                <!-- Series tag editor: only in edit mode, only when wired with tags -->
+                                <StackPanel Margin="0,8,0,0"
+                                            Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="Tags" FontSize="11" Opacity="0.7" Margin="0,0,0,4"/>
+                                    <views:TagEditorView DataContext="{Binding SeriesTagEditor}"/>
                                 </StackPanel>
                             </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
-        </StackPanel>
-    </ScrollViewer>
+    </Grid>
 </UserControl>
