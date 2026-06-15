@@ -23,9 +23,9 @@ namespace VideoShelf.App.Harness;
 /// Test-only: gated behind HarnessOptions.IsHarness in App.OnStartup.
 /// </summary>
 /// <remarks>
-/// I1 note: MainViewModel's BulkBar/CommandPalette/MultiRename are nullable-trailing-param
+/// I1 note: MainViewModel's BulkBar/MultiRename are nullable-trailing-param
 /// (null in slim test contexts, real instances in production DI and the harness).
-/// The production DI chain in ServiceCollectionExtensions.cs threads all three real
+/// The production DI chain in ServiceCollectionExtensions.cs threads both real
 /// instances; no consolidation is needed here — the pattern is correct as-is.
 /// </remarks>
 public sealed class HarnessRunner
@@ -246,9 +246,6 @@ public sealed class HarnessRunner
             // Browse with 2 creators pre-selected so the BulkActionBar is visible.
             case "BrowseSelection": await NavigateBrowseSelectionAsync(); break;
 
-            // Command palette open with a pre-filled query ("home").
-            case "CommandPalette": NavigateCommandPalette(); break;
-
             // Browse with the in-page filter bar visible + Compact density + List mode.
             case "BrowseFilter": NavigateBrowseFilter(); break;
 
@@ -321,22 +318,6 @@ public sealed class HarnessRunner
 
         // Give the BulkBar binding a render cycle to reflect the selection count.
         await Application.Current.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ContextIdle);
-    }
-
-    /// <summary>
-    /// Opens the Ctrl+K command palette with a pre-filled query so the result list
-    /// is populated for the screenshot. Uses "b" which matches B-named creators
-    /// ("Bella B"/"Bruno Bay"), the "Big Buck Bunny" series + its episode videos, and
-    /// the "Browse" action — so the sweep exercises Action/Creator/Series/Video item
-    /// kinds together (the M23 Group D series-results addition).
-    /// </summary>
-    private void NavigateCommandPalette()
-    {
-        _main.CurrentView = AppView.Browse; // show content behind the overlay
-        _main.OpenCommandPaletteCommand.Execute(null);
-        // Set a query after opening so the palette's RunAsync fires and populates Results.
-        if (_main.CommandPalette is not null)
-            _main.CommandPalette.Query = "b";
     }
 
     /// <summary>

@@ -48,7 +48,6 @@ public sealed partial class MainViewModel : ObservableObject
         HistoryViewModel history,
         VideoShelf.Core.Storage.LibraryRepository libraryRepo,
         BulkActionBarViewModel? bulkBar = null,
-        CommandPaletteViewModel? commandPalette = null,
         MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
@@ -74,10 +73,7 @@ public sealed partial class MainViewModel : ObservableObject
         Playlists = playlists;
         History = history;
         BulkBar = bulkBar;
-        CommandPalette = commandPalette;
         MultiRename = multiRename;
-        if (CommandPalette is not null)
-            CommandPalette.CloseRequested += (_, _) => IsCommandPaletteOpen = false;
         if (MultiRename is not null)
             MultiRename.CloseRequested += (_, _) => GoBack();
 
@@ -176,15 +172,8 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public BulkActionBarViewModel? BulkBar { get; }
 
-    /// <summary>Command palette VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
-    public CommandPaletteViewModel? CommandPalette { get; }
-
     /// <summary>Multi-series template rename VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public MultiRenameViewModel? MultiRename { get; }
-
-    /// <summary>True when the Ctrl+K command palette overlay is visible.</summary>
-    [ObservableProperty]
-    private bool _isCommandPaletteOpen;
 
     public FavoritesViewModel Favorites { get; }
     public WatchlistViewModel Watchlist { get; }
@@ -461,38 +450,6 @@ public sealed partial class MainViewModel : ObservableObject
                     el.Focus();
                 }));
     }
-
-    /// <summary>Opens the Ctrl+K command palette overlay and resets its state.</summary>
-    [RelayCommand]
-    private void OpenCommandPalette()
-    {
-        if (CommandPalette is null) return;
-        if (IsCommandPaletteOpen) return; // guard double-open
-        CommandPalette.Reset();
-        IsCommandPaletteOpen = true;
-        // Focus request is handled by a code-behind hook on IsCommandPaletteOpen.
-        OnPropertyChanged(nameof(IsCommandPaletteOpen));
-    }
-
-    /// <summary>
-    /// Builds the static action registry that the CommandPaletteViewModel uses.
-    /// Called once during DI construction after all commands are wired.
-    /// </summary>
-    public IReadOnlyList<(string Label, string Icon, Action Execute)> BuildActionRegistry()
-        => new List<(string, string, Action)>
-        {
-            ("Home",         "Home24",     () => ShowHomeCommand.Execute(null)),
-            ("Browse",       "Apps24",     () => ShowBrowseCommand.Execute(null)),
-            ("Settings",     "Settings24", () => ShowSettingsCommand.Execute(null)),
-            ("Playlists",    "List24",     () => ShowPlaylistsCommand.Execute(null)),
-            ("Watch Later",  "Heart24",    () => ShowWatchlistCommand.Execute(null)),
-            ("Favorites",    "Heart24",    () => ShowFavoritesCommand.Execute(null)),
-            ("History",      "Eye24",      () => ShowHistoryCommand.Execute(null)),
-            ("Up Next / Queue", "List24",  () => ShowQueueCommand.Execute(null)),
-            ("Scan Library", "ArrowReset24", () => ScanAndReloadCommand.Execute(null)),
-            ("Library Health", "Wrench24",  () => ShowMaintenanceCommand.Execute(null)),
-            ("Add Source…",  "FolderAdd24", () => Sources.AddSourceCommand.Execute(null)),
-        };
 
     /// <summary>Loads sources + library once at startup.</summary>
     public async Task InitializeAsync()

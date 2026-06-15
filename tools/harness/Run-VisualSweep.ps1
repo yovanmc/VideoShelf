@@ -122,7 +122,6 @@ $views = [ordered]@{
     'browse-scale'    = @('--view','Browse','--seed-demo')          # 30+ creators -> A-Z jump-list + virtualized grid + density/list toggles
     'browse-selection'= @('--view','BrowseSelection','--seed-demo') # selection mode + bulk-action bar ("N selected")
     'browse-filter'   = @('--view','BrowseFilter','--seed-demo')    # in-page filter bar open + Compact density + List mode
-    'command-palette' = @('--view','CommandPalette','--seed-demo')  # Ctrl+K palette open with a query
     'multi-rename'    = @('--view','MultiRename','--seed-demo')     # cross-series template rename preview
     # M18 (Library health) surfaces:
     'maintenance'         = @('--view','Maintenance','--seed-demo')       # dashboard tiles + per-source cards + scan-diff banner
