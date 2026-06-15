@@ -20,6 +20,13 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // M24-A: apply Ice Cyan accent to WPF-UI native controls (primary buttons,
+        // slider thumb, checkbox ticks, etc.) BEFORE any window/control is created, so
+        // they follow our token (not the OS accent) from first render.
+        ApplicationAccentColorManager.Apply(
+            System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7),
+            ApplicationTheme.Dark);
+
         var options = HarnessOptions.Parse(e.Args);
 
         try
@@ -31,12 +38,6 @@ public partial class App : Application
             _host.StartAsync().GetAwaiter().GetResult();
             var window = _host.Services.GetRequiredService<MainWindow>();
             window.Show();
-
-            // M24-A: apply Ice Cyan accent to WPF-UI native controls (primary buttons,
-            // slider thumb, checkbox ticks, etc.) so they follow our token, not the OS accent.
-            ApplicationAccentColorManager.Apply(
-                System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7),
-                ApplicationTheme.Dark);
 
             if (options.IsHarness)
             {
