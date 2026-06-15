@@ -23,7 +23,7 @@ public sealed class DiscoveryViewModelTests
 
     private sealed record Fx(AppTempDb Db, LibraryRepository Lib, WatchRepository Watch,
         TagRepository Tags, DiscoveryRepository Disc, StatsRepository Stats, DiscoveryViewModel Vm,
-        PlayQueueViewModel PlayQueue, SmartViewRepository SmartViews);
+        PlayQueueViewModel PlayQueue);
 
     private static Fx NewFx()
     {
@@ -38,9 +38,8 @@ public sealed class DiscoveryViewModelTests
         var thumbs = new NullThumbs();
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var smartViews = new SmartViewRepository(db.Db);
-        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue, smartViews);
-        return new Fx(db, lib, watch, tags, disc, statsRepo, vm, playQueue, smartViews);
+        var vm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
+        return new Fx(db, lib, watch, tags, disc, statsRepo, vm, playQueue);
     }
 
     [Fact]
@@ -176,47 +175,5 @@ public sealed class DiscoveryViewModelTests
         f.PlayQueue.HasQueue.ShouldBeTrue();
         f.PlayQueue.Items.Count.ShouldBe(1);
         f.PlayQueue.Items[0].Episode.VideoId.ShouldBe(vid);
-    }
-
-    [Fact]
-    public async Task SmartShelves_show_on_home_view_appears_with_matching_video()
-    {
-        var f = NewFx(); using var _d = f.Db;
-        // Seed a video
-        var src = f.Lib.UpsertSource(@"C:\m", "M");
-        var sec = f.Lib.UpsertSection(src, "Creator");
-        var ser = f.Lib.UpsertSeries(sec, "Show", false);
-        f.Lib.UpsertVideo(ser, @"C:\m\Creator\Show\e01.mkv", 1, "mkv");
-
-        // A show_on_home=true view with no rules (matches everything)
-        var def = new SmartViewDefinition("all", []);
-        f.SmartViews.Create("My Shelf", def, showOnHome: true, now: DateTimeOffset.UtcNow);
-
-        await f.Vm.LoadAsync();
-
-        f.Vm.HasSmartShelves.ShouldBeTrue();
-        f.Vm.SmartShelves.Count.ShouldBe(1);
-        f.Vm.SmartShelves[0].Name.ShouldBe("My Shelf");
-        f.Vm.SmartShelves[0].Items.ShouldNotBeEmpty();
-    }
-
-    [Fact]
-    public async Task SmartShelves_show_on_home_false_view_does_not_appear()
-    {
-        var f = NewFx(); using var _d = f.Db;
-        // Seed a video
-        var src = f.Lib.UpsertSource(@"C:\m", "M");
-        var sec = f.Lib.UpsertSection(src, "Creator");
-        var ser = f.Lib.UpsertSeries(sec, "Show", false);
-        f.Lib.UpsertVideo(ser, @"C:\m\Creator\Show\e01.mkv", 1, "mkv");
-
-        // A show_on_home=false view — should not surface on Home
-        var def = new SmartViewDefinition("all", []);
-        f.SmartViews.Create("Hidden Shelf", def, showOnHome: false, now: DateTimeOffset.UtcNow);
-
-        await f.Vm.LoadAsync();
-
-        f.Vm.HasSmartShelves.ShouldBeFalse();
-        f.Vm.SmartShelves.ShouldBeEmpty();
     }
 }

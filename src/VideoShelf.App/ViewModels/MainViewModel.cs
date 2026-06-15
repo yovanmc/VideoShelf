@@ -12,7 +12,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, SmartViews, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -42,7 +42,6 @@ public sealed partial class MainViewModel : ObservableObject
         SearchViewModel search,
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
-        SmartViewsViewModel smartViews,
         FavoritesViewModel favorites,
         WatchlistViewModel watchlist,
         PlaylistsViewModel playlists,
@@ -70,7 +69,6 @@ public sealed partial class MainViewModel : ObservableObject
         _toasts = toasts ?? new ToastService((_, _) => { }); // no-op timer in test contexts
         _motion = motion;
         Maintenance = maintenance;
-        SmartViews = smartViews;
         Favorites = favorites;
         Watchlist = watchlist;
         Playlists = playlists;
@@ -188,7 +186,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isCommandPaletteOpen;
 
-    public SmartViewsViewModel SmartViews { get; }
     public FavoritesViewModel Favorites { get; }
     public WatchlistViewModel Watchlist { get; }
     public PlaylistsViewModel Playlists { get; }
@@ -345,14 +342,6 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowSmartViews()
-    {
-        SmartViews.Load();
-        PushNav(CurrentView);
-        CurrentView = AppView.SmartViews;
-    }
-
-    [RelayCommand]
     private void ShowFavorites()
     {
         Favorites.Load();
@@ -495,16 +484,13 @@ public sealed partial class MainViewModel : ObservableObject
             ("Home",         "Home24",     () => ShowHomeCommand.Execute(null)),
             ("Browse",       "Apps24",     () => ShowBrowseCommand.Execute(null)),
             ("Settings",     "Settings24", () => ShowSettingsCommand.Execute(null)),
-            ("Smart Views",  "Library24",  () => ShowSmartViewsCommand.Execute(null)),
             ("Playlists",    "List24",     () => ShowPlaylistsCommand.Execute(null)),
             ("Watch Later",  "Heart24",    () => ShowWatchlistCommand.Execute(null)),
             ("Favorites",    "Heart24",    () => ShowFavoritesCommand.Execute(null)),
             ("History",      "Eye24",      () => ShowHistoryCommand.Execute(null)),
             ("Up Next / Queue", "List24",  () => ShowQueueCommand.Execute(null)),
-            ("Surprise Me",  "Play24",     () => SurpriseMeCommand.Execute(null)),
             ("Scan Library", "ArrowReset24", () => ScanAndReloadCommand.Execute(null)),
             ("Library Health", "Wrench24",  () => ShowMaintenanceCommand.Execute(null)),
-            ("New Smart View", "Add24",     () => { ShowSmartViewsCommand.Execute(null); SmartViews.NewViewCommand.Execute(null); }),
             ("Add Source…",  "FolderAdd24", () => Sources.AddSourceCommand.Execute(null)),
         };
 

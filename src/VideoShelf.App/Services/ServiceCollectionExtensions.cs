@@ -97,7 +97,6 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddSingleton<TagRepository>();
-        services.AddSingleton<SmartViewRepository>();
         services.AddSingleton<CurationRepository>();
         services.AddSingleton<PlaylistRepository>();
         services.AddSingleton<DiscoveryRepository>();
@@ -157,7 +156,6 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IThumbnailService>(),
             sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<SearchViewModel>();
-        services.AddSingleton<SmartViewsViewModel>();
         services.AddSingleton<FavoritesViewModel>();
         services.AddSingleton<WatchlistViewModel>();
         services.AddSingleton<PlaylistsViewModel>();
@@ -210,7 +208,6 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<SearchViewModel>(),
                 sp.GetRequiredService<MediaBackfillService>(),
                 sp.GetRequiredService<PlayQueueViewModel>(),
-                sp.GetRequiredService<SmartViewsViewModel>(),
                 sp.GetRequiredService<FavoritesViewModel>(),
                 sp.GetRequiredService<WatchlistViewModel>(),
                 sp.GetRequiredService<PlaylistsViewModel>(),

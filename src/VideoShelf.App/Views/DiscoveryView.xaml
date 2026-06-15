@@ -191,52 +191,6 @@
                 </ScrollViewer>
             </StackPanel>
 
-            <!-- Smart-view shelves -->
-            <StackPanel Margin="0,24,0,0" Visibility="{Binding HasSmartShelves, Converter={StaticResource BoolToVisibility}}">
-                <ItemsControl ItemsSource="{Binding SmartShelves}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="0,0,0,24">
-                                <TextBlock Text="{Binding Name}" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"/>
-                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                    <ItemsControl ItemsSource="{Binding Items}"
-                                                  KeyboardNavigation.TabNavigation="Once"
-                                                  KeyboardNavigation.DirectionalNavigation="Contained">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal"/>
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                    <Border.ContextMenu>
-                                                        <ContextMenu>
-                                                            <MenuItem Header="Play next"
-                                                                      Command="{Binding PlacementTarget.Tag.PlayVideoNextCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding VideoId}"/>
-                                                            <MenuItem Header="Add to queue"
-                                                                      Command="{Binding PlacementTarget.Tag.EnqueueVideoCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                                                      CommandParameter="{Binding VideoId}"/>
-                                                        </ContextMenu>
-                                                    </Border.ContextMenu>
-                                                    <views:VideoCard/>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-
             <!-- Favorites rail -->
             <StackPanel Margin="0,24,0,0"
                         Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}">

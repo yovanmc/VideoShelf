@@ -12,7 +12,6 @@ using VideoShelf.App.Scale;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
-using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
@@ -37,7 +36,6 @@ public sealed class HarnessRunner
     private readonly WatchRepository _watch;
     private readonly TagRepository _tags;
     private readonly CurationRepository _curation;
-    private readonly SmartViewRepository _smartViews;
     private readonly PlaylistRepository _playlists;
     private readonly MaintenanceRepository _maintenance;
 
@@ -48,7 +46,6 @@ public sealed class HarnessRunner
         WatchRepository watch,
         TagRepository tags,
         CurationRepository curation,
-        SmartViewRepository smartViews,
         PlaylistRepository playlists,
         MaintenanceRepository maintenance)
     {
@@ -58,7 +55,6 @@ public sealed class HarnessRunner
         _watch = watch;
         _tags = tags;
         _curation = curation;
-        _smartViews = smartViews;
         _playlists = playlists;
         _maintenance = maintenance;
     }
@@ -217,7 +213,6 @@ public sealed class HarnessRunner
             case "PlayerUpNext":
                 await NavigatePlayerUpNextAsync();
                 break;
-            case "SmartViews": _main.ShowSmartViewsCommand.Execute(null); break;
             case "Playlists":  _main.ShowPlaylistsCommand.Execute(null); break;
             case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
@@ -672,15 +667,6 @@ public sealed class HarnessRunner
             // Video + series tags (cascade chips on creator/series pages)
             _tags.AddSeriesTag(richest[0].SeriesId, "demo-series");
             _tags.AddVideoTag(richest[0].VideoId, "demo-video");
-
-            // Demo smart view (show on home) — uses dateAdded/withinDays so it matches any
-            // recently-scanned video, making the SmartViews page + Home smart-shelf non-empty
-            // regardless of whether the watched flag propagated before seeding.
-            _smartViews.Create(
-                "Demo · recent",
-                new SmartViewDefinition("all", new[] { new SmartRule("dateAdded", "withinDays", "3650") }),
-                showOnHome: true,
-                DateTimeOffset.UtcNow);
 
             // Demo playlist with up to two items
             var plId = _playlists.Create("Demo playlist", DateTimeOffset.UtcNow);

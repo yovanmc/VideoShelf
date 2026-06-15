@@ -54,8 +54,7 @@ public static class MainViewModelTestFactory
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var smartViews = new SmartViewRepository(temp.Db);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue, smartViews);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
@@ -64,7 +63,6 @@ public static class MainViewModelTestFactory
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
 
-        var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
@@ -75,7 +73,7 @@ public static class MainViewModelTestFactory
 
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, favoritesVm, watchlistVm,
             playlistsVm, historyVm, lib, motion: motion);
 
         ctx = new MainVmContext(temp, sectionId);

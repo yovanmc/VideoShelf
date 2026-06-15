@@ -73,8 +73,7 @@ public class MainViewModelTests
         var cardFactory = new CreatorCardFactory(art, thumbs);
         var statsRepo = new StatsRepository(temp.Db);
         var playQueue = new PlayQueueViewModel(lib, settings);
-        var smartViews = new SmartViewRepository(temp.Db);
-        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue, smartViews);
+        var discoveryVm = new DiscoveryViewModel(disc, lib, tags, cardFactory, statsRepo, playQueue);
         var sectionDetailVm = new SectionDetailViewModel(lib, tags, watch, thumbs, art, new FakeImagePicker(null), playQueue);
         var fs = new InMemoryFileSystem();
         var paths = new AppPaths(temp.DbPath + "-dir");
@@ -82,7 +81,6 @@ public class MainViewModelTests
         var creators = new CreatorsViewModel(lib, art, thumbs);
         var searchCardFactory = new CreatorCardFactory(art, thumbs);
         var searchVm = new SearchViewModel(lib, searchCardFactory);
-        var smartViewsVm = new SmartViewsViewModel(smartViews, tags, lib);
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
         var watchlistVm = new WatchlistViewModel(curation, lib);
@@ -90,7 +88,7 @@ public class MainViewModelTests
         var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,
             discoveryVm, sectionDetailVm, renameTool, creators, searchVm,
-            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, smartViewsVm, favoritesVm, watchlistVm,
+            new MediaBackfillService(lib, new FakeMediaProbe()), playQueue, favoritesVm, watchlistVm,
             playlistsVm, historyVm, lib);
 
         // Add a source via the sources VM, then scan + reload through the shell.
@@ -102,46 +100,4 @@ public class MainViewModelTests
         vm.Library.Sections.Single().DisplayName.ShouldBe("Creator A");
     }
 
-    [Fact]
-    public void ShowSmartViewsCommand_sets_CurrentView_to_SmartViews_and_pushes_back_stack()
-    {
-        var vm = MainViewModelTestFactory.Create(out var ctx);
-        using var _d = ctx.Db;
-
-        // Navigate somewhere first so there's something on the back stack.
-        vm.ShowSmartViewsCommand.Execute(null);
-
-        vm.CurrentView.ShouldBe(AppView.SmartViews);
-        vm.CanGoBack.ShouldBeTrue();
-    }
-
-    [Fact]
-    public void BuildActionRegistry_contains_Library_Health_New_Smart_View_and_Add_Source()
-    {
-        var vm = MainViewModelTestFactory.Create(out var ctx);
-        using var _d = ctx.Db;
-
-        var labels = vm.BuildActionRegistry().Select(a => a.Label).ToList();
-
-        labels.ShouldContain("Library Health");
-        labels.ShouldContain("New Smart View");
-        labels.ShouldContain("Add Source…");
-    }
-
-    [Fact]
-    public void ShowSmartViewsCommand_GoBack_returns_to_previous_view()
-    {
-        var vm = MainViewModelTestFactory.Create(out var ctx);
-        using var _d = ctx.Db;
-
-        // Start on Home.
-        vm.CurrentView.ShouldBe(AppView.Home);
-
-        vm.ShowSmartViewsCommand.Execute(null);
-        vm.CurrentView.ShouldBe(AppView.SmartViews);
-
-        vm.GoBackCommand.Execute(null);
-        vm.CurrentView.ShouldBe(AppView.Home);
-        vm.CanGoBack.ShouldBeFalse();
-    }
 }

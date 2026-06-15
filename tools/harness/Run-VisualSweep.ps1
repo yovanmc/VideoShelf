@@ -107,7 +107,6 @@ $views = [ordered]@{
     'search'        = @('--view','Search','--seed-demo')
     'browse'        = @('--view','Browse')
     'section-detail'= @('--view','SectionDetail','--seed-demo')
-    'smart-views'   = @('--view','SmartViews','--seed-demo')
     'playlists'     = @('--view','Playlists','--seed-demo')
     'watchlist'     = @('--view','Watchlist','--seed-demo')
     'favorites'     = @('--view','Favorites','--seed-demo')
