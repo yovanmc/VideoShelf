@@ -1,3 +1,4 @@
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.Core.Discovery;
@@ -23,6 +24,10 @@ public sealed partial class ContinueWatchingCardViewModel(ContinueWatchingItem i
     public bool IsWatched => item.Duration is > 0 && item.ResumePosition >= item.Duration.Value;
 
     [ObservableProperty] private string? thumbnailPath;
+
+    /// <summary>Frozen ImageSource for the card cover; always null for continue-watching cards
+    /// (thumbnail loading is not currently wired for this card type — placeholder shown).</summary>
+    public ImageSource? Cover => null;
 
     public event EventHandler? PlayInvoked;
     [RelayCommand] private void Play() => PlayInvoked?.Invoke(this, EventArgs.Empty);

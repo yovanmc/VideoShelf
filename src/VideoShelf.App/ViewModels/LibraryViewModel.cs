@@ -13,7 +13,8 @@ namespace VideoShelf.App.ViewModels;
 public sealed partial class LibraryViewModel(
     LibraryRepository library,
     WatchRepository watch,
-    IThumbnailService thumbnails) : ObservableObject
+    IThumbnailService thumbnails,
+    IImageLoader? imageLoader = null) : ObservableObject
 {
     private CancellationTokenSource? _opCts;
     private Task _pending = Task.CompletedTask;
@@ -38,7 +39,7 @@ public sealed partial class LibraryViewModel(
         Sections.Clear();
         foreach (var s in summaries)
         {
-            var sectionVm = new SectionViewModel(s, library, watch, thumbnails);
+            var sectionVm = new SectionViewModel(s, library, watch, thumbnails, imageLoader);
             sectionVm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             Sections.Add(sectionVm);
         }

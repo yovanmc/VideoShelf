@@ -73,7 +73,7 @@
                 <Border CornerRadius="{StaticResource CardImageRadius}"
                         Background="{StaticResource ThumbPlaceholderBrush}"
                         Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
-                    <Image Source="{Binding ThumbnailPath, IsAsync=True, NotifyOnTargetUpdated=True}"
+                    <Image Source="{Binding Cover}"
                            Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
                 </Border>
                 <!-- Watched checkmark badge: top-right chip overlay, visible when IsWatched=True.

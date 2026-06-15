@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Motion;
@@ -23,7 +24,8 @@ public sealed partial class SeriesViewModel(
     IReadOnlyList<PlaylistRef>? availablePlaylists = null,
     ItemArtRepository? itemArt = null,
     IImagePicker? imagePicker = null,
-    IToastService? toasts = null) : ObservableObject
+    IToastService? toasts = null,
+    IImageLoader? imageLoader = null) : ObservableObject
 {
     public TagEditorViewModel? SeriesTagEditor { get; } = tags != null ? new TagEditorViewModel(tags) : null;
 
@@ -42,6 +44,11 @@ public sealed partial class SeriesViewModel(
 
     [ObservableProperty]
     private string? _thumbnailPath;
+
+    /// <summary>Frozen ImageSource decoded at series tile display width, or null when no image is available.
+    /// Produced by <see cref="IImageLoader"/> (production); null in tests that omit the loader.</summary>
+    [ObservableProperty]
+    private ImageSource? _cover;
 
     [ObservableProperty]
     private bool _isExpanded;
@@ -162,11 +169,14 @@ public sealed partial class SeriesViewModel(
         if (!string.IsNullOrEmpty(overridePath))
         {
             ThumbnailPath = overridePath;
+            Cover = imageLoader?.Load(overridePath, decodePixelWidth: 200);
             return;
         }
         if (summary.ThumbnailSeedPath is null)
             return;
-        ThumbnailPath = await thumbnails.GetThumbnailPathAsync(summary.ThumbnailSeedPath, cancellationToken);
+        var path = await thumbnails.GetThumbnailPathAsync(summary.ThumbnailSeedPath, cancellationToken);
+        ThumbnailPath = path;
+        Cover = imageLoader?.Load(path, decodePixelWidth: 200);
     }
 
     [RelayCommand]

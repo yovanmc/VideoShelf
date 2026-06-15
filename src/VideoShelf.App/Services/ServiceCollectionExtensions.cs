@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         {
             services.AddSingleton<AppPaths>();
         }
+        services.AddSingleton<IImageLoader>(_ => new PooledBitmapLoader(maxEntries: 600));
         services.AddSingleton<IMotionPolicy, SystemMotionPolicy>();
         services.AddSingleton<IToastService>(_ => new ToastService((delay, act) =>
         {
@@ -59,7 +60,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<LibraryRepository>(),
             sp.GetRequiredService<CreatorArtRepository>(),
             sp.GetRequiredService<IThumbnailService>(),
-            sp.GetRequiredService<SettingsRepository>()));
+            sp.GetRequiredService<SettingsRepository>(),
+            sp.GetRequiredService<IImageLoader>()));
 
         services.AddSingleton<ScanService>();
         services.AddSingleton<IScanCoordinator, ScanCoordinator>();
@@ -118,14 +120,19 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IConfirmService>(),
             sp.GetRequiredService<IFileSystem>(),
             sp.GetRequiredService<GroupingEditViewModel>(),
-            sp.GetRequiredService<IToastService>()));
+            sp.GetRequiredService<IToastService>(),
+            sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>(sp => new SourcesViewModel(
             sp.GetRequiredService<LibraryRepository>(),
             sp.GetRequiredService<IFolderPicker>(),
             sp.GetRequiredService<IConfirmService>(),
             sp.GetRequiredService<IToastService>()));
-        services.AddSingleton<LibraryViewModel>();
+        services.AddSingleton<LibraryViewModel>(sp => new LibraryViewModel(
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<WatchRepository>(),
+            sp.GetRequiredService<IThumbnailService>(),
+            sp.GetRequiredService<IImageLoader>()));
 
         services.AddSingleton<IFileSystem, RealFileSystem>();
         services.AddSingleton<RenamePlanner>();
@@ -145,7 +152,10 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AppPaths>(),
             sp.GetRequiredService<IToastService>()));
 
-        services.AddSingleton<CreatorCardFactory>();
+        services.AddSingleton<CreatorCardFactory>(sp => new CreatorCardFactory(
+            sp.GetRequiredService<CreatorArtRepository>(),
+            sp.GetRequiredService<IThumbnailService>(),
+            sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<SearchViewModel>();
         services.AddSingleton<SmartViewsViewModel>();
         services.AddSingleton<FavoritesViewModel>();

@@ -429,7 +429,7 @@
                                     <Border Grid.Column="0" CornerRadius="{StaticResource ControlRadius}"
                                             Background="{StaticResource ThumbPlaceholderBrush}"
                                             Margin="0,2,8,2" ClipToBounds="True">
-                                        <Image Source="{Binding ImagePath, IsAsync=True}"
+                                        <Image Source="{Binding Cover}"
                                                Style="{StaticResource ThumbnailImage}" />
                                     </Border>
                                     <!-- Name + count -->
