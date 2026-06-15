@@ -113,6 +113,12 @@
                                 <MenuItem Header="Surprise me 🎲" Command="{Binding SurpriseMeCommand}" />
                                 <Separator />
                                 <MenuItem Header="Library Health" Command="{Binding ShowMaintenanceCommand}" />
+                                <Separator />
+                                <MenuItem Header="Add folder…" Command="{Binding Sources.AddSourceCommand}">
+                                    <MenuItem.Icon>
+                                        <ui:SymbolIcon Symbol="FolderAdd24" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </MenuItem>
                         </Menu>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
@@ -557,7 +563,10 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
                         <TextBlock Text="No sources yet" FontSize="22" FontWeight="SemiBold" HorizontalAlignment="Center" />
                         <TextBlock Text="Add a folder of videos to start building your library."
-                                   TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,16" />
+                                   TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,8" />
+                        <TextBlock Text="Tip: each folder you add becomes a Creator — name folders after the person."
+                                   TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextMutedBrush}"
+                                   Style="{StaticResource Caption}" Margin="0,0,0,16" />
                         <ui:Button Content="Add a source" HorizontalAlignment="Center"
                                    Command="{Binding DataContext.Sources.AddSourceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                    Style="{StaticResource PrimaryButton}" />
