@@ -16,6 +16,7 @@
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:NotNullToVisibility x:Key="NotNullToVis" />
             <conv:CountToVisibility x:Key="CountToVis" />
+            <conv:FractionToWidth x:Key="FractionToWidth" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -584,9 +585,32 @@
                                                                    Style="{StaticResource TertiaryButton}">
                                                             <ui:SymbolIcon Symbol="Play24" />
                                                         </ui:Button>
-                                                        <!-- Title -->
-                                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <!-- Title + runtime + progress: fills remaining width -->
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <!-- Title row: title fills width, runtime label docked right -->
+                                                            <DockPanel LastChildFill="True">
+                                                                <TextBlock DockPanel.Dock="Right"
+                                                                           Text="{Binding RuntimeLabel}"
+                                                                           FontSize="10"
+                                                                           Opacity="0.55"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="4,0,0,0"
+                                                                           Visibility="{Binding RuntimeLabel, Converter={StaticResource NotNullToVis}}" />
+                                                                <TextBlock Text="{Binding Title}"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </DockPanel>
+                                                            <!-- Thin progress track: only when in-progress -->
+                                                            <Border Height="3" CornerRadius="1.5" Margin="0,2,0,0"
+                                                                    Background="{StaticResource ThumbPlaceholderBrush}"
+                                                                    Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
+                                                                <Border HorizontalAlignment="Left" CornerRadius="1.5"
+                                                                        Background="{StaticResource AccentBrush}"
+                                                                        Width="{Binding ProgressFraction,
+                                                                            Converter={StaticResource FractionToWidth},
+                                                                            ConverterParameter=120}" />
+                                                            </Border>
+                                                        </StackPanel>
                                                     </DockPanel>
                                                     <!-- Video tag editor: only in edit mode -->
                                                     <views:TagEditorView DataContext="{Binding VideoTagEditor}"
