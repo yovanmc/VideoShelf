@@ -503,6 +503,9 @@ public sealed partial class MainViewModel : ObservableObject
             ("Up Next / Queue", "List24",  () => ShowQueueCommand.Execute(null)),
             ("Surprise Me",  "Play24",     () => SurpriseMeCommand.Execute(null)),
             ("Scan Library", "ArrowReset24", () => ScanAndReloadCommand.Execute(null)),
+            ("Library Health", "Wrench24",  () => ShowMaintenanceCommand.Execute(null)),
+            ("New Smart View", "Add24",     () => { ShowSmartViewsCommand.Execute(null); SmartViews.NewViewCommand.Execute(null); }),
+            ("Add Source…",  "FolderAdd24", () => Sources.AddSourceCommand.Execute(null)),
         };
 
     /// <summary>Loads sources + library once at startup.</summary>
