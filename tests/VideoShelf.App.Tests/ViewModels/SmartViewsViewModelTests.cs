@@ -299,4 +299,89 @@ public sealed class SmartViewsViewModelTests
 
         new SmartViewRepository(f.Db.Db).GetAll().ShouldBeEmpty();
     }
+
+    // ── Live MatchCount ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void MatchCount_is_empty_when_no_rules_in_builder()
+    {
+        var f = NewFx(); using var _d = f.Db;
+
+        // Remove the auto-added blank rule so EditRules is empty.
+        f.Vm.NewViewCommand.Execute(null);
+        f.Vm.RemoveRuleCommand.Execute(f.Vm.EditRules[0]);
+
+        f.Vm.MatchCount.ShouldBe(string.Empty);
+    }
+
+    [Fact]
+    public void MatchCount_contains_correct_video_count_after_adding_a_rule()
+    {
+        var f = NewFx(); using var _d = f.Db;
+
+        // Seed two unwatched videos.
+        var lib = f.Lib;
+        var srcId = lib.UpsertSource(@"C:\m", "M");
+        var secId = lib.UpsertSection(srcId, "S");
+        var seriesId = lib.UpsertSeries(secId, "Show", isStandalone: false);
+        lib.UpsertVideo(seriesId, @"C:\m\S\Show\e01.mkv", 1, "mkv");
+        lib.UpsertVideo(seriesId, @"C:\m\S\Show\e02.mkv", 2, "mkv");
+
+        f.Vm.NewViewCommand.Execute(null);
+        var row = f.Vm.EditRules[0];
+        row.Field = "watched";
+        row.Op = "is";
+        row.Value = "false";
+
+        // MatchCount should report 2 videos.
+        f.Vm.MatchCount.ShouldBe("Matches 2 videos");
+    }
+
+    [Fact]
+    public void MatchCount_updates_when_rule_value_changes()
+    {
+        var f = NewFx(); using var _d = f.Db;
+
+        var lib = f.Lib;
+        var srcId = lib.UpsertSource(@"C:\m", "M");
+        var secId = lib.UpsertSection(srcId, "S");
+        var seriesId = lib.UpsertSeries(secId, "Show", isStandalone: false);
+        var vid = lib.UpsertVideo(seriesId, @"C:\m\S\Show\e01.mkv", 1, "mkv");
+        using var conn = f.Db.Db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE videos SET watched=1 WHERE id=$id";
+        cmd.Parameters.AddWithValue("$id", vid);
+        cmd.ExecuteNonQuery();
+
+        f.Vm.NewViewCommand.Execute(null);
+        var row = f.Vm.EditRules[0];
+        row.Field = "watched";
+        row.Op = "is";
+        row.Value = "false"; // 0 unwatched → "Matches 0 videos"
+
+        f.Vm.MatchCount.ShouldBe("Matches 0 videos");
+
+        // Switch to watched=true → should see 1 match.
+        row.Value = "true";
+        f.Vm.MatchCount.ShouldBe("Matches 1 video");
+    }
+
+    [Fact]
+    public void Load_renders_RuleSummary_as_plain_English()
+    {
+        var f = NewFx(); using var _d = f.Db;
+
+        // Create a smart view with one rule.
+        f.Vm.NewViewCommand.Execute(null);
+        f.Vm.EditName = "Unwatched";
+        f.Vm.EditRules[0].Field = "watched";
+        f.Vm.EditRules[0].Op = "is";
+        f.Vm.EditRules[0].Value = "false";
+        f.Vm.SaveCommand.Execute(null);
+
+        f.Vm.Load();
+
+        // RuleSummary should be prose, not raw DSL.
+        f.Vm.Views[0].RuleSummary.ShouldBe("All of: unwatched");
+    }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -55,21 +56,14 @@ public sealed class SmartViewListItemViewModel
     public bool ShowOnHome { get; }
     public SmartView Model { get; }
 
-    public SmartViewListItemViewModel(SmartView model)
+    public SmartViewListItemViewModel(SmartView model,
+        IReadOnlyDictionary<long, string>? creatorNames = null)
     {
         Model = model;
         Id = model.Id;
         Name = model.Name;
         ShowOnHome = model.ShowOnHome;
-        RuleSummary = BuildSummary(model.Definition);
-    }
-
-    private static string BuildSummary(SmartViewDefinition def)
-    {
-        if (def.Rules.Count == 0) return "(no rules)";
-        var match = def.Match == "all" ? "all of" : "any of";
-        var parts = def.Rules.Select(r => $"{r.Field} {r.Op} {r.Value}");
-        return $"{match}: {string.Join(", ", parts)}";
+        RuleSummary = SmartRuleProse.Describe(model.Definition, creatorNames);
     }
 }
 
@@ -86,6 +80,21 @@ public sealed partial class SmartViewsViewModel : ObservableObject
         _smartViews = smartViews;
         _tags = tags;
         _library = library;
+
+        // Subscribe to EditRules collection changes so we can track per-row property changes
+        // and recompute the live match count.
+        EditRules.CollectionChanged += (_, e) =>
+        {
+            if (e.NewItems != null)
+                foreach (SmartRuleRowViewModel row in e.NewItems)
+                    row.PropertyChanged += OnRuleRowPropertyChanged;
+
+            if (e.OldItems != null)
+                foreach (SmartRuleRowViewModel row in e.OldItems)
+                    row.PropertyChanged -= OnRuleRowPropertyChanged;
+
+            RefreshMatchCount();
+        };
     }
 
     // ── Views list ───────────────────────────────────────────────────────────
@@ -105,11 +114,17 @@ public sealed partial class SmartViewsViewModel : ObservableObject
     [ObservableProperty]
     private bool _matchAll = true;
 
+    partial void OnMatchAllChanged(bool value) => RefreshMatchCount();
+
     [ObservableProperty]
     private bool _editShowOnHome = true;
 
     [ObservableProperty]
     private long? _editingId = null;
+
+    /// <summary>Live "Matches N videos" string shown below the builder rules list.</summary>
+    [ObservableProperty]
+    private string _matchCount = string.Empty;
 
     public ObservableCollection<SmartRuleRowViewModel> EditRules { get; } = new();
 
@@ -127,9 +142,10 @@ public sealed partial class SmartViewsViewModel : ObservableObject
         IsLoading = true;
         try
         {
+            var creatorNames = BuildCreatorNameMap();
             Views.Clear();
             foreach (var sv in _smartViews.GetAll())
-                Views.Add(new SmartViewListItemViewModel(sv));
+                Views.Add(new SmartViewListItemViewModel(sv, creatorNames));
         }
         finally
         {
@@ -237,5 +253,48 @@ public sealed partial class SmartViewsViewModel : ObservableObject
         _smartViews.Reorder(item.Id, idx + 1);
         _smartViews.Reorder(next.Id, idx);
         Load();
+    }
+
+    // ── Live match count helpers ─────────────────────────────────────────────
+
+    private void OnRuleRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        => RefreshMatchCount();
+
+    /// <summary>
+    /// Recomputes <see cref="MatchCount"/> from the current builder state.
+    /// Runs a cheap COUNT(*) query; called on every rule change (no debounce needed).
+    /// Clears to empty string when there are no rules (avoids stale "Matches 0 videos" during setup).
+    /// </summary>
+    private void RefreshMatchCount()
+    {
+        if (EditRules.Count == 0)
+        {
+            MatchCount = string.Empty;
+            return;
+        }
+
+        try
+        {
+            var def = new SmartViewDefinition(
+                MatchAll ? "all" : "any",
+                EditRules.Select(r => new SmartRule(r.Field, r.Op, r.Value)).ToList());
+
+            var count = _smartViews.CountMatchingVideos(def, DateTimeOffset.UtcNow);
+            MatchCount = $"Matches {count} video{(count == 1 ? "" : "s")}";
+        }
+        catch
+        {
+            // Swallow (e.g. invalid value in a rule field during typing); leave previous count.
+        }
+    }
+
+    /// <summary>Builds an id→display-name map from all sections in the library.</summary>
+    private IReadOnlyDictionary<long, string> BuildCreatorNameMap()
+    {
+        var summaries = _library.GetSectionSummaries();
+        var map = new Dictionary<long, string>(summaries.Count);
+        foreach (var s in summaries)
+            map[s.SectionId] = s.DisplayName;
+        return map;
     }
 }

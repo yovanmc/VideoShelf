@@ -11,6 +11,7 @@
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:InvertBool x:Key="InvertBool" />
+            <conv:NotNullOrEmptyToVisibility x:Key="NotNullOrEmptyToVisibility" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -162,7 +163,12 @@
                     </ItemsControl>
 
                     <ui:Button Content="Add rule" Command="{Binding AddRuleCommand}"
-                               Style="{StaticResource SecondaryButton}" Margin="0,0,0,12" />
+                               Style="{StaticResource SecondaryButton}" Margin="0,0,0,8" />
+
+                    <!-- Live match count — shown only when non-empty (i.e. at least one rule) -->
+                    <TextBlock Text="{Binding MatchCount}"
+                               Opacity="0.7" FontSize="12" Margin="0,0,0,8"
+                               Visibility="{Binding MatchCount, Converter={StaticResource NotNullOrEmptyToVisibility}}" />
 
                     <!-- Show on home -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,16">

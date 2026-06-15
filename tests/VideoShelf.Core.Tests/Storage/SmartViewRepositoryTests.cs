@@ -351,4 +351,67 @@ public sealed class SmartViewRepositoryTests
         results.Select(r => r.VideoId).ShouldContain(watchedVid);
         results.Select(r => r.VideoId).ShouldNotContain(neitherVid);
     }
+
+    // ── CountMatchingVideos ───────────────────────────────────────────────────
+
+    [Fact]
+    public void CountMatchingVideos_emptyRules_returns_all_nonmissing_count()
+    {
+        var (db, lib, _) = NewFixture();
+        using var _d = db;
+        var repo = new SmartViewRepository(db.Db);
+        var (_, _, vid1) = SeedVideo(db, lib, sectionName: "S1", seriesTitle: "Show1", ep: 1);
+        var (_, _, vid2) = SeedVideo(db, lib, sectionName: "S2", seriesTitle: "Show2", ep: 1);
+        var (_, _, vid3) = SeedVideo(db, lib, sectionName: "S3", seriesTitle: "Show3", ep: 1);
+        // Mark vid3 missing — excluded from count.
+        SetRaw(db, "UPDATE videos SET missing=1 WHERE id=$id", ("$id", vid3));
+        _ = vid1; _ = vid2;
+
+        var count = repo.CountMatchingVideos(EmptyDef(), now: Now);
+
+        count.ShouldBe(2);
+    }
+
+    [Fact]
+    public void CountMatchingVideos_watched_is_false_returns_correct_count()
+    {
+        var (db, lib, _) = NewFixture();
+        using var _d = db;
+        var repo = new SmartViewRepository(db.Db);
+        var srcId = lib.UpsertSource(@"C:\m", "M");
+        var secId = lib.UpsertSection(srcId, "S");
+        var seriesId = lib.UpsertSeries(secId, "Show", isStandalone: false);
+        var unwatched1 = lib.UpsertVideo(seriesId, @"C:\m\S\Show\e01.mkv", 1, "mkv");
+        var unwatched2 = lib.UpsertVideo(seriesId, @"C:\m\S\Show\e02.mkv", 2, "mkv");
+        var watched    = lib.UpsertVideo(seriesId, @"C:\m\S\Show\e03.mkv", 3, "mkv");
+        SetRaw(db, "UPDATE videos SET watched=1 WHERE id=$id", ("$id", watched));
+        _ = unwatched1; _ = unwatched2;
+
+        var def = new SmartViewDefinition("all", new[] { new SmartRule("watched", "is", "false") });
+        var count = repo.CountMatchingVideos(def, now: Now);
+
+        count.ShouldBe(2);
+    }
+
+    [Fact]
+    public void CountMatchingVideos_matches_GetMatchingVideos_result_count()
+    {
+        var (db, lib, _) = NewFixture();
+        using var _d = db;
+        var repo = new SmartViewRepository(db.Db);
+        var srcId = lib.UpsertSource(@"C:\m", "M");
+        var secId = lib.UpsertSection(srcId, "S");
+        var seriesId = lib.UpsertSeries(secId, "Show", isStandalone: false);
+        lib.UpsertVideo(seriesId, @"C:\m\S\Show\e01.mkv", 1, "mkv");
+        lib.UpsertVideo(seriesId, @"C:\m\S\Show\e02.mkv", 2, "mkv");
+        var watched = lib.UpsertVideo(seriesId, @"C:\m\S\Show\e03.mkv", 3, "mkv");
+        SetRaw(db, "UPDATE videos SET watched=1 WHERE id=$id", ("$id", watched));
+
+        var def = WatchedFalseDef();
+
+        var listCount  = repo.GetMatchingVideos(def, limit: 1000, now: Now).Count;
+        var scalarCount = repo.CountMatchingVideos(def, now: Now);
+
+        scalarCount.ShouldBe(listCount);
+    }
 }
