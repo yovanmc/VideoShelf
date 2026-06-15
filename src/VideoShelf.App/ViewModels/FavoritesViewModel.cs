@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Models;
 using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class FavoritesViewModel(CurationRepository curation, LibraryRepository library) : ObservableObject, IBulkSelectionSource
+public sealed partial class FavoritesViewModel(CurationRepository curation, LibraryRepository library,
+    IThumbnailService? thumbnails = null, IImageLoader? imageLoader = null) : ObservableObject, IBulkSelectionSource
 {
     public ObservableCollection<RecencyCardViewModel> Favorites { get; } = [];
 
@@ -56,7 +59,7 @@ public sealed partial class FavoritesViewModel(CurationRepository curation, Libr
         Favorites.Clear();
         foreach (var item in items)
         {
-            var card = new RecencyCardViewModel(item);
+            var card = new RecencyCardViewModel(item, thumbnails, imageLoader);
             var capturedId = item.VideoId;
             card.PlayInvoked += (_, _) =>
             {
@@ -65,6 +68,7 @@ public sealed partial class FavoritesViewModel(CurationRepository curation, Libr
             };
             card.PropertyChanged += OnCardPropertyChanged;
             Favorites.Add(card);
+            _ = card.LoadImageAsync(CancellationToken.None);
         }
         OnPropertyChanged(nameof(HasFavorites));
         } // end try

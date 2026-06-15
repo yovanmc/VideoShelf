@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
@@ -11,7 +13,8 @@ namespace VideoShelf.App.ViewModels.Discovery;
 public sealed partial class DiscoveryViewModel(
     DiscoveryRepository discovery, LibraryRepository library, TagRepository tags,
     CreatorCardFactory cards, StatsRepository stats, PlayQueueViewModel playQueue,
-    SmartViewRepository smartViews, CurationRepository? curation = null) : ObservableObject
+    SmartViewRepository smartViews, CurationRepository? curation = null,
+    IThumbnailService? thumbnails = null, IImageLoader? imageLoader = null) : ObservableObject
 {
     private const int RailLimit = 24;
 
@@ -153,15 +156,17 @@ public sealed partial class DiscoveryViewModel(
 
     private ContinueWatchingCardViewModel MakeContinueCard(ContinueWatchingItem i)
     {
-        var card = new ContinueWatchingCardViewModel(i);
+        var card = new ContinueWatchingCardViewModel(i, thumbnails, imageLoader);
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
+        _ = card.LoadImageAsync(CancellationToken.None);
         return card;
     }
 
     private RecencyCardViewModel MakeRecencyCard(RecencyItem i)
     {
-        var card = new RecencyCardViewModel(i);
+        var card = new RecencyCardViewModel(i, thumbnails, imageLoader);
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
+        _ = card.LoadImageAsync(CancellationToken.None);
         return card;
     }
 

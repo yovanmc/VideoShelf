@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels.Discovery;
 using VideoShelf.Core.Discovery;
 using VideoShelf.Core.Models;
@@ -15,15 +17,20 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
     private const int ResultLimit = 48;
     private readonly LibraryRepository _library;
     private readonly CreatorCardFactory _cards;
+    private readonly IThumbnailService? _thumbnails;
+    private readonly IImageLoader? _imageLoader;
 
     private CancellationTokenSource? _opCts;
     private Task _pending = Task.CompletedTask;
     private bool _searching;
 
-    public SearchViewModel(LibraryRepository library, CreatorCardFactory cards)
+    public SearchViewModel(LibraryRepository library, CreatorCardFactory cards,
+        IThumbnailService? thumbnails = null, IImageLoader? imageLoader = null)
     {
         _library = library;
         _cards = cards;
+        _thumbnails = thumbnails;
+        _imageLoader = imageLoader;
     }
 
     public ObservableCollection<CreatorCardViewModel> CreatorResults { get; } = [];
@@ -131,8 +138,9 @@ public sealed partial class SearchViewModel : ObservableObject, IBulkSelectionSo
 
     private RecencyCardViewModel MakeVideoCard(RecencyItem i)
     {
-        var card = new RecencyCardViewModel(i);
+        var card = new RecencyCardViewModel(i, _thumbnails, _imageLoader);
         card.PlayInvoked += (_, _) => RaisePlay(i.SeriesId, i.VideoId);
+        _ = card.LoadImageAsync(CancellationToken.None);
         return card;
     }
 
