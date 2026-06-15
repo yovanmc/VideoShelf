@@ -39,9 +39,6 @@ public sealed partial class SeriesViewModel(
     [ObservableProperty]
     private int _unwatchedCount = summary.UnwatchedCount;
 
-    // D5: track previous value so we only fire SeriesCompleted on a genuine prev>0 → 0 transition.
-    private int _previousUnwatchedCount = summary.UnwatchedCount;
-
     [ObservableProperty]
     private string? _thumbnailPath;
 
@@ -60,8 +57,6 @@ public sealed partial class SeriesViewModel(
     public bool HasUnwatched => UnwatchedCount > 0;
 
     public event System.EventHandler? UnwatchedChanged;
-    /// <summary>Raised when all episodes become watched (unwatched count drops to 0).</summary>
-    public event System.EventHandler? SeriesCompleted;
     public event System.EventHandler<EpisodeView>? PlayRequested;
     public event System.EventHandler<SeriesViewModel>? RenameRequested;
     public event System.EventHandler? PlayAllRequested;
@@ -131,13 +126,6 @@ public sealed partial class SeriesViewModel(
     {
         OnPropertyChanged(nameof(HasUnwatched));
         UnwatchedChanged?.Invoke(this, System.EventArgs.Empty);
-        // D5: only raise SeriesCompleted on a genuine prev>0 → 0 transition.
-        // Does NOT fire on 0→0 repeats or on initial construction of an already-complete series
-        // (because _previousUnwatchedCount is initialised from summary.UnwatchedCount, so the
-        // first Refresh() call that stays at 0 sees prev==0 and skips the event).
-        if (value == 0 && _previousUnwatchedCount > 0 && EpisodeCount > 0)
-            SeriesCompleted?.Invoke(this, System.EventArgs.Empty);
-        _previousUnwatchedCount = value;
     }
 
     /// <summary>Recomputes the unwatched badge from the DB (after a watched toggle).</summary>
