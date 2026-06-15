@@ -121,9 +121,10 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- No-selection empty state -->
+            <!-- No-selection empty state (shown only when HasSelected is false — i.e. no playlists exist
+                 since Load() auto-selects the first one when playlists are present) -->
             <TextBlock DockPanel.Dock="Top"
-                       Text="Select a playlist to view its items."
+                       Text="No playlists yet — click New to create your first one."
                        Foreground="{StaticResource TextMutedBrush}" Margin="0,40,0,0">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -142,8 +143,8 @@
                           Visibility="{Binding HasSelected, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
                     <!-- Empty-items state -->
-                    <TextBlock Text="This playlist is empty."
-                               Foreground="{StaticResource TextMutedBrush}" Margin="0,16,0,0">
+                    <TextBlock Text="No videos in this playlist yet — add from Browse or a creator page."
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,16,0,0" TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />
