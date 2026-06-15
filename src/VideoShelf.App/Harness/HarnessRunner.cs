@@ -330,7 +330,10 @@ public sealed class HarnessRunner
 
     /// <summary>
     /// Opens the Ctrl+K command palette with a pre-filled query so the result list
-    /// is populated for the screenshot. Uses "home" which matches the "Home" action.
+    /// is populated for the screenshot. Uses "b" which matches B-named creators
+    /// ("Bella B"/"Bruno Bay"), the "Big Buck Bunny" series + its episode videos, and
+    /// the "Browse" action — so the sweep exercises Action/Creator/Series/Video item
+    /// kinds together (the M23 Group D series-results addition).
     /// </summary>
     private void NavigateCommandPalette()
     {
@@ -338,7 +341,7 @@ public sealed class HarnessRunner
         _main.OpenCommandPaletteCommand.Execute(null);
         // Set a query after opening so the palette's RunAsync fires and populates Results.
         if (_main.CommandPalette is not null)
-            _main.CommandPalette.Query = "home";
+            _main.CommandPalette.Query = "b";
     }
 
     /// <summary>
