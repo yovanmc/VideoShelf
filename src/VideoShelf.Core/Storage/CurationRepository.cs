@@ -27,21 +27,21 @@ public sealed class CurationRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
-    /// <summary>Returns the rating for a video (0..5).</summary>
-    public int GetRating(long videoId)
+    /// <summary>Returns the rating for a video (0..5, supports 0.5 increments).</summary>
+    public double GetRating(long videoId)
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT rating FROM videos WHERE id = $id";
         cmd.Parameters.AddWithValue("$id", videoId);
         var result = cmd.ExecuteScalar();
-        return result is long l ? (int)l : 0;
+        return result is null || result is DBNull ? 0.0 : Convert.ToDouble(result);
     }
 
-    /// <summary>Sets the rating for a video (clamped to 0..5).</summary>
-    public void SetRating(long videoId, int rating)
+    /// <summary>Sets the rating for a video (clamped to 0..5, supports 0.5 increments).</summary>
+    public void SetRating(long videoId, double rating)
     {
-        var clamped = Math.Max(0, Math.Min(5, rating));
+        var clamped = Math.Clamp(rating, 0, 5);
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "UPDATE videos SET rating = $r WHERE id = $id";

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.Motion;
@@ -42,7 +43,7 @@ public sealed partial class EpisodeViewModel(
     private bool _inWatchlist = curation?.InWatchlist(model.VideoId) ?? false;
 
     [ObservableProperty]
-    private int _rating = curation?.GetRating(model.VideoId) ?? 0;
+    private double _rating = curation?.GetRating(model.VideoId) ?? 0.0;
 
     public event System.EventHandler? WatchedChanged;
 
@@ -94,13 +95,14 @@ public sealed partial class EpisodeViewModel(
     private void SetRating(object? param)
     {
         if (curation is null) return;
-        var r = param switch
+        double r = param switch
         {
-            int i => i,
-            string s when int.TryParse(s, out var parsed) => parsed,
-            _ => 0,
+            double d => d,
+            int i => (double)i,
+            string s when double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed) => parsed,
+            _ => 0.0,
         };
-        var clamped = System.Math.Max(0, System.Math.Min(5, r));
+        var clamped = System.Math.Clamp(r, 0.0, 5.0);
         Rating = clamped;
         curation.SetRating(model.VideoId, clamped);
     }

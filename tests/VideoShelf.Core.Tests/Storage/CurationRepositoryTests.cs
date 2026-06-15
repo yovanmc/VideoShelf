@@ -59,7 +59,7 @@ public class CurationRepositoryTests
         var videoId = SeedVideo(temp);
         var curation = new CurationRepository(temp.Db);
 
-        curation.GetRating(videoId).ShouldBe(0);
+        curation.GetRating(videoId).ShouldBe(0.0);
     }
 
     [Fact]
@@ -69,9 +69,33 @@ public class CurationRepositoryTests
         var videoId = SeedVideo(temp);
         var curation = new CurationRepository(temp.Db);
 
-        curation.SetRating(videoId, 4);
+        curation.SetRating(videoId, 4.0);
 
-        curation.GetRating(videoId).ShouldBe(4);
+        curation.GetRating(videoId).ShouldBe(4.0);
+    }
+
+    [Fact]
+    public void SetRating_persists_half_star_3_5()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var curation = new CurationRepository(temp.Db);
+
+        curation.SetRating(videoId, 3.5);
+
+        curation.GetRating(videoId).ShouldBe(3.5);
+    }
+
+    [Fact]
+    public void SetRating_persists_half_star_0_5()
+    {
+        using var temp = new TempDb();
+        var videoId = SeedVideo(temp);
+        var curation = new CurationRepository(temp.Db);
+
+        curation.SetRating(videoId, 0.5);
+
+        curation.GetRating(videoId).ShouldBe(0.5);
     }
 
     [Fact]
@@ -81,9 +105,9 @@ public class CurationRepositoryTests
         var videoId = SeedVideo(temp);
         var curation = new CurationRepository(temp.Db);
 
-        curation.SetRating(videoId, -3);
+        curation.SetRating(videoId, -3.0);
 
-        curation.GetRating(videoId).ShouldBe(0);
+        curation.GetRating(videoId).ShouldBe(0.0);
     }
 
     [Fact]
@@ -93,9 +117,9 @@ public class CurationRepositoryTests
         var videoId = SeedVideo(temp);
         var curation = new CurationRepository(temp.Db);
 
-        curation.SetRating(videoId, 99);
+        curation.SetRating(videoId, 99.0);
 
-        curation.GetRating(videoId).ShouldBe(5);
+        curation.GetRating(videoId).ShouldBe(5.0);
     }
 
     // ─── GetFavorites ───────────────────────────────────────────────────────
