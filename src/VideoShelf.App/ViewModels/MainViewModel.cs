@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -46,7 +45,6 @@ public sealed partial class MainViewModel : ObservableObject
         HistoryViewModel history,
         VideoShelf.Core.Storage.LibraryRepository libraryRepo,
         BulkActionBarViewModel? bulkBar = null,
-        MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
         IToastService? toasts = null,
@@ -69,9 +67,6 @@ public sealed partial class MainViewModel : ObservableObject
         Playlists = playlists;
         History = history;
         BulkBar = bulkBar;
-        MultiRename = multiRename;
-        if (MultiRename is not null)
-            MultiRename.CloseRequested += (_, _) => GoBack();
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
 
@@ -150,9 +145,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public BulkActionBarViewModel? BulkBar { get; }
-
-    /// <summary>Multi-series template rename VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
-    public MultiRenameViewModel? MultiRename { get; }
 
     public FavoritesViewModel Favorites { get; }
     public WatchlistViewModel Watchlist { get; }
@@ -379,18 +371,6 @@ public sealed partial class MainViewModel : ObservableObject
         await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
         PushNav(CurrentView);
         CurrentView = AppView.RenameTool;
-    }
-
-    /// <summary>
-    /// Opens the multi-series template rename tool seeded with the supplied series ids.
-    /// No-op when <see cref="MultiRename"/> is null (e.g. in slim test contexts).
-    /// </summary>
-    public async Task OpenMultiRenameAsync(IReadOnlyList<long> seriesIds)
-    {
-        if (MultiRename is null || seriesIds.Count == 0) return;
-        await MultiRename.LoadAsync(seriesIds, MultiRenameViewModel.DefaultTemplate);
-        PushNav(CurrentView);
-        CurrentView = AppView.MultiRename;
     }
 
     [RelayCommand]

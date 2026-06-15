@@ -66,17 +66,19 @@ public sealed partial class RenameToolViewModel : ObservableObject
         _isStandalone = isStandalone;
         SeriesTitle = baseTitle;
 
-        _videos = await Task.Run(() => _library.GetVideosForSeries(seriesId));
-
-        var standalone = _isStandalone || _videos.Count <= 1;
-        var padWidth = CanonicalNamer.PadWidth(_videos.Select(v => v.EpisodeNo));
+        // Single-file rename: load only the first video in the series.
+        // For standalones this is the one file; for multi-episode series the user
+        // renames one file at a time via the episode-level "Rename…" action.
+        var allVideos = await Task.Run(() => _library.GetVideosForSeries(seriesId));
+        _videos = allVideos.Count > 0 ? new[] { allVideos[0] } : Array.Empty<Video>();
 
         _suppressReplan = true;
         Rows.Clear();
         foreach (var v in _videos)
         {
             var ext = Path.GetExtension(v.FilePath);
-            var proposed = CanonicalNamer.Build(_baseTitle, standalone ? (int?)null : v.EpisodeNo, ext, padWidth);
+            // Single-file: always use the standalone form (no episode number suffix).
+            var proposed = CanonicalNamer.Build(_baseTitle, null, ext, padWidth: 0);
             var row = new RenameRowViewModel(v.Id, v.EpisodeNo, Path.GetFileName(v.FilePath), proposed, RenameItemStatus.Ready);
             row.NewNameEdited += (_, _) => Replan();
             Rows.Add(row);

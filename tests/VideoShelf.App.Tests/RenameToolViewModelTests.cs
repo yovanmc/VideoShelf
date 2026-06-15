@@ -47,25 +47,15 @@ public class RenameToolViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Load_BuildsCanonicalEditableProposals()
+    public async Task Load_BuildsCanonicalEditableProposal_SingleFile()
     {
         var vm = Build();
         await vm.LoadAsync(_seriesId, "My Show", isStandalone: false);
 
-        vm.Rows.Count.ShouldBe(2);
-        vm.Rows.Select(r => r.NewName).ShouldBe(new[] { "My Show 01.mkv", "My Show 02.mkv" });
-        vm.Rows.All(r => r.WillRename).ShouldBeTrue();
-    }
-
-    [Fact]
-    public async Task EditingName_ReplansAndFlagsDuplicate()
-    {
-        var vm = Build();
-        await vm.LoadAsync(_seriesId, "My Show", false);
-        vm.Rows[1].NewName = "My Show 01.mkv"; // collide with row 0
-
-        vm.Rows[0].Status.ShouldBe(RenameItemStatus.DuplicateTarget);
-        vm.Rows[1].Status.ShouldBe(RenameItemStatus.DuplicateTarget);
+        // Single-file rename: only the first episode is shown.
+        vm.Rows.Count.ShouldBe(1);
+        vm.Rows[0].NewName.ShouldBe("My Show.mkv");
+        vm.Rows[0].WillRename.ShouldBeTrue();
     }
 
     [Fact]
@@ -75,9 +65,10 @@ public class RenameToolViewModelTests : IDisposable
         await vm.LoadAsync(_seriesId, "My Show", false);
         await vm.ApplyCommand.ExecuteAsync(null);
 
-        _fs.FileExists(@"C:\m\My Show 01.mkv").ShouldBeTrue();
-        _library.GetVideosForSeries(_seriesId).Select(v => Path.GetFileName(v.FilePath))
-            .OrderBy(n => n).ShouldBe(new[] { "My Show 01.mkv", "My Show 02.mkv" });
+        _fs.FileExists(@"C:\m\My Show.mkv").ShouldBeTrue();
+        // The renamed file now has the canonical name; the second file is untouched.
+        var paths = _library.GetVideosForSeries(_seriesId).Select(v => Path.GetFileName(v.FilePath)).ToList();
+        paths.ShouldContain("My Show.mkv");
         vm.CanUndo.ShouldBeTrue();
     }
 

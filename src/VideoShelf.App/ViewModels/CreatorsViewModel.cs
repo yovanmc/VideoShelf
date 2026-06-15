@@ -144,24 +144,6 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
         return ids;
     }
 
-    /// <summary>
-    /// H2 — Expands the currently selected creators into all their series ids.
-    /// Used to seed <see cref="MultiRenameViewModel"/> from the bulk-action bar Rename button.
-    /// Scope: only valid on the Browse (creator-grid) page where selections are whole creators.
-    /// On video-card pages (Favorites/Watchlist/Search) the selection is individual videos
-    /// not necessarily covering whole series, so multi-rename is only enabled from the creator grid.
-    /// </summary>
-    public IReadOnlyList<long> GetSelectedSeriesIds()
-    {
-        var ids = new List<long>();
-        foreach (var card in Selection.SelectedItems)
-        {
-            var series = _library.GetSeriesForSection(card.SectionId);
-            ids.AddRange(series.Select(s => s.Id));
-        }
-        return ids;
-    }
-
     /// <summary>True while LoadAsync is in progress; used to show the skeleton overlay.</summary>
     [ObservableProperty]
     private bool _isLoading;

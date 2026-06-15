@@ -12,9 +12,7 @@ public partial class BulkActionBar : UserControl
 
     /// <summary>
     /// Raised when the user clicks the "Rename…" button.
-    /// The host window resolves the selected series ids and opens MultiRename.
-    /// Scoped to the creator-grid Browse page; on other pages the host ignores this event
-    /// or the button is not contextually visible.
+    /// Scoped to the creator-grid Browse page.
     /// </summary>
     public event EventHandler? RenameRequested;
 

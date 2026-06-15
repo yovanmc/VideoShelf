@@ -23,10 +23,8 @@ namespace VideoShelf.App.Harness;
 /// Test-only: gated behind HarnessOptions.IsHarness in App.OnStartup.
 /// </summary>
 /// <remarks>
-/// I1 note: MainViewModel's BulkBar/MultiRename are nullable-trailing-param
-/// (null in slim test contexts, real instances in production DI and the harness).
-/// The production DI chain in ServiceCollectionExtensions.cs threads both real
-/// instances; no consolidation is needed here — the pattern is correct as-is.
+/// I1 note: MainViewModel's BulkBar is nullable-trailing-param
+/// (null in slim test contexts, real instance in production DI and the harness).
 /// </remarks>
 public sealed class HarnessRunner
 {
@@ -243,9 +241,6 @@ public sealed class HarnessRunner
             // Browse with the in-page filter bar visible + Compact density + List mode.
             case "BrowseFilter": NavigateBrowseFilter(); break;
 
-            // MultiRename preview page seeded with the richest creator's series.
-            case "MultiRename": await NavigateMultiRenameAsync(); break;
-
             // ── M21 B4 toast state ────────────────────────────────────────────
             // Shows the Home page with a toast in the bottom-right corner so the
             // visual sweep can confirm the overlay renders correctly.
@@ -325,47 +320,6 @@ public sealed class HarnessRunner
             _main.Creators.ToggleFilterCommand.Execute(null);
         _main.Creators.SetDensityCompactCommand.Execute(null);
         _main.Creators.SetViewModeListCommand.Execute(null);
-    }
-
-    /// <summary>
-    /// Opens the MultiRename page seeded with the series ids from the richest creator
-    /// (the one with the most series, seeded in SeedDemoAsync).
-    /// Falls back to navigating to the Browse page if MultiRename is unavailable.
-    /// </summary>
-    private async Task NavigateMultiRenameAsync()
-    {
-        if (_main.MultiRename is null)
-        {
-            _main.CurrentView = AppView.Browse;
-            return;
-        }
-
-        // Find the section with the most series — that's the ≥40-series demo creator.
-        var allSections = _library.GetSectionSummaries();
-        long bestSectionId = 0;
-        int bestSeriesCount = 0;
-        foreach (var s in allSections)
-        {
-            var series = _library.GetSeriesForSection(s.SectionId);
-            if (series.Count > bestSeriesCount)
-            {
-                bestSeriesCount = series.Count;
-                bestSectionId = s.SectionId;
-            }
-        }
-
-        if (bestSectionId == 0 || bestSeriesCount == 0)
-        {
-            _main.CurrentView = AppView.Browse;
-            return;
-        }
-
-        var seriesIds = _library.GetSeriesForSection(bestSectionId)
-                                .Select(s => s.Id)
-                                .Take(5)   // limit to 5 for a readable preview screenshot
-                                .ToList();
-
-        await _main.OpenMultiRenameAsync(seriesIds);
     }
 
     /// <summary>
