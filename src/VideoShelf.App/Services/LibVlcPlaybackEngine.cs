@@ -21,8 +21,6 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     private readonly Dispatcher _dispatcher;
     private MediaPlayer? _previewPlayer;
     private string? _previewMediaPath;
-    private bool _volumeNormalizeEnabled;
-
     /// <summary>The underlying libVLC player, for the VideoView to host. App-internal use only.</summary>
     public MediaPlayer MediaPlayer => _player;
 
@@ -134,19 +132,6 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
     {
         get { try { return _player.Scale; } catch { return 0f; } }
         set { try { _player.Scale = value; } catch { } }
-    }
-
-    // ----- C1: volume normalization -----
-    // normvol is a libVLC audio filter applied at media-load time (not a runtime property).
-    // SupportsVolumeNormalize = true means the Media.AddOption approach is wired and applied
-    // on the next Load. AUDIBLE EFFECT ON WINDOWS OUTPUT IS UNVERIFIED — requires owner listening test.
-    // If the owner reports no audible effect, flip this to => false to hide the Group D toggle.
-    public bool SupportsVolumeNormalize => true;
-
-    public bool VolumeNormalizeEnabled
-    {
-        get => _volumeNormalizeEnabled;
-        set => _volumeNormalizeEnabled = value;
     }
 
     public IReadOnlyList<TrackOption> GetAudioTracks()
