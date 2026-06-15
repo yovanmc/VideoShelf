@@ -16,9 +16,7 @@
             <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"
                        Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding CreatorResults}"
-                          Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"
-                          KeyboardNavigation.TabNavigation="Once"
-                          KeyboardNavigation.DirectionalNavigation="Contained">
+                          Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate><views:CreatorCard Margin="0,0,12,12"/></DataTemplate>
@@ -29,9 +27,7 @@
             <TextBlock Text="Series" Style="{StaticResource TypeRailHeader}" Margin="0,16,0,8"
                        Visibility="{Binding HasSeriesResults, Converter={StaticResource BoolToVisibility}}"/>
             <ItemsControl ItemsSource="{Binding SeriesResults}"
-                          Visibility="{Binding HasSeriesResults, Converter={StaticResource BoolToVisibility}}"
-                          KeyboardNavigation.TabNavigation="Once"
-                          KeyboardNavigation.DirectionalNavigation="Contained">
+                          Visibility="{Binding HasSeriesResults, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -40,7 +36,6 @@
                                 Padding="0" Margin="0,0,12,12"
                                 Background="Transparent" BorderThickness="0" Cursor="Hand"
                                 HorizontalContentAlignment="Stretch"
-                                IsTabStop="True"
                                 FocusVisualStyle="{StaticResource AppFocusVisual}">
                             <StackPanel>
                                 <Border CornerRadius="{StaticResource CardImageRadius}"
@@ -89,9 +84,7 @@
                          ScrollViewer.CanContentScroll="True"
                          VirtualizingPanel.IsVirtualizing="True"
                          VirtualizingPanel.VirtualizationMode="Recycling"
-                         Style="{StaticResource PlainListBox}"
-                         KeyboardNavigation.TabNavigation="Once"
-                         KeyboardNavigation.DirectionalNavigation="Contained">
+                         Style="{StaticResource PlainListBox}">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <vwp:VirtualizingWrapPanel SpacingMode="Uniform" />

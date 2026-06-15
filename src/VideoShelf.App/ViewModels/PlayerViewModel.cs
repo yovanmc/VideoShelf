@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
@@ -112,9 +111,6 @@ public sealed partial class PlayerViewModel(
         }
     }
 
-    /// <summary>Folder screenshots are written to. Set by DI/host; defaults to a temp-safe value for tests.</summary>
-    public string CaptureDirectory { get; set; } = System.IO.Path.GetTempPath();
-
     /// <summary>Folder seek-preview frames are cached in.</summary>
     public string SeekPreviewDirectory { get; set; } = System.IO.Path.GetTempPath();
 
@@ -123,25 +119,6 @@ public sealed partial class PlayerViewModel(
 
     /// <summary>The video id of the currently loaded episode, or null if nothing is open.</summary>
     public long? CurrentVideoId => _current?.VideoId;
-
-    [ObservableProperty]
-    private string? _lastScreenshotPath;
-
-    [RelayCommand]
-    private void Screenshot()
-    {
-        try
-        {
-            Directory.CreateDirectory(CaptureDirectory);
-            var name = $"capture_{DateTime.Now:yyyyMMdd_HHmmss_fff}.png";
-            var target = Path.Combine(CaptureDirectory, name);
-            LastScreenshotPath = engine.TrySnapshot(target) ? target : null;
-        }
-        catch
-        {
-            LastScreenshotPath = null; // fail-safe: a screenshot must never crash playback
-        }
-    }
 
     /// <summary>True when a video is loaded and ItemArtRepository is available.</summary>
     public bool CanSetCover => itemArt is not null && _current is not null;
@@ -297,7 +274,7 @@ public sealed partial class PlayerViewModel(
 
     // ==========================================================================
 
-    // ===== D-VM: speed / aspect / audio-normalize =============================
+    // ===== D-VM: speed ==========================================================
 
     public IReadOnlyList<double> SpeedPresets { get; } = new double[] { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0 };
 
@@ -321,43 +298,6 @@ public sealed partial class PlayerViewModel(
     }
 
     public string RateLabel => PlaybackRate == 1.0 ? "1×" : $"{PlaybackRate:0.##}×";
-
-    // Aspect/zoom presets
-    public sealed record AspectPreset(string Label, string? Ratio, float Scale);
-
-    private static readonly AspectPreset[] _aspectPresets =
-    {
-        new("Default", null, 0f),
-        new("16:9",    "16:9", 0f),
-        new("4:3",     "4:3",  0f),
-        new("Fill",    null,   1f),
-    };
-
-    public IReadOnlyList<AspectPreset> AspectPresets { get; } = _aspectPresets;
-
-    [ObservableProperty]
-    private AspectPreset _selectedAspect = _aspectPresets[0];
-
-    partial void OnSelectedAspectChanged(AspectPreset p)
-    {
-        engine.AspectRatio = p.Ratio;
-        engine.Scale = p.Scale;
-    }
-
-    [RelayCommand]
-    private void CycleAspect()
-    {
-        var idx = Array.IndexOf(_aspectPresets, SelectedAspect);
-        SelectedAspect = _aspectPresets[(idx + 1) % _aspectPresets.Length];
-    }
-
-    // Audio normalize (only when supported)
-    public bool CanNormalizeVolume => engine.SupportsVolumeNormalize;
-
-    [ObservableProperty]
-    private bool _volumeNormalizeEnabled;
-
-    partial void OnVolumeNormalizeEnabledChanged(bool v) => engine.VolumeNormalizeEnabled = v;
 
     // ==========================================================================
 
@@ -528,10 +468,8 @@ public sealed partial class PlayerViewModel(
         IsMuted = false;
         ResumePositionSeconds = library.GetResumePosition(episode.VideoId) ?? 0;
 
-        // D: reset ephemeral playback-speed / aspect per-open
+        // D: reset ephemeral playback-speed per-open
         PlaybackRate = 1.0;
-        SelectedAspect = AspectPresets[0];
-        VolumeNormalizeEnabled = false;
 
         // E1: reset A-B repeat per-open
         RepeatStartSeconds = null;

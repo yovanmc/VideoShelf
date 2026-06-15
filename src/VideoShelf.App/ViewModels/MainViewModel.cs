@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using VideoShelf.App.Accessibility;
 using VideoShelf.App.Motion;
 using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels.Discovery;
@@ -25,7 +24,6 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ResolutionBackfillService? _resolutionBackfill;
     private readonly PlayQueueViewModel _playQueue;
     private readonly VideoShelf.Core.Storage.LibraryRepository _libraryRepo;
-    private readonly IFocusReturnService? _focusReturn;
     private readonly IToastService _toasts;
     private readonly IMotionPolicy? _motion;
 
@@ -51,7 +49,6 @@ public sealed partial class MainViewModel : ObservableObject
         MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
-        IFocusReturnService? focusReturn = null,
         IToastService? toasts = null,
         IMotionPolicy? motion = null)
     {
@@ -64,7 +61,6 @@ public sealed partial class MainViewModel : ObservableObject
         _resolutionBackfill = resolutionBackfill;
         _playQueue = playQueue;
         _libraryRepo = libraryRepo;
-        _focusReturn = focusReturn;
         _toasts = toasts ?? new ToastService((_, _) => { }); // no-op timer in test contexts
         _motion = motion;
         Maintenance = maintenance;
@@ -79,12 +75,6 @@ public sealed partial class MainViewModel : ObservableObject
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
 
-        // D7: recompute WindowTitle when the player title changes.
-        _player.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(PlayerViewModel.Title))
-                OnPropertyChanged(nameof(WindowTitle));
-        };
         _playQueue.PlayRequested += (_, ep) => OpenPlayer(ep);
         _player.PlaybackEnded += (_, finished) =>
         {
@@ -155,19 +145,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string Title => "VideoShelf";
 
-    // ── D7: now-playing window title ─────────────────────────────────────────
-
-    /// <summary>Pure helper: composes the window title from the now-playing string.</summary>
-    public static string ComposeWindowTitle(string nowPlaying)
-        => string.IsNullOrEmpty(nowPlaying) ? "VideoShelf" : $"{nowPlaying} — VideoShelf";
-
-    /// <summary>
-    /// Dynamic window title: "Song — VideoShelf" while playing, "VideoShelf" otherwise.
-    /// Recomputed whenever the player title changes or the player opens/closes.
-    /// </summary>
-    public string WindowTitle => IsPlayerVisible
-        ? ComposeWindowTitle(_player.Title)
-        : "VideoShelf";
+    /// <summary>Static window title.</summary>
+    public string WindowTitle => "VideoShelf";
 
     /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public BulkActionBarViewModel? BulkBar { get; }
@@ -255,7 +234,6 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnIsPlayerVisibleChanged(bool value)
     {
         OnPropertyChanged(nameof(IsInlinePlayerVisible));
-        OnPropertyChanged(nameof(WindowTitle));
     }
     partial void OnIsPictureInPictureChanged(bool value) => OnPropertyChanged(nameof(IsInlinePlayerVisible));
 
@@ -298,10 +276,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OpenPlayer(EpisodeView episode)
     {
-        // Capture the focused element only on the FIRST open of a playback sequence.
-        // Auto-next (player→player) must NOT overwrite the original launching card.
-        if (!IsPlayerVisible)
-            _focusReturn?.Capture(System.Windows.Input.Keyboard.FocusedElement);
         IsPlayerVisible = true;
         _player.Open(episode);
         // ResumePositionSeconds is set synchronously inside Open() from the DB; read it immediately after.
@@ -430,17 +404,6 @@ public sealed partial class MainViewModel : ObservableObject
         _player.IsFullscreen = false;
         IsPlayerVisible = false;
         IsPictureInPicture = false;
-        // Restore focus to the card that launched playback.
-        // BeginInvoke so focus lands after the target view is re-realized in the visual tree.
-        var el = _focusReturn?.TakeForRestore();
-        if (el is not null)
-            System.Windows.Application.Current?.Dispatcher.BeginInvoke(
-                System.Windows.Threading.DispatcherPriority.Loaded,
-                new System.Action(() =>
-                {
-                    if (el is System.Windows.FrameworkElement fe && !fe.IsLoaded) return;
-                    el.Focus();
-                }));
     }
 
     /// <summary>Loads sources + library once at startup.</summary>

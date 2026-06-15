@@ -100,7 +100,7 @@ public sealed class HarnessRunner
             var isPlayerState = _options.View is
                 "Player" or "PiP" or "PlayerQueue" or
                 "PlayerMore" or "PlayerTracks" or "PlayerVolume" or
-                "PlayerSpeed" or "PlayerAspect" or "PlayerAbRepeat" or
+                "PlayerSpeed" or "PlayerAbRepeat" or
                 "PlayerSkipFeedback" or "PlayerUpNext";
 
             await NavigateAsync(_options.View);
@@ -184,12 +184,6 @@ public sealed class HarnessRunner
             case "PlayerSpeed":
                 await PlayAsync(_options.Play!, pip: false);
                 _postSettleAction = () => _main.Player.SetPlaybackRateCommand.Execute(1.5);
-                break;
-
-            // Aspect cycled to 16:9 (second preset — Default→16:9→4:3→Fill).
-            case "PlayerAspect":
-                await PlayAsync(_options.Play!, pip: false);
-                _postSettleAction = () => _main.Player.CycleAspectCommand.Execute(null);
                 break;
 
             // A-B repeat active: set A at ~3 s, B at ~8 s so the bar chip lights up.

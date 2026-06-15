@@ -71,11 +71,6 @@ public sealed class FakePlaybackEngine : IPlaybackEngine
     public string? AspectRatio { get; set; }
     public float Scale { get; set; }
 
-    // ----- C1: volume normalization -----
-    // Always returns true in the fake so VM tests exercise the toggle path.
-    public bool SupportsVolumeNormalize => true;
-    public bool VolumeNormalizeEnabled { get; set; }
-
     public event EventHandler<double>? PositionChanged;
     public event EventHandler<double>? LengthChanged;
     public event EventHandler? Ended;

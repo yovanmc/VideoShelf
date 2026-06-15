@@ -9,7 +9,7 @@ using VideoShelf.Core.Storage;
 namespace VideoShelf.App.Tests;
 
 /// <summary>
-/// Group C unit tests: engine seam extensions (Rate/AspectRatio/Scale/VolumeNormalize/TracksChanged)
+/// Group C unit tests: engine seam extensions (Rate/AspectRatio/Scale/TracksChanged)
 /// and the M13 ESAdded fix (TracksChanged → RefreshTracks in PlayerViewModel).
 /// All tests run against FakePlaybackEngine — no real libVLC needed.
 /// </summary>
@@ -127,36 +127,6 @@ public class PlayerEngineSeamTests
         engine.Scale = 1.5f;
 
         engine.Scale.ShouldBe(1.5f);
-    }
-
-    // ── C1 / C5: VolumeNormalize round-trip ──────────────────────────────────
-
-    [Fact]
-    public void SupportsVolumeNormalize_is_true_on_fake()
-    {
-        var engine = new FakePlaybackEngine();
-
-        engine.SupportsVolumeNormalize.ShouldBeTrue();
-    }
-
-    [Fact]
-    public void VolumeNormalizeEnabled_defaults_to_false()
-    {
-        var engine = new FakePlaybackEngine();
-
-        engine.VolumeNormalizeEnabled.ShouldBeFalse();
-    }
-
-    [Fact]
-    public void VolumeNormalizeEnabled_round_trips()
-    {
-        var engine = new FakePlaybackEngine();
-
-        engine.VolumeNormalizeEnabled = true;
-        engine.VolumeNormalizeEnabled.ShouldBeTrue();
-
-        engine.VolumeNormalizeEnabled = false;
-        engine.VolumeNormalizeEnabled.ShouldBeFalse();
     }
 
     // ── C4 / M13: TracksChanged → VM RefreshTracks ───────────────────────────

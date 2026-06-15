@@ -316,16 +316,6 @@
                                                              BorderThickness="0"
                                                              Foreground="White" />
 
-                                                    <!-- D: Audio normalize toggle (hidden when engine doesn't support it) -->
-                                                    <ToggleButton Margin="0,4,0,0"
-                                                                  IsChecked="{Binding Player.VolumeNormalizeEnabled, Mode=TwoWay}"
-                                                                  Style="{StaticResource ChipToggle}"
-                                                                  HorizontalAlignment="Left"
-                                                                  Visibility="{Binding Player.CanNormalizeVolume, Converter={StaticResource BoolToVisibility}}"
-                                                                  ToolTip="Normalize audio volume">
-                                                        <TextBlock Text="Normalize" Foreground="White" />
-                                                    </ToggleButton>
-
                                                     <Separator Margin="0,6" Background="{StaticResource PlayerPopupBorderBrush}" />
 
                                                     <!-- Subtitle tracks -->
@@ -389,16 +379,6 @@
                                                PopupAnimation="Fade">
                                             <Border Style="{StaticResource PlayerFlyoutBorder}" MinWidth="180">
                                                 <StackPanel>
-                                                    <ui:Button Command="{Binding Player.ScreenshotCommand}"
-                                                               Style="{StaticResource TertiaryButton}"
-                                                               HorizontalAlignment="Stretch"
-                                                               ToolTip="Screenshot">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <ui:SymbolIcon Symbol="Camera24" Margin="0,0,8,0" />
-                                                            <TextBlock Text="Screenshot" VerticalAlignment="Center"
-                                                                       Foreground="White" />
-                                                        </StackPanel>
-                                                    </ui:Button>
                                                     <ui:Button Command="{Binding Player.SetCoverFromFrameCommand}"
                                                                Style="{StaticResource TertiaryButton}"
                                                                HorizontalAlignment="Stretch"
@@ -434,19 +414,6 @@
                                                         <ui:Button Content="2×" Command="{Binding Player.SetPlaybackRateCommand}" CommandParameter="2.0"
                                                                    Style="{StaticResource TertiaryButton}" Padding="6,3" MinHeight="0" Margin="0,0,2,2" />
                                                     </WrapPanel>
-
-                                                    <!-- D: Aspect/zoom row — cycle button -->
-                                                    <ui:Button Command="{Binding Player.CycleAspectCommand}"
-                                                               Style="{StaticResource TertiaryButton}"
-                                                               HorizontalAlignment="Left"
-                                                               ToolTip="Cycle aspect ratio">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="Aspect: " VerticalAlignment="Center"
-                                                                       Foreground="White" Margin="0,0,4,0" FontSize="12" />
-                                                            <TextBlock Text="{Binding Player.SelectedAspect.Label}"
-                                                                       VerticalAlignment="Center" Foreground="{StaticResource AccentBrush}" FontSize="12" />
-                                                        </StackPanel>
-                                                    </ui:Button>
 
                                                     <Separator Margin="0,4" Background="{StaticResource PlayerPopupBorderBrush}" />
 

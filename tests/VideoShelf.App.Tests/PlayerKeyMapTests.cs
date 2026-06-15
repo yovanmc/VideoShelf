@@ -13,17 +13,12 @@ public class PlayerKeyMapTests
     [InlineData(Key.Right, ModifierKeys.None, PlayerCommand.SkipForward)]
     [InlineData(Key.F, ModifierKeys.None, PlayerCommand.ToggleFullscreen)]
     [InlineData(Key.Escape, ModifierKeys.None, PlayerCommand.ExitFullscreen)]
-    [InlineData(Key.E, ModifierKeys.Control, PlayerCommand.Screenshot)]
     public void Maps_known_keys(Key key, ModifierKeys mods, PlayerCommand expected)
         => PlayerKeyMap.Resolve(key, mods).ShouldBe(expected);
 
     [Fact]
     public void Unmapped_key_returns_none()
         => PlayerKeyMap.Resolve(Key.Q, ModifierKeys.None).ShouldBe(PlayerCommand.None);
-
-    [Fact]
-    public void E_without_control_is_not_screenshot()
-        => PlayerKeyMap.Resolve(Key.E, ModifierKeys.None).ShouldBe(PlayerCommand.None);
 
     // ── B4: ClosePlayer enum regression tests ─────────────────────────────────
     // The B4 Esc back-out chain is:

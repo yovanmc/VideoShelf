@@ -34,7 +34,6 @@ public class HarnessViewsAndSeedTests
     [InlineData("PlayerTracks")]
     [InlineData("PlayerVolume")]
     [InlineData("PlayerSpeed")]
-    [InlineData("PlayerAspect")]
     [InlineData("PlayerAbRepeat")]
     [InlineData("PlayerSkipFeedback")]
     [InlineData("PlayerUpNext")]

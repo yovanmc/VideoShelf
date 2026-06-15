@@ -62,12 +62,6 @@ public interface IPlaybackEngine : IDisposable
     /// <summary>Zoom scale factor. 0 = fit-to-window (auto); >0 = fixed zoom (1.0 = 1:1 pixels).</summary>
     float Scale { get; set; }
 
-    // ----- volume normalization -----
-    /// <summary>True when the engine can apply the normvol audio filter at Load time.</summary>
-    bool SupportsVolumeNormalize { get; }
-    /// <summary>When true and SupportsVolumeNormalize, normvol filter is added on the next Load.</summary>
-    bool VolumeNormalizeEnabled { get; set; }
-
     // ----- events -----
     /// <summary>Fires (roughly per second) with the current position in seconds.</summary>
     event EventHandler<double>? PositionChanged;

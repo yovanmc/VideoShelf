@@ -41,11 +41,6 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     // ── C2: pooled bitmap loader (nullable trailing param) ────────────────────
     private readonly IImageLoader? _imageLoader;
 
-    // ── D5: bulk-watched suppression flag ────────────────────────────────────
-    // Set to true around bulk Refresh() loops so per-series SeriesCompleted toasts
-    // are not raised for every series that transitions to 0 during a bulk admin action.
-    private bool _suppressCelebration;
-
     // ── M18-H: grouping override edit (nullable trailing param) ──────────────
     /// <summary>
     /// Grouping-override operations for the Edit-mode affordances.
@@ -170,16 +165,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     private void MarkCreatorWatched()
     {
         watch.SetWatchedForSection(SectionId, true);
-        // D5: suppress per-series celebration toasts during bulk admin action.
-        _suppressCelebration = true;
-        try
-        {
-            foreach (var s in SeriesList) s.Refresh();
-        }
-        finally
-        {
-            _suppressCelebration = false;
-        }
+        foreach (var s in SeriesList) s.Refresh();
     }
 
     [RelayCommand]
@@ -397,13 +383,6 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));
             svm.MarkWatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, true); svm.Refresh(); };
             svm.MarkUnwatchedRequested += (_, _) => { watch.SetWatchedForSeries(svm.SeriesId, false); svm.Refresh(); };
-            // D5: celebrate when all episodes in a series become watched.
-            // Skipped during bulk-mark-watched operations (_suppressCelebration=true).
-            svm.SeriesCompleted += (_, _) =>
-            {
-                if (!_suppressCelebration)
-                    _toasts?.Show($"🎉 Finished {svm.BaseTitle}!", kind: ToastKind.Success);
-            };
             // Subscribe to episodes as they lazy-load so each episode feeds the section-level Selection.
             svm.Episodes.CollectionChanged += OnSeriesEpisodesChanged;
             SeriesList.Add(svm);

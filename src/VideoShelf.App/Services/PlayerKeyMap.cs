@@ -8,7 +8,6 @@ public enum PlayerCommand
     TogglePlayPause,
     ToggleFullscreen,
     ExitFullscreen,
-    Screenshot,
     // E3: routed through the skip commands so feedback fires
     SkipBack,
     SkipForward,
@@ -28,7 +27,6 @@ public static class PlayerKeyMap
 
         return (key, ctrl) switch
         {
-            (Key.E, true) => PlayerCommand.Screenshot,
             (Key.Space, false) => PlayerCommand.TogglePlayPause,
             // Left/Right now route through the skip VM commands (E3: fires skip feedback)
             (Key.Left, false) => PlayerCommand.SkipBack,
