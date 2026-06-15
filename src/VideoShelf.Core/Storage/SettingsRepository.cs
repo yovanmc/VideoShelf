@@ -91,4 +91,20 @@ public sealed class SettingsRepository(VideoShelfDb db)
 
     public void SetBrowseViewMode(BrowseViewMode value)
         => SetString(BrowseViewModeKey, value.ToString());
+
+    // ── Probe concurrency ─────────────────────────────────────────────────────
+    public const string ProbeConcurrencyKey = "probe_concurrency";
+
+    /// <summary>Returns the stored integer for <paramref name="key"/>, or <paramref name="fallback"/> when
+    /// absent or not parseable.</summary>
+    public int GetInt(string key, int fallback)
+    {
+        var raw = GetString(key, "");
+        return int.TryParse(raw, out var v) ? v : fallback;
+    }
+
+    /// <summary>Max concurrent libVLC probes. Clamped to [1, 8]. Stored under key <c>probe_concurrency</c>.
+    /// Default 3 is conservative on a 4-core dev box; lower to 1 for a safe sequential fallback.</summary>
+    public int GetProbeConcurrency(int defaultValue = 3)
+        => Math.Clamp(GetInt(ProbeConcurrencyKey, defaultValue), 1, 8);
 }
