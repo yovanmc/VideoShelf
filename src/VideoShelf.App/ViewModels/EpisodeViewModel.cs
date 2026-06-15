@@ -25,6 +25,29 @@ public sealed partial class EpisodeViewModel(
     public string FilePath => model.FilePath;
     public bool IsMissing => model.Missing;
 
+    // --- playback progress (C2) ---
+    public double? Duration => model.Duration;
+    public double ResumePosition => model.ResumePosition;
+
+    /// <summary>0..1 fraction of the episode watched; 0 when duration is unknown.</summary>
+    public double ProgressFraction =>
+        model.Duration is > 0 ? System.Math.Clamp(model.ResumePosition / model.Duration.Value, 0, 1) : 0;
+
+    /// <summary>True when there is non-trivial in-progress resume position (not started or fully watched).</summary>
+    public bool HasProgress => ProgressFraction is > 0 and < 1;
+
+    /// <summary>Human-readable runtime: "h:mm" when ≥1 hour, "m:ss" otherwise. Null when duration unknown.</summary>
+    public string? RuntimeLabel => model.Duration is double d ? FormatRuntime(d) : null;
+
+    private static string FormatRuntime(double seconds)
+    {
+        var totalSeconds = (int)System.Math.Round(seconds);
+        var h = totalSeconds / 3600;
+        var m = (totalSeconds % 3600) / 60;
+        var s = totalSeconds % 60;
+        return h >= 1 ? $"{h}:{m:D2}" : $"{m}:{s:D2}";
+    }
+
     public bool HasCuration => curation is not null;
 
     /// <summary>True when this episode is selected in the multi-select list.

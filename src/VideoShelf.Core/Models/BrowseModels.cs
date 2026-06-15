@@ -10,10 +10,11 @@ public sealed record SeriesSummary(
     long SeriesId, long SectionId, string BaseTitle, bool IsStandalone,
     int EpisodeCount, int UnwatchedCount, string? ThumbnailSeedPath);
 
-/// <summary>An episode row: identity, ordering, display title, and watched/missing flags.</summary>
+/// <summary>An episode row: identity, ordering, display title, watched/missing flags, and playback position.</summary>
 public sealed record EpisodeView(
     long VideoId, long SeriesId, string FilePath, int EpisodeNo, string Title,
-    bool Watched, bool Missing);
+    bool Watched, bool Missing,
+    double? Duration = null, double ResumePosition = 0);
 
 public enum SearchHitKind { Section, Series, Video }
 

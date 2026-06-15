@@ -89,4 +89,63 @@ public class EpisodeViewModelTests
         vm.IsFavorite.ShouldBeFalse();
         curation.IsFavorite(videoId).ShouldBeFalse();
     }
+
+    // ── C2: progress fraction + runtime label ──────────────────────────────
+
+    [Fact]
+    public void ProgressFraction_is_zero_when_duration_unknown()
+    {
+        using var temp = new AppTempDb();
+        var (watch, videoId) = Seed(temp);
+        var view = new EpisodeView(videoId, 1, @"C:\V\S\a.mp4", 1, "Base",
+            Watched: false, Missing: false, Duration: null, ResumePosition: 0);
+        var vm = new EpisodeViewModel(view, watch);
+
+        vm.ProgressFraction.ShouldBe(0.0);
+        vm.HasProgress.ShouldBeFalse();
+        vm.RuntimeLabel.ShouldBeNull();
+    }
+
+    [Fact]
+    public void ProgressFraction_computed_from_duration_and_resume()
+    {
+        using var temp = new AppTempDb();
+        var (watch, videoId) = Seed(temp);
+        var view = new EpisodeView(videoId, 1, @"C:\V\S\a.mp4", 1, "Base",
+            Watched: false, Missing: false, Duration: 3600.0, ResumePosition: 900.0);
+        var vm = new EpisodeViewModel(view, watch);
+
+        vm.ProgressFraction.ShouldBe(0.25, tolerance: 0.001);
+        vm.HasProgress.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void HasProgress_false_when_fully_watched()
+    {
+        using var temp = new AppTempDb();
+        var (watch, videoId) = Seed(temp);
+        var view = new EpisodeView(videoId, 1, @"C:\V\S\a.mp4", 1, "Base",
+            Watched: true, Missing: false, Duration: 1800.0, ResumePosition: 1800.0);
+        var vm = new EpisodeViewModel(view, watch);
+
+        // fraction = 1.0 → HasProgress = false (not in-progress, fully watched)
+        vm.ProgressFraction.ShouldBe(1.0, tolerance: 0.001);
+        vm.HasProgress.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(3661.0, "1:01")]   // 1 hour 1 minute → h:mm
+    [InlineData(3600.0, "1:00")]   // exactly 1 hour
+    [InlineData(125.0,  "2:05")]   // 2 min 5 sec → m:ss
+    [InlineData(59.0,   "0:59")]   // under 1 minute
+    public void RuntimeLabel_formats_correctly(double seconds, string expected)
+    {
+        using var temp = new AppTempDb();
+        var (watch, videoId) = Seed(temp);
+        var view = new EpisodeView(videoId, 1, @"C:\V\S\a.mp4", 1, "Base",
+            Watched: false, Missing: false, Duration: seconds, ResumePosition: 0);
+        var vm = new EpisodeViewModel(view, watch);
+
+        vm.RuntimeLabel.ShouldBe(expected);
+    }
 }

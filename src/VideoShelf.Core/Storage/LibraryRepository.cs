@@ -308,7 +308,8 @@ public sealed class LibraryRepository(VideoShelfDb db)
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing,
+                   v.duration, v.resume_position
             FROM videos v
             JOIN series se ON se.id = v.series_id
             WHERE v.series_id = $s
@@ -324,7 +325,9 @@ public sealed class LibraryRepository(VideoShelfDb db)
             var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
             list.Add(new EpisodeView(
                 r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
-                r.GetInt64(5) != 0, r.GetInt64(6) != 0));
+                r.GetInt64(5) != 0, r.GetInt64(6) != 0,
+                Duration: r.IsDBNull(7) ? null : r.GetDouble(7),
+                ResumePosition: r.IsDBNull(8) ? 0 : r.GetDouble(8)));
         }
         return list;
     }
@@ -366,7 +369,8 @@ public sealed class LibraryRepository(VideoShelfDb db)
         using var conn = db.Open();
         var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing
+            SELECT v.id, v.series_id, v.file_path, v.episode_no, se.base_title, v.watched, v.missing,
+                   v.duration, v.resume_position
             FROM videos v
             JOIN series se ON se.id = v.series_id
             WHERE v.id = $vid;
@@ -379,7 +383,9 @@ public sealed class LibraryRepository(VideoShelfDb db)
         var title = episodeNo <= 1 ? baseTitle : $"{baseTitle} {episodeNo}";
         return new EpisodeView(
             r.GetInt64(0), r.GetInt64(1), r.GetString(2), episodeNo, title,
-            r.GetInt64(5) != 0, r.GetInt64(6) != 0);
+            r.GetInt64(5) != 0, r.GetInt64(6) != 0,
+            Duration: r.IsDBNull(7) ? null : r.GetDouble(7),
+            ResumePosition: r.IsDBNull(8) ? 0 : r.GetDouble(8));
     }
 
     /// <summary>Looks up an episode by its file path; returns null when not found.</summary>

@@ -16,6 +16,7 @@
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
             <conv:NotNullToVisibility x:Key="NotNullToVis" />
             <conv:CountToVisibility x:Key="CountToVis" />
+            <conv:FractionToWidth x:Key="FractionToWidth" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -407,10 +408,14 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel>
-                                                    <DockPanel Margin="0,2"
-                                                               Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
+                                                    <!-- Episode row: multi-line to avoid truncation in the 200px card.
+                                                         Line 1: title (full width)
+                                                         Line 2: Play | rating | runtime | watched (compact controls)
+                                                         Line 3: progress bar (full width, shown only when HasProgress) -->
+                                                    <StackPanel Margin="0,3,0,1"
+                                                                Opacity="{Binding IsMissing, Converter={StaticResource MissingToOpacity}}">
                                                         <!-- Right-click context menu with actions moved off the row -->
-                                                        <DockPanel.ContextMenu>
+                                                        <StackPanel.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Toggle favorite" Command="{Binding ToggleFavoriteCommand}"/>
                                                                 <MenuItem Header="Watch later" Command="{Binding ToggleWatchlistCommand}"/>
@@ -424,170 +429,198 @@
                                                                     </MenuItem.ItemContainerStyle>
                                                                 </MenuItem>
                                                             </ContextMenu>
-                                                        </DockPanel.ContextMenu>
-                                                        <!-- Selection checkbox: visible only when episode selection mode is active -->
-                                                        <CheckBox DockPanel.Dock="Left"
-                                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                                  Margin="0,0,4,0"
-                                                                  VerticalAlignment="Center"
-                                                                  Visibility="{Binding DataContext.Selection.IsSelectionMode,
-                                                                      RelativeSource={RelativeSource AncestorType=UserControl},
-                                                                      Converter={StaticResource BoolToVisibility}}" />
-                                                        <!-- Watched indicator (right side) -->
-                                                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Watched, Mode=OneWay}"
-                                                                  Command="{Binding ToggleWatchedCommand}"
-                                                                  VerticalAlignment="Center"/>
-                                                        <!-- Compact half-star rating control (right side, curation only) -->
-                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                                                                    VerticalAlignment="Center"
-                                                                    Margin="4,0,4,0"
-                                                                    Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
-                                                            <!-- Compact display: star icon + numeric label; clicking opens popup -->
-                                                            <ToggleButton x:Name="RatingToggle"
-                                                                          Padding="4,2"
-                                                                          Background="Transparent"
-                                                                          BorderThickness="0"
-                                                                          Cursor="Hand"
-                                                                          ToolTip="Rate this episode">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <ui:SymbolIcon>
-                                                                        <ui:SymbolIcon.Style>
-                                                                            <Style TargetType="ui:SymbolIcon">
-                                                                                <Setter Property="Symbol" Value="Star24" />
-                                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding Rating}" Value="0">
-                                                                                        <Setter Property="Symbol" Value="StarOff24" />
-                                                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </ui:SymbolIcon.Style>
-                                                                    </ui:SymbolIcon>
-                                                                    <TextBlock Margin="3,0,0,0" VerticalAlignment="Center" FontSize="11">
-                                                                        <TextBlock.Style>
-                                                                            <Style TargetType="TextBlock">
-                                                                                <Setter Property="Text" Value="{Binding Rating}" />
-                                                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                                                                <Style.Triggers>
-                                                                                    <DataTrigger Binding="{Binding Rating}" Value="0">
-                                                                                        <Setter Property="Text" Value="–" />
-                                                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                                                                    </DataTrigger>
-                                                                                </Style.Triggers>
-                                                                            </Style>
-                                                                        </TextBlock.Style>
-                                                                    </TextBlock>
-                                                                </StackPanel>
-                                                            </ToggleButton>
-                                                            <!-- Half-star popup anchored to the compact button -->
-                                                            <Popup PlacementTarget="{Binding ElementName=RatingToggle}"
-                                                                   Placement="Top"
-                                                                   IsOpen="{Binding IsChecked, ElementName=RatingToggle, Mode=TwoWay}"
-                                                                   StaysOpen="False"
-                                                                   AllowsTransparency="True"
-                                                                   PopupAnimation="Fade">
-                                                                <Border Background="{DynamicResource ApplicationBackgroundBrush}"
-                                                                        BorderBrush="{StaticResource DividerBrush}"
-                                                                        BorderThickness="1"
-                                                                        CornerRadius="6"
-                                                                        Padding="8,6">
+                                                        </StackPanel.ContextMenu>
+
+                                                        <!-- Line 1: Title — full width so long names are not truncated -->
+                                                        <DockPanel LastChildFill="True">
+                                                            <!-- Selection checkbox: visible only when episode selection mode is active -->
+                                                            <CheckBox DockPanel.Dock="Left"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                      Margin="0,0,4,0"
+                                                                      VerticalAlignment="Center"
+                                                                      Visibility="{Binding DataContext.Selection.IsSelectionMode,
+                                                                          RelativeSource={RelativeSource AncestorType=UserControl},
+                                                                          Converter={StaticResource BoolToVisibility}}" />
+                                                            <TextBlock Text="{Binding Title}"
+                                                                       FontSize="12"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+
+                                                        <!-- Line 2: compact controls — Play | rating | runtime | watched -->
+                                                        <DockPanel Margin="0,2,0,0" LastChildFill="False">
+                                                            <!-- Play button (left) -->
+                                                            <ui:Button DockPanel.Dock="Left" Padding="4,1" Margin="0,0,4,0"
+                                                                       ToolTip="Play" Command="{Binding PlayCommand}"
+                                                                       Style="{StaticResource TertiaryButton}">
+                                                                <ui:SymbolIcon Symbol="Play24" />
+                                                            </ui:Button>
+                                                            <!-- Watched checkbox (right) -->
+                                                            <CheckBox DockPanel.Dock="Right"
+                                                                      IsChecked="{Binding Watched, Mode=OneWay}"
+                                                                      Command="{Binding ToggleWatchedCommand}"
+                                                                      VerticalAlignment="Center"/>
+                                                            <!-- Runtime label (right of rating, muted) -->
+                                                            <TextBlock DockPanel.Dock="Right"
+                                                                       Text="{Binding RuntimeLabel}"
+                                                                       FontSize="10"
+                                                                       Opacity="0.55"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,4,0"
+                                                                       Visibility="{Binding RuntimeLabel, Converter={StaticResource NotNullToVis}}" />
+                                                            <!-- Compact half-star rating control (curation only) -->
+                                                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
+                                                                        VerticalAlignment="Center"
+                                                                        Visibility="{Binding HasCuration, Converter={StaticResource BoolToVisibility}}">
+                                                                <!-- Compact display: star icon + numeric label; clicking opens popup -->
+                                                                <ToggleButton x:Name="RatingToggle"
+                                                                              Padding="4,1"
+                                                                              Background="Transparent"
+                                                                              BorderThickness="0"
+                                                                              Cursor="Hand"
+                                                                              ToolTip="Rate this episode">
                                                                     <StackPanel Orientation="Horizontal">
-                                                                        <!-- 5 star cells, each split into left-half (x.5) and right-half (x.0) -->
-                                                                        <!-- Star 1 -->
-                                                                        <Grid Width="28" Height="28">
-                                                                            <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=1}"
-                                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            <!-- left half → 0.5 -->
-                                                                            <Button Width="14" HorizontalAlignment="Left"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="0.5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                            <!-- right half → 1.0 -->
-                                                                            <Button Width="14" HorizontalAlignment="Right"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="1"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                        </Grid>
-                                                                        <!-- Star 2 -->
-                                                                        <Grid Width="28" Height="28">
-                                                                            <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=2}"
-                                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            <Button Width="14" HorizontalAlignment="Left"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="1.5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                            <Button Width="14" HorizontalAlignment="Right"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="2"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                        </Grid>
-                                                                        <!-- Star 3 -->
-                                                                        <Grid Width="28" Height="28">
-                                                                            <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=3}"
-                                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            <Button Width="14" HorizontalAlignment="Left"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="2.5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                            <Button Width="14" HorizontalAlignment="Right"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="3"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                        </Grid>
-                                                                        <!-- Star 4 -->
-                                                                        <Grid Width="28" Height="28">
-                                                                            <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=4}"
-                                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            <Button Width="14" HorizontalAlignment="Left"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="3.5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                            <Button Width="14" HorizontalAlignment="Right"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="4"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                        </Grid>
-                                                                        <!-- Star 5 -->
-                                                                        <Grid Width="28" Height="28">
-                                                                            <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=5}"
-                                                                                           Foreground="{StaticResource AccentBrush}"
-                                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                            <Button Width="14" HorizontalAlignment="Left"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="4.5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                            <Button Width="14" HorizontalAlignment="Right"
-                                                                                    Background="Transparent" BorderThickness="0" Opacity="0"
-                                                                                    Command="{Binding SetRatingCommand}" CommandParameter="5"
-                                                                                    Click="RatingPopup_StarClicked"/>
-                                                                        </Grid>
-                                                                        <!-- Clear rating -->
-                                                                        <ui:Button Margin="6,0,0,0" Padding="4,2"
-                                                                                   Style="{StaticResource TertiaryButton}"
-                                                                                   ToolTip="Clear rating"
-                                                                                   Command="{Binding SetRatingCommand}" CommandParameter="0"
-                                                                                   Click="RatingPopup_StarClicked">
-                                                                            <ui:SymbolIcon Symbol="Dismiss16" />
-                                                                        </ui:Button>
+                                                                        <ui:SymbolIcon>
+                                                                            <ui:SymbolIcon.Style>
+                                                                                <Style TargetType="ui:SymbolIcon">
+                                                                                    <Setter Property="Symbol" Value="Star24" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Rating}" Value="0">
+                                                                                            <Setter Property="Symbol" Value="StarOff24" />
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </ui:SymbolIcon.Style>
+                                                                        </ui:SymbolIcon>
+                                                                        <TextBlock Margin="3,0,0,0" VerticalAlignment="Center" FontSize="11">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Text" Value="{Binding Rating}" />
+                                                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding Rating}" Value="0">
+                                                                                            <Setter Property="Text" Value="–" />
+                                                                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
                                                                     </StackPanel>
-                                                                </Border>
-                                                            </Popup>
-                                                        </StackPanel>
-                                                        <!-- Play button (left) -->
-                                                        <ui:Button DockPanel.Dock="Left" Padding="6,2" Margin="0,0,6,0"
-                                                                   ToolTip="Play" Command="{Binding PlayCommand}"
-                                                                   Style="{StaticResource TertiaryButton}">
-                                                            <ui:SymbolIcon Symbol="Play24" />
-                                                        </ui:Button>
-                                                        <!-- Title -->
-                                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"/>
-                                                    </DockPanel>
+                                                                </ToggleButton>
+                                                                <!-- Half-star popup anchored to the compact button -->
+                                                                <Popup PlacementTarget="{Binding ElementName=RatingToggle}"
+                                                                       Placement="Top"
+                                                                       IsOpen="{Binding IsChecked, ElementName=RatingToggle, Mode=TwoWay}"
+                                                                       StaysOpen="False"
+                                                                       AllowsTransparency="True"
+                                                                       PopupAnimation="Fade">
+                                                                    <Border Background="{DynamicResource ApplicationBackgroundBrush}"
+                                                                            BorderBrush="{StaticResource DividerBrush}"
+                                                                            BorderThickness="1"
+                                                                            CornerRadius="6"
+                                                                            Padding="8,6">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <!-- 5 star cells, each split into left-half (x.5) and right-half (x.0) -->
+                                                                            <!-- Star 1 -->
+                                                                            <Grid Width="28" Height="28">
+                                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=1}"
+                                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                <!-- left half → 0.5 -->
+                                                                                <Button Width="14" HorizontalAlignment="Left"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="0.5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                                <!-- right half → 1.0 -->
+                                                                                <Button Width="14" HorizontalAlignment="Right"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="1"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                            </Grid>
+                                                                            <!-- Star 2 -->
+                                                                            <Grid Width="28" Height="28">
+                                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=2}"
+                                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                <Button Width="14" HorizontalAlignment="Left"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="1.5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                                <Button Width="14" HorizontalAlignment="Right"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="2"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                            </Grid>
+                                                                            <!-- Star 3 -->
+                                                                            <Grid Width="28" Height="28">
+                                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=3}"
+                                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                <Button Width="14" HorizontalAlignment="Left"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="2.5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                                <Button Width="14" HorizontalAlignment="Right"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="3"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                            </Grid>
+                                                                            <!-- Star 4 -->
+                                                                            <Grid Width="28" Height="28">
+                                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=4}"
+                                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                <Button Width="14" HorizontalAlignment="Left"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="3.5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                                <Button Width="14" HorizontalAlignment="Right"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="4"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                            </Grid>
+                                                                            <!-- Star 5 -->
+                                                                            <Grid Width="28" Height="28">
+                                                                                <ui:SymbolIcon Symbol="{Binding Rating, Converter={StaticResource HalfStarSymbolConv}, ConverterParameter=5}"
+                                                                                               Foreground="{StaticResource AccentBrush}"
+                                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                <Button Width="14" HorizontalAlignment="Left"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="4.5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                                <Button Width="14" HorizontalAlignment="Right"
+                                                                                        Background="Transparent" BorderThickness="0" Opacity="0"
+                                                                                        Command="{Binding SetRatingCommand}" CommandParameter="5"
+                                                                                        Click="RatingPopup_StarClicked"/>
+                                                                            </Grid>
+                                                                            <!-- Clear rating -->
+                                                                            <ui:Button Margin="6,0,0,0" Padding="4,2"
+                                                                                       Style="{StaticResource TertiaryButton}"
+                                                                                       ToolTip="Clear rating"
+                                                                                       Command="{Binding SetRatingCommand}" CommandParameter="0"
+                                                                                       Click="RatingPopup_StarClicked">
+                                                                                <ui:SymbolIcon Symbol="Dismiss16" />
+                                                                            </ui:Button>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </Popup>
+                                                            </StackPanel>
+                                                        </DockPanel>
+
+                                                        <!-- Line 3: progress bar — full width, shown only when in-progress -->
+                                                        <Border Height="3" CornerRadius="1.5" Margin="0,3,0,0"
+                                                                Background="{StaticResource ThumbPlaceholderBrush}"
+                                                                Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
+                                                            <Border HorizontalAlignment="Left" CornerRadius="1.5"
+                                                                    Background="{StaticResource AccentBrush}"
+                                                                    Width="{Binding ProgressFraction,
+                                                                        Converter={StaticResource FractionToWidth},
+                                                                        ConverterParameter=180}" />
+                                                        </Border>
+                                                    </StackPanel>
                                                     <!-- Video tag editor: only in edit mode -->
                                                     <views:TagEditorView DataContext="{Binding VideoTagEditor}"
                                                                          Margin="0,2,0,4"
