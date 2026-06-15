@@ -43,7 +43,7 @@
              ═══════════════════════════════════════════════════════════════════ -->
         <ScrollViewer Grid.Row="0"
                       VerticalScrollBarVisibility="Auto"
-                      motion:ScrollMemory.ViewKey="SectionDetailHeader">
+                      motion:ScrollMemory.ViewKey="SectionDetail">
             <StackPanel>
 
                 <!-- HERO BANNER: creator art (dimmed) + name + count + tag pills + art actions -->

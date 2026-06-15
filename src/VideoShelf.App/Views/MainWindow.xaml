@@ -308,14 +308,22 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto"
-                                  motion:ScrollMemory.ViewKey="Browse">
+                        <!-- The ListBox sits DIRECTLY in the grid column (no outer ScrollViewer):
+                             its own internal ScrollViewer must be the scroll surface so the
+                             VirtualizingWrapPanel is measured with a definite viewport height and
+                             actually virtualizes. Wrapping it in an outer ScrollViewer gives the VWP
+                             infinite height → every container realizes (the M22 bench caught this). -->
                         <ListBox x:Name="CreatorsGridListBox"
+                                 Grid.Column="0"
+                                 motion:ScrollMemory.ViewKey="Browse"
                                  ItemsSource="{Binding Creators.Creators}"
                                  SelectionMode="Extended"
                                  ScrollViewer.CanContentScroll="True"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  VirtualizingPanel.IsVirtualizing="True"
                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                 VirtualizingPanel.ScrollUnit="Pixel"
                                  Style="{StaticResource PlainListBox}"
                                  Margin="16,0,16,16"
                                  IsTextSearchEnabled="True"
@@ -355,7 +363,6 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                    </ScrollViewer>
 
                         <!-- A–Z jump strip (G1): vertical index beside the grid.
                              Plain WPF Button per letter — no ui:* retemplate.
