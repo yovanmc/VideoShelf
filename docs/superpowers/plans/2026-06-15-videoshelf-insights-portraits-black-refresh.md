@@ -1,16 +1,20 @@
-# M24 — Insights, Creator Portraits & a Black-Glass Refresh — Implementation Plan
+# M24 — Lean + Refresh (cut bloat · black-glass · insights · creator portraits) — Implementation Plan
 
-> **Written for Sonnet execution.** This plan touches existing files digested by signature, not read line-by-line. For every task that EDITS an existing file: **read the current file first.** If its actual shape does not match what this plan describes, **STOP and report** rather than forcing the change.
+> **Written for Sonnet execution.** This plan touches existing files digested by signature, not read line-by-line. For every task that EDITS or REMOVES an existing file: **read the current file first.** If its actual shape does not match what this plan describes, **STOP and report** rather than forcing the change. Removals especially: if a feature is entangled with a KEPT feature, STOP and report rather than ripping out something load-bearing.
 
-**Goal:** Four owner-chosen prongs, shipped as ONE milestone via stacked PRs at the group seams (the M16/M23 model):
-1. **Black-glass visual refresh** — move the base surface to true-black (`#070707`) and brighten the cyan accent to `#4FC3F7` ("Ice Cyan"). Owner picked this from a live palette exploration.
-2. **Insights dashboard** — a dedicated page expanding the tiny Home stats strip into real library insights.
-3. **Creator portraits from a video frame** — an OFFLINE hybrid picker (grid of auto-grabbed candidate frames across the creator's videos **+** scrub-a-video to an exact frame). This REPLACES the earlier "Google image lookup" idea — no network, no API key, no ToS/wrong-person risk; it keeps the app's **"no network for content"** constraint fully intact.
-4. **Visibility & ease-of-use polish** — surface hidden features and clarify affordances (a concrete cut from a 24-item UX audit). **NOT accessibility** — the owner explicitly declined screen-reader/AutomationProperties work (PR #77 stands; keep UIA semantics OUT).
+**Goal:** The owner reviewed the whole feature set and chose to **cut bloat and fold it into M24** alongside the visual refresh + the two new features. One milestone, stacked PRs at group seams (M16/M23 model). Net result: a leaner, focused personal-library player on a black-glass theme, plus insights and creator portraits.
 
-**Architecture:** 5 stacked PRs, split at group seams: **A** (palette refresh) → **B** (insights) → **C** (creator-frame picker) → **D1** (discoverability + nav) → **D2** (affordances + empty states + quick wins). The ROADMAP flip rides D2 (the final PR). App-layer + Core **read-path** + two additive features (creator-frame capture, insights queries) only.
+**Owner-decided scope (locked via a live review):**
+- **CUT:** Smart Views (rule builder + page + Home shelves) · Command palette (Ctrl+K) · Surprise Me · player extras (aspect/zoom presets, volume normalization, the standalone frame-screenshot button, now-playing-in-titlebar, PiP snap-to-corner animation, series-complete celebration, card→hero crossfade) · accessibility remainder (keyboard-nav helpers, focus-restore service, type-ahead, color-independent ✓/NN% cues, 44px hit-target minimums) · series **split/merge** · **cross-series + per-series batch** rename.
+- **KEEP confirm/undo + tooltips** (NOT cut — data safety + universal UX).
+- **TRIM:** rename → keep ONLY single-file rename; series editing → keep ONLY move-episode-in/out + manual reorder.
+- **RENAME:** Watchlist → **"Watch Later"** (nav label, page title, the per-video toggle/command, any tooltips).
+- **ADD (the original M24 prongs):** black-glass refresh (Ice Cyan `#4FC3F7` on true-black `#070707`) · insights dashboard · creator-portrait-from-a-frame (offline hybrid picker).
+- **KEEP (explicitly affirmed, do NOT touch):** Playlists · Watch Later · recommendation rails + tags · favorites + ratings · PiP · play queue + up-next · A-B loop · speed · nav niceties (A–Z jump-list, breadcrumbs, scroll memory) · full maintenance suite (relink, remove-source, duplicate detect/resolve, orphan/empty cleanup, health dashboard).
 
-**No `user_version` runner / no schema change** — every new capability reuses existing tables/columns (`videos.rating`/`duration`/`resume_position`/`added_at`, `watch_events`, `creator_art`, the tag tables). The streak M8→M23 holds. No `ui:*` control retemplate. Library files are never written (captured frames go to `%LOCALAPPDATA%\VideoShelf\covers\`).
+**Architecture:** 7 stacked PRs at group seams: **A** black-glass refresh → **B** cut Smart Views + palette + Surprise Me → **C** cut player extras + accessibility remainder → **D** trim rename + grouping + rename Watchlist → **E** insights → **F** creator portraits → **G** reduced UX polish + ROADMAP flip. Each removal PR must leave the app building, launching, and green; remove features end-to-end (VM + view + repo methods + DI + nav/menu entries + harness `--view` states + tests) and delete now-dead code.
+
+**No `user_version` runner / no schema change.** Removals are code-only (orphaned tables like `watch_events` references stay — do NOT drop tables/columns; just stop using the removed UI). New features reuse existing tables/columns. The M8→M23 no-runner streak holds. No `ui:*` retemplate.
 
 **Tech stack:** .NET 10 · WPF + WPF-UI (`ui:FluentWindow`, Mica) · LibVLCSharp · `Microsoft.Data.Sqlite` · xUnit/Shouldly. `gh` is **not on PATH** → `& "C:\Program Files\GitHub CLI\gh.exe"`. Solution: `VideoShelf.slnx`.
 
@@ -18,155 +22,204 @@
 
 ## Conventions (apply to every task)
 
-- **Test gate** (after every group, before every PR): `dotnet test VideoShelf.slnx -c Release --nologo -v q` → `Failed: 0`, total climbing from the **1060** baseline. Core flake → re-run the Core project alone to confirm; don't chase.
+- **Test gate** (after every group, before every PR): `dotnet test VideoShelf.slnx -c Release --nologo -v q` → `Failed: 0`. Baseline **1060**. Removal PRs will REMOVE tests for cut features (expected — the total may drop); ADD PRs climb. State the new total each time. Core flake → re-run Core alone.
 - **Build quietly:** `dotnet build VideoShelf.slnx -c Release -v minimal`.
-- **Commits:** author `yovanmc`, trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. **No Codex trailer.** Merge `--merge` (no squash). `gh pr merge` from the main repo root, never a worktree. Direct pushes to `main` are blocked — every change ships via branch + PR. The ROADMAP flip rides D2.
-- **CI:** after pushing each branch + opening its PR, sleep ~20s then `& "C:\Program Files\GitHub CLI\gh.exe" pr checks <PR#> --watch` in the foreground; merge only when green.
-- **Theming (LOAD-BEARING — this codebase has had multiple WPF-UI regressions):** additive only. Never set `Style`/`Template` on a `ui:*` control for cosmetics. **Never alias a WPF-UI theme brush via a nested `<StaticResource ResourceKey=…>` and consume it as `{StaticResource}`** — it silently fails to materialise at merge time (the M15/M17 crash). Make new tokens DIRECT `<SolidColorBrush>` values. No `AutomationProperties`/screen-reader (PR #77 stands). [[wpfui-theming-and-visual-verification]]
-- **Verification:** the `Run-VisualSweep.ps1` sweep (Debug build, ffmpeg fixtures) writes PNGs to `tests/screenshots/<stamp>/`; a **Sonnet subagent views them and returns a TEXT verdict** — never load PNGs into the controller. [[feedback-screenshot-verify-in-subagent]] Over-video/libVLC content is GDI-uncapturable (verify-by-proxy). After any XAML/window restructure, the sweep's real-app `--view <X> --done-signal` launches double as the render-crash backstop (XAML/template crashes pass build+unit tests — cf. the M22 `ScrollMemory.ViewKey` crash). **Group A note:** the GDI sweep can FALSE-FAIL small/dense UI at full-window zoom — if a verdict hinges on small regions, crop+upscale before judging (the M23 Group C lesson).
+- **Removals are deletions, not dead code:** delete the cut feature's files (VMs/views/repos), its DI registrations, its `AppView` enum members + `MainViewModel` commands/properties, its nav-menu items + content hosts + active-underline entries, its `Run-VisualSweep.ps1` `--view` entries + `HarnessRunner` cases, and its tests. After each removal, **grep for the removed type/command names to confirm zero dangling references** before building.
+- **Commits:** author `yovanmc`, trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. **No Codex trailer.** Merge `--merge`. `gh pr merge` from the repo root. Direct pushes to `main` blocked. ROADMAP flip rides G.
+- **CI:** push branch + open PR → sleep ~20s → `& "C:\Program Files\GitHub CLI\gh.exe" pr checks <PR#> --watch` foreground → merge when green.
+- **Theming (LOAD-BEARING):** additive only; never set `Style`/`Template` on a `ui:*` control; never alias a WPF-UI brush via nested `<StaticResource ResourceKey=…>` then consume as `{StaticResource}` (make new tokens DIRECT brushes). [[wpfui-theming-and-visual-verification]]
+- **Verification:** `Run-VisualSweep.ps1` writes PNGs to `tests/screenshots/<stamp>/`; a **Sonnet subagent views them → TEXT verdict** (never load PNGs into the controller [[feedback-screenshot-verify-in-subagent]]). Over-video/libVLC content is GDI-uncapturable (verify-by-proxy). The sweep's real-app `--view` launches are the render-crash backstop. After REMOVALS, the sweep also confirms no orphaned nav entry / blank page remains. Group A note: the GDI sweep can false-FAIL small/dense UI at full-window zoom — crop+upscale before judging (M23 Group C lesson).
+- **Accessibility:** the owner has now asked to REMOVE the accessibility remainder (Group C) — keyboard nav, focus-restore, type-ahead, color ✓/% cues, 44px minimums. Do NOT re-introduce any `AutomationProperties`/screen-reader (PR #77 + this). KEEP confirm/undo + tooltips.
 
 ---
 
 ## Group A — Black-glass refresh (Ice Cyan on true-black) — PR #1
 
-> Owner picked "Ice Cyan `#4FC3F7` on true-black `#070707`" from a live palette exploration. The base today is the WPF-UI **Mica** backdrop (~`#1C1C1C`); `SurfaceBrush`/`CardSurfaceBrush` are **aliases** to WPF-UI keys, so a color edit alone won't work — Mica must be turned off and the surface tokens made direct.
+> Owner picked "Ice Cyan `#4FC3F7` on true-black `#070707`" from a live palette exploration. Base today is the WPF-UI **Mica** backdrop (~`#1C1C1C`); `SurfaceBrush`/`CardSurfaceBrush` are **aliases** to WPF-UI keys, so a color edit alone won't work — Mica must be off and the surface tokens made direct.
 
-### Task A1: Make the base surface true-black
+### A1 — true-black base
 **Files:** `src/VideoShelf.App/Resources/DesignTokens.xaml`, `src/VideoShelf.App/Views/MainWindow.xaml`.
-- [ ] **Read `DesignTokens.xaml` first.** Convert the two aliases to DIRECT brushes (this also fixes the latent nested-`<StaticResource>` fragility):
-  - `SurfaceBrush`: replace `<StaticResource ResourceKey="ApplicationBackgroundBrush" />` → `<SolidColorBrush x:Key="SurfaceBrush" Color="#FF070707" />`
-  - `CardSurfaceBrush`: replace `<StaticResource ResourceKey="ControlFillColorDefaultBrush" />` → `<SolidColorBrush x:Key="CardSurfaceBrush" Color="#FF141414" />` (a subtle elevation so cards read against the true-black canvas).
-  - Leave `TextPrimary/Secondary/Muted`, `DividerBrush`, `ChipFillBrush`, the player scrims (already near-black) unchanged.
-- [ ] **Read `MainWindow.xaml` (the `ui:FluentWindow` root).** Turn off Mica so the solid black canvas shows: set `WindowBackdropType="None"` (it's currently `"Mica"`) and add `Background="#FF070707"` on the `ui:FluentWindow` (or its root Grid). The nav bar / `ui:TitleBar` are `Background="Transparent"` (M87) → they'll show the solid black through, which is intended.
+- [ ] **Read `DesignTokens.xaml` first.** Convert the two aliases to DIRECT brushes (also fixes the nested-`<StaticResource>` fragility): `SurfaceBrush` → `<SolidColorBrush x:Key="SurfaceBrush" Color="#FF070707" />`; `CardSurfaceBrush` → `<SolidColorBrush x:Key="CardSurfaceBrush" Color="#FF141414" />` (subtle elevation). Leave text/divider/chip/player-scrim brushes unchanged.
+- [ ] **Read `MainWindow.xaml` (the `ui:FluentWindow` root).** Set `WindowBackdropType="None"` (was `"Mica"`) + `Background="#FF070707"`. (Nav/`ui:TitleBar` are `Background="Transparent"` → show black through; intended.)
 - [ ] Build. Commit `refresh(theme): true-black base surface (Mica off, direct surface brushes)`.
 
-### Task A2: Redirect the raw `ApplicationBackgroundBrush` consumers
-**Files:** `MainWindow.xaml` (empty-state overlay ~line 560), `SectionDetailView.xaml` (~line 520), and the command-palette card hex (~line 637).
-- [ ] Two views consume the WPF-UI key directly and will NOT pick up the token change: `MainWindow.xaml` empty-state `Background="{StaticResource ApplicationBackgroundBrush}"` → `{StaticResource SurfaceBrush}`; `SectionDetailView.xaml` `Background="{DynamicResource ApplicationBackgroundBrush}"` → `{DynamicResource SurfaceBrush}`.
-- [ ] The command-palette card is a hardcoded `Background="#FF1E1E2E"` (~MainWindow line 637) → change to `#FF101014` (near-black with a hair of the cyan-cool tint). Leave the palette scrim `#99000000` and divider `#22FFFFFF` as-is.
-- [ ] Build. Commit `refresh(theme): redirect raw background consumers to true-black surface`.
+### A2 — redirect raw background consumers
+**Files:** `MainWindow.xaml` (empty-state ~line 560), `SectionDetailView.xaml` (~line 520), palette card hex (~line 637).
+- [ ] `MainWindow.xaml` empty-state `{StaticResource ApplicationBackgroundBrush}` → `{StaticResource SurfaceBrush}`; `SectionDetailView.xaml` `{DynamicResource ApplicationBackgroundBrush}` → `{DynamicResource SurfaceBrush}`. The command-palette card `Background="#FF1E1E2E"` → `#FF101014`. **NOTE:** if Group B (palette removal) lands first in your stack, the palette-card hex is moot — skip it; otherwise change it here. (Stack order is A before B, so change it here; B then deletes the palette entirely. That's fine — A keeps the build valid.)
+- [ ] Build. Commit `refresh(theme): redirect raw background consumers to true-black`.
 
-### Task A3: Brighten the accent everywhere (token + WPF-UI controls)
+### A3 — Ice Cyan accent
 **Files:** `DesignTokens.xaml`, `src/VideoShelf.App/App.xaml.cs`.
-- [ ] In `DesignTokens.xaml`: `<Color x:Key="AccentColor">#5CC8FF</Color>` → `#4FC3F7`. This recolors every element that uses `{StaticResource AccentBrush}` (nav underlines, focus ring, eyebrows, chip-toggle checked, seek/progress fills, ratings, etc.).
-- [ ] **WPF-UI native controls** (primary buttons, slider thumb, checkbox ticks) follow the OS accent, NOT our token — there is no `ApplicationAccentColorManager` call today. To make them match Ice Cyan: in `App.xaml.cs` startup (after the host/DI is built, before/at `OnStartup`), call `Wpf.Ui.Appearance.ApplicationAccentColorManager.Apply(System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7));` (confirm the exact namespace/type against the WPF-UI 4.3.0 DLL — it may be `ApplicationAccentColorManager.Apply(Color)` or `ApplicationThemeManager`/`AccentColorManager`; **STOP and report** if no such API exists and instead leave WPF-UI controls on OS accent + note it). Keep it a single startup call; do not retemplate controls.
-- [ ] Build. Commit `refresh(theme): Ice Cyan accent (#4FC3F7) token + WPF-UI accent`.
+- [ ] `<Color x:Key="AccentColor">#5CC8FF</Color>` → `#4FC3F7`.
+- [ ] In `App.xaml.cs` startup, call `Wpf.Ui.Appearance.ApplicationAccentColorManager.Apply(System.Windows.Media.Color.FromRgb(0x4F,0xC3,0xF7));` so WPF-UI native controls match (confirm the exact API in WPF-UI 4.3.0; **STOP and report** if absent — then leave WPF-UI controls on OS accent + note it).
+- [ ] Build. Commit `refresh(theme): Ice Cyan accent (#4FC3F7)`.
 
 ### Group A close-out
-- [ ] Test gate green. **Full sweep** via a Sonnet subagent → TEXT verdict across ALL views: true-black canvas everywhere (no leftover `#1C1C1C` Mica-gray panels), cards/panels read against black, cyan accent is the brighter `#4FC3F7`, no washed-out or invisible text, no white/black render failure, titlebar degrades cleanly with Mica off. Pay special attention to: Home, Browse, creator page, Player flyouts, Maintenance, DuplicateResolve, Settings, command palette. Real-app `--view Browse`/`Home`/`SectionDetail` launches `OK` (render-crash backstop — the FluentWindow backdrop change is the risk).
-- [ ] Push `feat/m24-a-black-refresh`, PR, CI green, merge, sync.
+- [ ] Test gate green. **Full sweep** → TEXT verdict: true-black canvas everywhere (no Mica-gray leftovers), `#141414` cards read against black, brighter cyan accent, no washed/invisible text, no render failure, titlebar degrades cleanly with Mica off. Real-app `--view Browse`/`Home`/`SectionDetail` `OK` (the FluentWindow backdrop change is the risk).
+- [ ] Push `feat/m24-a-black-refresh`, PR, CI, merge, sync.
 
 ---
 
-## Group B — Insights dashboard — PR #2
+## Group B — Cut Smart Views + Command Palette + Surprise Me — PR #2
 
-> Today: `StatsRepository.GetLibraryStats()` + `GetTopCreatorsByWatched(limit)` feed a 2-line text strip on Home. Build a dedicated **Insights** page with richer (offline, no-schema) aggregates rendered as stat cards + simple Border-based bar charts (the app has no charting dep — reuse the track+fill `Border` pattern).
+> Remove three power-user surfaces end-to-end. **Read each feature's files first; grep for references before/after.**
 
-### Task B1: New stats queries (Core) — TDD
-**Files:** `src/VideoShelf.Core/Models/StatsModels.cs` (add records), `src/VideoShelf.Core/Storage/StatsRepository.cs` (add methods); tests in the existing stats-repo test file.
-- [ ] **Read `StatsRepository` + `StatsModels` + `VideoShelfDb` schema first** to confirm column/table names (`videos.rating` REAL, `videos.duration`, `videos.watched`, `videos.added_at`, `watch_events(video_id, watched_at)`, the tag tables, `sections`). Use `$`-params and per-call `db.Open()` (match the existing methods).
-- [ ] Add these records + methods (adapt names to the real column casing you find):
-  - `RatingBucket(double Rating, int Count)` → `GetRatingDistribution()` — `SELECT rating, COUNT(*) FROM videos WHERE missing=0 AND rating>0 GROUP BY rating ORDER BY rating`.
-  - `WatchActivityPoint(string Period, int Count)` → `GetWatchActivityByMonth(int months)` — group `watch_events.watched_at` by `strftime('%Y-%m', watched_at)`, last N months, ordered ascending. (Bars over time.)
-  - `TagWatchStat(string Tag, int Total, int Watched)` → `GetTopTagsByWatch(int limit)` — join `video_tags`→`videos` (and/or section/series tags — pick the tag table that actually drives video membership; confirm which the Smart-view builder treats as the canonical tag). Group by tag, order by Total desc.
-  - `LibraryComposition(int Creators, int Series, int Standalones, int TotalVideos, double TotalDurationSeconds)` → `GetLibraryComposition()` — counts from `sections`/`series`/`videos`.
-  - (Reuse the existing `GetLibraryStats` for the headline completion numbers; add `int UnwatchedVideos => Total - Watched - InProgress` in the VM, not a new query.)
-- [ ] Tests: seed via the existing stats-test fixture (or `StressLibrarySeeder`), assert each query returns expected shapes/counts on known data; assert empty-library returns empty lists / zeroes without throwing.
-- [ ] Commit `feat(core): insights stats queries (ratings/activity/tags/composition)`.
+### B1 — Remove Smart Views
+- [ ] **Find all Smart-Views code:** `SmartViewsViewModel`, `SmartViewsView.xaml`, `SmartViewRepository`, `SmartViewSqlBuilder`, `SmartViewModels.cs` (`SmartRule`/`SmartViewDefinition`), `SmartRuleProse` (M23) + their tests; the `AppView.SmartViews` enum member, `MainViewModel.ShowSmartViewsCommand`/`SmartViews` property + DI, the Library-menu "Smart Views" `MenuItem` + content host + active-underline entry in `MainWindow.xaml`, the `'smart-views'` sweep `--view` + `HarnessRunner` case, and the **smart-view Home shelves** wiring in `DiscoveryViewModel` (the `showOnHome` smart-view rails). The M23 demo seeded a smart view in `HarnessRunner.SeedDemoAsync` — remove that seed line too.
+- [ ] **STOP and report** if `SmartViewSqlBuilder` (or `parse_query`/scoped-run) is shared by a KEPT feature (search/recommendations). If it's only used by Smart Views, delete it; if shared, keep the shared core and remove only the Smart-Views VM/view/page/shelves.
+- [ ] Delete the files, enum member, commands, DI, menu/host/underline, harness entries, seed line, and tests. Leave the `saved_searches`/`smart_collections` tables in the DB (no schema change) — just unused.
+- [ ] Grep confirms zero dangling `SmartView*` references. Build. Commit `cut(smartviews): remove smart views (rule builder, page, home shelves)`.
 
-### Task B2: Insights page (VM + view + nav)
-**Files:** new `src/VideoShelf.App/ViewModels/InsightsViewModel.cs`, new `src/VideoShelf.App/Views/InsightsView.xaml`; `MainViewModel.cs` (`AppView` enum + `ShowInsightsCommand` + property), `MainWindow.xaml` (Library menu entry + content host + nav underline), `ServiceCollectionExtensions.cs` (DI), optionally `BuildActionRegistry()` (palette entry).
-- [ ] **Read `MainViewModel` (`AppView` enum ~line 15, the `ShowHistory`/`ShowMaintenance` command pattern, `PushNav`) + `MainWindow.xaml` (the Library `Menu` block ~lines 107–115 and the `EnumToVis`/`EnumSetToVis` content hosts).** Add `Insights` to `AppView`; add `InsightsViewModel Insights { get; }` + `[RelayCommand] void ShowInsights()` (calls `Insights.Load(); PushNav(CurrentView); CurrentView = AppView.Insights;`). Register VM in DI.
-- [ ] `InsightsViewModel.Load()` calls the B1 queries + `GetLibraryStats`/`GetTopCreatorsByWatched`; expose stat strings + `ObservableCollection`s for the bar lists. Compute bar widths as fractions (reuse `FractionToWidth`). Round all displayed numbers.
-- [ ] `InsightsView.xaml`: a scrollable page — a row of stat cards (total / watched / completion % / total hours), a "watch activity" bar chart (months), a "ratings" distribution bar row, "top creators" + "top tags" lists. Use the design tokens (`StatValue`, `Caption`, `TypeRailHeader`, `CardSurfaceBrush`, `AccentBrush` for bar fills). No new colors.
-- [ ] Wire a Library-menu `MenuItem` "Insights" → `ShowInsightsCommand`; add the content host (`EnumToVis ConverterParameter=Insights`); add `Insights` to the Library tab's active-underline set. Optionally add "Insights" to `BuildActionRegistry()`.
-- [ ] Build + sweep (add an `'insights' = @('--view','Insights','--seed-demo')` entry to `Run-VisualSweep.ps1` and an `AppView.Insights` case in `HarnessRunner` mirroring how Maintenance is driven — **STOP and report** if the harness can't reach the new view). Commit `feat(insights): dedicated insights dashboard page`.
+### B2 — Remove the command palette
+- [ ] **Find:** `CommandPaletteViewModel`, `PaletteItemViewModel`, `PaletteRanker`, the palette view/overlay in `MainWindow.xaml` (the `#FF1E1E2E`/now-`#FF101014` card + scrim ~lines 620–680), `OpenCommandPaletteCommand` + the `CommandPalette` property on `MainViewModel`, `MainViewModel.BuildActionRegistry()` (the whole action registry exists only for the palette — confirm and remove), the Ctrl+K key binding, the `'command-palette'` sweep `--view` + `HarnessRunner.NavigateCommandPalette`, and their tests.
+- [ ] **STOP and report** if anything besides the palette consumes `PaletteRanker`/`BuildActionRegistry`. Delete end-to-end. Grep confirms no `Palette`/`CommandPalette` references remain. Build. Commit `cut(palette): remove Ctrl+K command palette`.
+
+### B3 — Remove Surprise Me
+- [ ] **Find:** the `AppView.SurpriseMe` member (if present) / `SurpriseMeCommand` on `MainViewModel`, any nav/menu entry, the random-pick logic, and tests. Delete. (It opens a random unwatched video — confirm no shared helper is used elsewhere.) Build. Commit `cut(discovery): remove Surprise Me`.
 
 ### Group B close-out
-- [ ] Test gate; sweep verdict: Insights renders stat cards + bar charts with seeded data, no breakage. Push `feat/m24-b-insights`, PR, CI, merge, sync.
+- [ ] Test gate (down from 1060 by the removed tests; `Failed: 0`). Sweep: Library menu no longer lists Smart Views; no Ctrl+K; Home has no smart-view shelves; no orphaned blank pages. Push `feat/m24-b-cut-smartviews-palette`, PR, CI, merge, sync.
 
 ---
 
-## Group C — Creator portrait from a video frame (hybrid picker) — PR #3
+## Group C — Cut player extras + accessibility remainder — PR #3
 
-> Owner idea (replaces Google lookup): set a creator's image from a frame of THEIR OWN videos. **Hybrid:** a grid of auto-grabbed candidates (one per video across the creator's library) for a fast pick **+** scrub a chosen video to an exact frame. Offline; saves the PNG to `%LOCALAPPDATA%\VideoShelf\covers\`; writes only the `creator_art` path (never library folders).
+### C1 — Remove player extras
+**Files:** `PlayerViewModel.cs`, `PlayerView.xaml`, the playback-engine seam (`IPlaybackEngine`/`LibVlcPlaybackEngine`), `Run-VisualSweep.ps1`/`HarnessRunner` player `--view` states.
+- [ ] Remove these player features end-to-end (commands + bound UI in the "⋯ More"/tracks flyouts + engine members + tests + harness `--view`s):
+  - **Aspect/zoom presets** (`AspectRatio`/`Scale`/the aspect-cycle command + the "⋯ More" aspect row; `player-aspect` sweep state).
+  - **Volume normalization** (the `normvol` toggle + `SupportsVolumeNormalize` + `:audio-filter=normvol` at load + the tracks-flyout toggle).
+  - **Frame-screenshot BUTTON** (the standalone "screenshot" command/button in "⋯ More" + `player-more` screenshot affordance) — **but KEEP the underlying `IThumbnailSnapshotter`/`TakeSnapshot` capability**, because Group F (creator portraits) and set-cover-from-frame need it. Only remove the user-facing screenshot button/command, not the snapshot service.
+  - **Now-playing-in-titlebar** (`ComposeWindowTitle` now-playing composition — revert the window title to a static "VideoShelf").
+  - **Speed?** NO — speed is KEPT. Do not remove speed.
+  - **A-B repeat?** NO — KEPT. Do not remove.
+- [ ] **STOP and report** if removing aspect/scale breaks the engine interface used by a kept path. Grep confirms removed commands have no XAML references. Build. Commit `cut(player): remove aspect/zoom, volume-normalize, screenshot button, titlebar now-playing`.
 
-### Task C1: Arbitrary-position snapshot (service) — TDD where possible
-**Files:** `src/VideoShelf.App/Services/IThumbnailService.cs` (or wherever `IThumbnailSnapshotter` is declared), `src/VideoShelf.App/Services/LibVlcThumbnailService.cs`.
-- [ ] **Read `LibVlcThumbnailService` + the `IThumbnailSnapshotter` interface.** Today `TrySnapshotAsync(videoPath, outputPngPath, ct)` seeks to a hardcoded `Min(Length/10, 3000ms)` then `TakeSnapshot`. Add an overload that accepts a position:
-  `Task<bool> TrySnapshotAtAsync(string videoPath, string outputPngPath, TimeSpan position, CancellationToken ct)` — same headless `LibVLC`/`MediaPlayer` flow, but seek to `position` (clamp to `[0, Length]`), delay to let the frame settle, `TakeSnapshot`. Refactor the existing `TrySnapshotAsync` to call `TrySnapshotAtAsync(..., default-position, ct)` so there's one implementation. Must remain **fail-safe (never throw)** — return `false` on any error.
-- [ ] Add a tiny pure helper + test for the position clamp / candidate-position selection (the libVLC snapshot itself is integration — verified at the app via the picker, not unit-tested). Commit `feat(service): arbitrary-position frame snapshot`.
+### C2 — Remove motion flourishes
+**Files:** the M21 motion code.
+- [ ] Remove: **series-complete celebration** (`SeriesCompleted` event + toast + animation), **PiP snap-to-corner animation** (keep PiP itself; remove only the snap `BeginAnimation` flourish — PiP still works, just no animated snap), **card→hero crossfade** (`HeroTransition`/the crossfade fallback). KEEP: reduced-motion gate, thumbnail fade, card hover, toasts+undo, skeleton loaders, basic view transitions, scroll memory.
+- [ ] Build. Commit `cut(motion): remove celebration, PiP-snap animation, card→hero crossfade`.
 
-### Task C2: Candidate gathering + picker VM — TDD (pure parts)
-**Files:** new `src/VideoShelf.App/ViewModels/CreatorFramePickerViewModel.cs`; reuse `LibraryRepository.GetSeriesForSection(sectionId)` + `GetEpisodes(seriesId)`, `CreatorArtRepository.SetArtPath`, `AppPaths.CoversDirectory`.
-- [ ] **Read `SectionDetailViewModel.SetCreatorArtCommand` (~line 431) + `CreatorArtRepository` + `AppPaths`** (confirm `CoversDirectory`). Pure-testable logic to extract + test: given the creator's videos, choose up to N (e.g. 9) **candidate seed paths** (spread across series, skip missing files) — a pure `SelectCandidateVideos(IReadOnlyList<...>, int max)` helper with a test (deterministic spread, missing excluded, ≤max). And the saved-frame path builder (`covers/creator-{sectionId}-{timestamp-or-guid}.png` under `CoversDirectory`) — pure + tested.
-- [ ] The VM exposes: `Candidates` (each = seed video + a lazily-snapshotted thumbnail path), a `ScrubTarget` (a chosen video + a `PositionSeconds` slider bound to its duration), a captured-frame `Preview`, and `ConfirmCommand` (saves the chosen PNG via `TrySnapshotAtAsync` → `CoversDirectory` → `CreatorArtRepository.SetArtPath(sectionId, path)` → raise a "done" event so the creator page refreshes its art). All snapshot calls are async/fire-safe.
-- [ ] Commit `feat(creator-art): candidate gathering + frame-picker view-model`.
-
-### Task C3: Picker UI + wire into the creator page
-**Files:** new `src/VideoShelf.App/Views/CreatorFramePickerView.xaml` (a dialog/overlay), `SectionDetailView.xaml` + `SectionDetailViewModel.cs` (entry point), DI.
-- [ ] The existing `SetCreatorArtCommand` opens a file picker (`IImagePicker.PickImage`). Extend the entry point so the creator-art affordance offers **"From a video frame…"** (opens the new picker) alongside the existing **"From a file…"**. (Either a small menu/flyout on the art button, or two buttons — match the creator-page hero's existing style.)
-- [ ] `CreatorFramePickerView`: a **candidate grid** (tap a frame → confirm) + a **scrub panel** (pick a video from the creator, a slider over its duration, a "Capture frame" button showing a live preview, then "Use this frame"). Show a neutral state while frames generate. Save → close → creator art refreshes (the avatar fallback is replaced by the chosen frame).
-- [ ] On confirm, the saved frame must land in `CoversDirectory` (never a library folder) and update `creator_art`. Build + sweep (add a `'creator-frame-picker'` harness `--view` state if feasible, driving the picker open for a seeded creator; **STOP and report** if the harness can't open it — then verify-by-proxy with unit tests + a real-app manual note).
-- [ ] Commit `feat(creator-art): hybrid frame picker (candidate grid + scrub)`.
+### C3 — Remove the accessibility remainder (keep confirm/undo + tooltips)
+**Files:** the M20 a11y code that survived PR #77.
+- [ ] Remove: the **keyboard-navigation helpers** (`KeyboardNavigation.TabNavigation`/`DirectionalNavigation` setters added for a11y, `IsTabStop` a11y additions — leave default focusability, just remove the explicit a11y roving-tabindex attributes), **`TextSearch` type-ahead** wiring, the **`IFocusReturnService`** + its capture/restore calls in the OpenPlayer/ClosePlayer funnel, the **color-independent cues** (`Checkmark24` watched badge + `FractionToPercentText` "NN%" label added in M20 — keep the progress BAR, remove the %-text + ✓-badge that were the color-independent cue), and the **`HitTarget` 44px** style + its `BasedOn` usages (controls revert to their natural size).
+- [ ] **KEEP:** `IConfirmService` confirm dialogs, all Undo (toast + buttons), and all `ToolTip`s. `AppFocusVisual` focus rings — **STOP and report** before removing: confirm whether they're purely a11y or also general mouse-UX; default to KEEP focus rings unless the owner-intent clearly cuts them (they're cheap and harmless). 
+- [ ] Grep confirms no `IFocusReturnService`/`FractionToPercentText`/`HitTarget` references remain. Build. Commit `cut(a11y): remove keyboard-nav/focus-restore/type-ahead/color-cues/44px (keep confirm+undo+tooltips)`.
 
 ### Group C close-out
-- [ ] Test gate; sweep/real-app verdict: the picker opens, shows candidate frames + a scrub panel, and setting a frame replaces the creator's avatar with the chosen image. Push `feat/m24-c-creator-frames`, PR, CI, merge, sync.
+- [ ] Test gate. Sweep: player "⋯ More"/tracks flyouts no longer show aspect/normalize/screenshot; watched cards no longer show the ✓-badge/%-text (bar remains); PiP still works (no animated snap); confirm dialogs + undo toasts still fire. Real-app player launch `OK`. Push `feat/m24-c-cut-player-a11y`, PR, CI, merge, sync.
 
 ---
 
-## Group D1 — Discoverability + navigation — PR #4
+## Group D — Trim rename + grouping; rename Watchlist → Watch Later — PR #4
 
-> Surface features that are currently right-click-only / buried, WITHOUT undoing the #87 episode-row declutter. The reconciliation: a SINGLE "⋯" overflow button per row/tile (not 5 inline icons) — visible + discoverable, still uncluttered.
+### D1 — Rename: keep only single-file rename
+**Files:** the M5 `VideoShelf.Core.Renaming` (`CanonicalNamer`/`RenamePlanner`/`RenameExecutor`), `RenameToolViewModel`/`RenameToolView`, the M17 cross-series template rename (`MultiRenameViewModel`/`MultiRenameView`), `AppView.RenameTool`/`AppView.MultiRename`, the section-detail "Rename files…" entries, harness `--view` rename-tool/multi-rename states.
+- [ ] **Remove the M17 cross-series template rename entirely** (`MultiRename*` VM/view, `AppView.MultiRename`, the "Rename files…" multi-series entry, harness `multi-rename` state, tests).
+- [ ] **Reduce the M5 per-series rename to single-file rename:** the owner wants to rename ONE file at a time, not batch-canonicalize a whole series. Simplest safe path: **STOP and report your chosen approach before deleting** — either (a) keep `RenameToolViewModel` but restrict its UI/flow to a single selected episode (one source → one editable target → apply → undo), removing the whole-series batch planning UI; or (b) replace it with a small "Rename this file…" command on the episode row (inline editable name → `RenameExecutor` for one file → the existing crash-safe manifest + undo). **Preserve all M5 safety** (manifest-first, 2-arg `File.Move`, re-verify at apply, tolerant undo, `UpdateVideoPath` repaths `file_path`+`raw_filename`+`grouping_overrides.file_path`). The library-mutation discipline is non-negotiable [[user-preferences]].
+- [ ] Build + tests (keep the single-file rename tests; remove batch/multi-rename tests). Commit `trim(rename): single-file rename only (remove batch + cross-series)`.
 
-### Task D1 tasks (one commit per logical change, or batch 2-3 closely-related)
-- [ ] **Ctrl+K hint:** add a subtle `"Ctrl K"` badge as a suffix inside/next to the nav search box so the palette is discoverable — `MainWindow.xaml`. (Static chip using `ChipFillBrush`/`TextMutedBrush`.)
-- [ ] **Surprise me → visible nav button:** add a dice button (`ui:SymbolIcon`, a valid WPF-UI symbol e.g. `Dice24` — verify; else `Sparkle24`) in the nav bar bound to the existing surprise-me command (find it on `MainViewModel`) with `ToolTip="Surprise me"` — `MainWindow.xaml`.
-- [ ] **Scan affordance in nav/Library:** add a visible "Rescan" entry (Library menu item and/or a nav button) bound to `ScanAndReloadCommand` with a tooltip — `MainWindow.xaml`. (Today scan is Settings-only.)
-- [ ] **Series tile "⋯" overflow:** the series tile exposes only `ActivateCommand`; its Play all / Play next / Add to queue / Mark (un)watched / Rename actions are right-click-only. Add a `ui:Button` (`MoreHorizontal24`) docked top-right of the series tile header (visible, or visible-on-hover) opening a flyout/`ContextMenu` with those existing commands — `SectionDetailView.xaml`. Reuse the commands already on the series VM (no new commands).
-- [ ] **Episode "⋯" overflow (reconciles #87):** add ONE `MoreHorizontal24` button to the episode row's compact line 2 that opens the SAME context menu currently bound to the row's right-click (`ToggleFavorite`/`Watch later`/`Add to playlist`). Keeps the row decluttered (one button, not five) while making the actions discoverable — `SectionDetailView.xaml`.
-- [ ] **"New playlist…" in the add-to-playlist flyout:** the `AvailablePlaylists` submenu is empty when no playlists exist. Append a "New playlist…" `MenuItem` (bound to a create-then-add command — find/extend the playlist create command) — `SectionDetailView.xaml` / `EpisodeViewModel`.
-- [ ] **Library Health issue badge:** when `MissingCount + DuplicateGroupCount > 0`, show a small count badge on the "Library Health" Library-menu item — `MainWindow.xaml` + a count exposed on `MainViewModel`/`MaintenanceViewModel` (reuse existing maintenance counts; **STOP and report** if they aren't cheaply available without a scan).
-- [ ] Build + sweep (Browse + creator page + an open Library menu if capturable). Commit per change. Push `feat/m24-d1-discoverability`, PR, CI, merge, sync.
+### D2 — Grouping: keep move-in/out + reorder; remove split/merge
+**Files:** the M18 grouping-override code (`grouping_overrides` table usage, the split/merge/move/reorder UI on the creator page Edit mode, `SectionDetailViewModel` grouping commands), tests.
+- [ ] **Keep:** move an episode from one series to another (`MoveEpisodeToSeriesCommand`/`override` write — the owner's "add/remove from a series" need) + manual episode **reorder** (`override_episode_no`). Ensure both are reachable in the creator-page Edit mode.
+- [ ] **Remove:** the **split-series** and **merge-series** commands + their UI affordances + tests. **STOP and report** if split/merge share the same override write-path as move (so you don't break move) — if entangled, keep the shared write and remove only the split/merge UI + commands.
+- [ ] Build + tests. Commit `trim(grouping): keep move-episode + reorder, remove split/merge`.
+
+### D3 — Rename Watchlist → "Watch Later"
+**Files:** `WatchlistViewModel`/`WatchlistView.xaml`, `AppView.Watchlist`, the nav/Library-menu label, the per-video watchlist toggle command + its button/tooltip text, any "watchlist" user-facing strings (NOT the DB column `in_watchlist`/`watchlist_at` — leave the schema; rename only the USER-FACING label + ideally the VM/view/command type names for clarity).
+- [ ] Replace user-facing "Watchlist"/"Watch later" strings with **"Watch Later"** consistently (nav, page title, toggle button, tooltips, toast text). Renaming the C# type names (`WatchlistViewModel`→`WatchLaterViewModel`, `AppView.Watchlist`→`AppView.WatchLater`) is optional but preferred for consistency — if you rename types, update ALL references + DI + harness + tests. **Do NOT rename the DB columns** (`in_watchlist`/`watchlist_at`) — schema stays.
+- [ ] Build + tests (update any test asserting the old label). Commit `rename(watch-later): Watchlist → "Watch Later" (UI + types; schema unchanged)`.
+
+### Group D close-out
+- [ ] Test gate. Sweep: only single-file rename remains; creator-page Edit mode shows move + reorder (no split/merge); nav/page reads "Watch Later". Push `feat/m24-d-trim-rename-grouping-rename`, PR, CI, merge, sync.
 
 ---
 
-## Group D2 — Affordances, empty states & quick wins (+ ROADMAP flip) — PR #5
+## Group E — Insights dashboard — PR #5
 
-### Task D2 tasks
-- [ ] **Filter toggle label:** the Browse filter `ChipToggle` is funnel-icon-only; add a "Filter" text label beside the icon — `MainWindow.xaml`.
-- [ ] **Distinct density icons:** Compact density and List view-mode both use `List24` (ambiguous). Give Compact a distinct glyph (e.g. `TextAlignJustified24`/`LineHorizontal324` — verify exists), keep `Grid24` (Normal) / `Apps24` (Spacious), and keep List-view-mode's `List24` — so density vs view-mode read differently — `MainWindow.xaml`.
-- [ ] **Select tooltips:** add `ToolTip="Select multiple to bulk-edit"` to the "Select" `ChipToggle` on Browse / Favorites / Watchlist / Search — `MainWindow.xaml`, `FavoritesView.xaml`, `WatchlistView.xaml`, `SearchView.xaml`.
-- [ ] **SmartViews empty state + examples hint:** when `Views.Count == 0`, show an empty-state TextBlock in the left column ("Create your first smart view with the builder →"); add a one-line examples hint under the builder ("e.g. tag is anime · unwatched · rating ≥ 4") — `SmartViewsView.xaml`.
-- [ ] **History empty-state copy:** change "episodes you finish will appear here" → "Videos you watch will appear here." — `HistoryView.xaml`.
-- [ ] **Queue empty state:** add a "Queue is empty — add videos from any creator page" TextBlock to `QueuePageView.xaml` (shown when the queue is empty).
-- [ ] **Always-visible Back:** render the Back button disabled (not hidden) when `!CanGoBack` so the affordance is consistent — `MainWindow.xaml`. (Confirm the current binding hides it; switch `Visibility` → `IsEnabled`.)
-- [ ] Build + sweep across Browse / SmartViews / History / Queue / Favorites. Commit per change.
-- [ ] **ROADMAP flip:** flip the M24 row to ✅ Merged (PR list #1–#5 actual numbers, final test count, one-line shipped summary) + a decision-log entry (durable gotchas: Mica-off true-black approach, the accent-manager call, the offline frame-picker replacing Google, the #87-reconciling overflow pattern, any harness `--view` additions). Commit `docs(roadmap): M24 shipped`, ride this branch.
-- [ ] Push `feat/m24-d2-polish-flip`, PR, CI green, merge `--merge --delete-branch`, sync.
+> Replace the tiny Home stats strip with a dedicated Insights page (offline, no-schema aggregates rendered as stat cards + Border-based bar charts — no charting dep). NOTE: Smart Views (B) is gone, but Insights does NOT depend on it.
+
+### E1 — New stats queries (Core) — TDD
+**Files:** `src/VideoShelf.Core/Models/StatsModels.cs`, `src/VideoShelf.Core/Storage/StatsRepository.cs`; tests in the stats-repo test file.
+- [ ] **Read `StatsRepository`/`StatsModels`/`VideoShelfDb` schema first** (`videos.rating` REAL, `duration`, `watched`, `added_at`, `watch_events(video_id, watched_at)`, tag tables, `sections`). `$`-params, per-call `db.Open()`.
+- [ ] Add (adapt to real casing): `RatingBucket(double Rating, int Count)` → `GetRatingDistribution()`; `WatchActivityPoint(string Period, int Count)` → `GetWatchActivityByMonth(int months)` (group `watch_events.watched_at` by `strftime('%Y-%m', …)`); `TagWatchStat(string Tag, int Total, int Watched)` → `GetTopTagsByWatch(int limit)` (join the canonical video-tag membership table); `LibraryComposition(int Creators, int Series, int Standalones, int TotalVideos, double TotalDurationSeconds)` → `GetLibraryComposition()`. Reuse existing `GetLibraryStats` + `GetTopCreatorsByWatched`.
+- [ ] Tests cover each query on seeded data + empty-library (no throw). Commit `feat(core): insights stats queries`.
+
+### E2 — Insights page
+**Files:** new `InsightsViewModel.cs` + `InsightsView.xaml`; `MainViewModel` (`AppView.Insights` + `ShowInsightsCommand` + property), `MainWindow.xaml` (Library menu entry + content host + underline), DI, `Run-VisualSweep.ps1` + `HarnessRunner` (`Insights` `--view`).
+- [ ] Mirror the `ShowHistory`/`ShowMaintenance` pattern. `Load()` calls the E1 queries; expose stat strings + bar collections (fractions via `FractionToWidth`); round all numbers. `InsightsView`: stat cards (total/watched/completion %/total hours) + watch-activity bar chart + ratings distribution + top creators + top tags, using `StatValue`/`Caption`/`TypeRailHeader`/`CardSurfaceBrush`/`AccentBrush`. Empty-library state.
+- [ ] Build + sweep (`'insights'` `--view`). **STOP and report** if the harness can't reach the new view. Commit `feat(insights): dedicated insights dashboard`.
+
+### Group E close-out
+- [ ] Test gate; sweep verdict: Insights renders cards + bars on seeded data, clean empty state. Push `feat/m24-e-insights`, PR, CI, merge, sync.
+
+---
+
+## Group F — Creator portrait from a video frame (hybrid picker) — PR #6
+
+> Offline: candidate-frame grid across the creator's videos **+** scrub-a-video to an exact frame. Saves PNG to `%LOCALAPPDATA%\VideoShelf\covers\`; writes only the `creator_art` path (library folders never written). No network.
+
+### F1 — Arbitrary-position snapshot (service)
+**Files:** `IThumbnailService.cs`/the `IThumbnailSnapshotter` interface, `LibVlcThumbnailService.cs`.
+- [ ] **Read `LibVlcThumbnailService` + the interface.** Add `Task<bool> TrySnapshotAtAsync(string videoPath, string outputPngPath, TimeSpan position, CancellationToken ct)` — same headless flow but seek to clamped `position`. Refactor the existing default snapshot to call it. Fail-safe (never throw). NOTE: the standalone player screenshot BUTTON is removed in Group C, but this snapshot SERVICE stays (this feature needs it). Add a pure clamp/position helper + test. Commit `feat(service): arbitrary-position frame snapshot`.
+
+### F2 — Candidate gathering + picker VM — TDD (pure parts)
+**Files:** new `CreatorFramePickerViewModel.cs`; reuse `LibraryRepository.GetSeriesForSection`/`GetEpisodes`, `CreatorArtRepository.SetArtPath`, `AppPaths` covers dir.
+- [ ] **Read `SectionDetailViewModel.SetCreatorArtCommand` + `CreatorArtRepository` + `AppPaths`.** Pure-tested helpers: `SelectCandidateVideos(videos, max)` (spread across series, skip missing, ≤max) + the saved-frame path builder under the covers dir. VM exposes `Candidates` (seed + lazy thumb), a `ScrubTarget` (video + `PositionSeconds` over its duration) + captured `Preview`, and `ConfirmCommand` (snapshot via `TrySnapshotAtAsync` → covers dir → `SetArtPath` → raise "done"). Commit `feat(creator-art): candidate gathering + frame-picker VM`.
+
+### F3 — Picker UI + wire-in
+**Files:** new `CreatorFramePickerView.xaml`; `SectionDetailView.xaml`/`SectionDetailViewModel.cs` entry; DI.
+- [ ] Extend the existing creator-art entry to offer **"From a video frame…"** alongside "From a file…". The picker: a **candidate grid** + a **scrub panel** (pick a video → slider → "Capture frame" preview → "Use this frame"). Save → close → creator art refreshes. Frames land in the covers dir (never library folders). Build + sweep (add a picker `--view` if feasible; else verify-by-proxy + a real-app note; **STOP and report** if unreachable). Commit `feat(creator-art): hybrid frame picker (grid + scrub)`.
+
+### Group F close-out
+- [ ] Test gate; verdict: picker opens, shows candidates + scrub, setting a frame replaces the avatar. Push `feat/m24-f-creator-frames`, PR, CI, merge, sync.
+
+---
+
+## Group G — Reduced UX polish + ROADMAP flip — PR #7
+
+> The original D1/D2 polish, **minus anything referencing cut features.** DROP: the Ctrl+K hint (palette cut), the Surprise-me button (cut), the SmartViews empty-state (cut). KEEP the rest.
+
+### G tasks (one commit per change or batch closely-related)
+- [ ] **Episode "⋯" overflow** — one `MoreHorizontal24` button on the episode row opening the existing favorite / Watch Later / add-to-playlist context menu (discoverable, still decluttered — reconciles #87). `SectionDetailView.xaml`.
+- [ ] **Series tile "⋯" overflow** — a `MoreHorizontal24` button on the series tile header opening Play all / Play next / Add to queue / Mark (un)watched / **Rename this file** (the trimmed single-file rename) / move-episode. `SectionDetailView.xaml`.
+- [ ] **"New playlist…" in the add-to-playlist flyout** when none exist. `SectionDetailView.xaml`/`EpisodeViewModel`.
+- [ ] **Library-Health issue badge** when `MissingCount + DuplicateGroupCount > 0` (maintenance KEPT). `MainWindow.xaml` + a count on `MainViewModel`/`MaintenanceViewModel`. **STOP and report** if counts need a scan to compute.
+- [ ] **Browse "Filter" label** beside the funnel toggle. `MainWindow.xaml`.
+- [ ] **Distinct density-vs-list icons** (Compact density and List view-mode both use `List24` today). Give Compact a distinct glyph; keep `Grid24`/`Apps24`. `MainWindow.xaml`.
+- [ ] **Select tooltips** on the multi-select "Select" toggles. `MainWindow.xaml`/`FavoritesView`/Watch-Later view/`SearchView`.
+- [ ] **History empty-state copy** → "Videos you watch will appear here." `HistoryView.xaml`.
+- [ ] **Queue empty state** → "Queue is empty — add videos from any creator page." `QueuePageView.xaml`.
+- [ ] **Always-visible Back** (render disabled, not hidden, when `!CanGoBack`). `MainWindow.xaml`.
+- [ ] **ROADMAP flip:** flip the M24 row to ✅ Merged (PR list #1–#7, final test count, one-line shipped summary) + a decision-log entry (durable gotchas: Mica-off true-black + accent-manager; the cut list + what was KEPT; offline frame-picker; #87-reconciling overflow; Watchlist→Watch-Later UI-only rename with schema unchanged; tables left orphaned by removals). Commit `docs(roadmap): M24 shipped`. Ride this branch.
+- [ ] Push `feat/m24-g-polish-flip`, PR, CI green, merge `--merge --delete-branch`, sync.
 - [ ] **Ping the owner** (Phase B handoff): M24 merged & CI-green.
 
 ---
 
 ## Acceptance criteria (whole milestone)
-1. **Black-glass:** every view renders on a true-black (`#070707`) canvas with `#141414` cards and the brighter `#4FC3F7` accent; no leftover Mica-gray panels, no washed-out/invisible text, no render failure — verified on a full sweep.
-2. **Insights:** a dedicated Insights page (reachable from nav) shows stat cards + bar charts (watch activity, ratings, top creators/tags, composition) on real data, with a clean empty-library state.
-3. **Creator portraits:** a creator's image can be set from a frame of their own videos — a candidate grid AND a scrub-to-exact-frame mode; the chosen PNG saves under `%LOCALAPPDATA%\VideoShelf\covers\` and replaces the avatar; no network used; library folders untouched.
-4. **Visibility & ease:** Ctrl+K is hinted; Surprise-me and Rescan are visible in nav; series + episode hidden actions are reachable via a single "⋯" overflow (declutter preserved); Filter is labeled; density vs list-mode icons are distinct; Select has tooltips; SmartViews/Queue have empty states; Back is consistently present.
-5. **Invariants:** no `user_version` runner / no schema change; no `ui:*` retemplate; no `AutomationProperties`/screen-reader; library never written; full suite green (≥ 1060 + new tests).
+1. **Black-glass:** every view on true-black `#070707` + `#141414` cards + `#4FC3F7` accent; no Mica-gray leftovers, no render failure.
+2. **Cuts gone, no orphans:** Smart Views, Ctrl+K palette, Surprise Me, the listed player extras, the a11y remainder, series split/merge, and batch/cross-series rename are removed end-to-end — no dead nav entries, no blank pages, no dangling references; the app builds, launches, and is green.
+3. **Trims correct:** single-file rename works (with all M5 safety); creator-page Edit mode has move-episode + reorder (no split/merge); "Watch Later" replaces "Watchlist" everywhere user-facing (schema unchanged).
+4. **Kept features intact:** Playlists, Watch Later, recommendation rails + tags, favorites + ratings, PiP, queue + up-next, A-B loop, speed, A–Z/breadcrumbs/scroll-memory, full maintenance suite — all still work.
+5. **Insights:** a dedicated page with stat cards + bar charts on real data + empty state.
+6. **Creator portraits:** set a creator image from a frame of their own videos (candidate grid + scrub), saved to the covers dir; no network; library untouched.
+7. **Invariants:** confirm/undo + tooltips KEPT; no `AutomationProperties`/screen-reader; no `user_version`/schema change; no `ui:*` retemplate; library never written; suite green.
 
 ## STOP-and-report triggers (collected)
-- A3: no `ApplicationAccentColorManager.Apply(Color)` (or equivalent) API in WPF-UI 4.3.0 → leave WPF-UI controls on OS accent and note it.
-- B2 / C3 / D1: the harness can't drive the new `--view` (Insights / creator-frame-picker) or reach a populated state → verify-by-proxy (unit tests + a real-app manual note) and report.
-- C: `AppPaths.CoversDirectory` doesn't exist (use the actual covers/thumbs dir name you find).
-- D1: maintenance counts (missing/duplicate) aren't available without triggering a scan → skip the Library Health badge and report.
-- Any palette change that leaves a view unreadable or a control invisible against true-black.
+- A3: no `ApplicationAccentColorManager.Apply(Color)` in WPF-UI 4.3.0.
+- B1: `SmartViewSqlBuilder`/`parse_query` shared by search/recommendations (don't break the kept feature).
+- B2: anything besides the palette uses `PaletteRanker`/`BuildActionRegistry`.
+- C1: removing aspect/scale breaks the engine interface a kept path uses.
+- C3: `AppFocusVisual` focus rings ambiguous (a11y vs general UX) → default KEEP.
+- D1: the single-file-rename reduction approach (restrict existing tool vs new per-file command) — confirm before deleting.
+- D2: split/merge shares the move/reorder override write-path.
+- E2 / F3: the harness can't reach the new Insights / frame-picker view.
+- Any removal that leaves a dangling reference, blank page, or breaks a KEPT feature.
 
 ## Self-review (author)
-- Every owner ask maps to a group: palette→A, insights→B, image lookup (reframed offline)→C, UX polish→D1/D2. ✓
-- True-black approach grounded in the real theming wiring (Mica off + direct surface brushes + accent manager), with the nested-`<StaticResource>` trap avoided. ✓
-- Image lookup is OFFLINE — no network, no API key, constraint intact; builds on existing `creator_art` + libVLC snapshot. ✓
-- Additive only; no migration (reuses existing tables/columns). ✓
-- #87 declutter reconciled via a single "⋯" overflow, not re-added inline icons. ✓
-- New pure logic (stats queries, candidate selection, path building, position clamp) is unit-tested; XAML/theme/wiring verified by sweep + real-app launch. ✓
-- Accessibility explicitly excluded per owner. ✓
+- Every owner decision from the live review maps to a group: refresh→A, cut SmartViews/palette/SurpriseMe→B, cut player-extras/a11y→C, trim rename/grouping + rename Watchlist→D, insights→E, portraits→F, polish→G. ✓
+- KEEP list explicitly fenced (Playlists, Watch Later, recommendations+tags, ratings/favorites, PiP, queue/up-next, A-B, speed, nav niceties, full maintenance, confirm/undo, tooltips). ✓
+- Removals are end-to-end deletions with grep-for-dangling + STOP-on-entanglement guards; library-mutation safety preserved for single-file rename. ✓
+- No schema change (orphaned tables left in place); offline frame picker keeps "no network for content". ✓
+- New pure logic unit-tested; XAML/theme/removals verified by sweep + real-app launch. ✓
