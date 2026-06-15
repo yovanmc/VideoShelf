@@ -16,11 +16,11 @@ function Run-One($view, $maxNodes) {
   $done = Join-Path $scratch "$view.done"
   $dataDir = Join-Path $scratch "data"
   & $exe --stress $Spec --view $view --metrics-out $metrics --done-signal $done --data-dir $dataDir | Out-Null
-  if (-not (Test-Path $metrics)) { throw "$view: no metrics written" }
+  if (-not (Test-Path $metrics)) { throw "${view}: no metrics written" }
   $m = (Get-Content $metrics -Raw | ConvertFrom-Json)[0]
   Write-Host "$view  nodes=$($m.RenderedNodeCount)  renderMs=$($m.InitialRenderMs)  heapMB=$([math]::Round($m.ManagedHeapBytes/1MB))"
-  if ($m.RenderedNodeCount -gt $maxNodes)      { throw "$view: realized nodes $($m.RenderedNodeCount) > $maxNodes (virtualization regressed)" }
-  if ($m.InitialRenderMs   -gt $MaxInitialRenderMs) { throw "$view: initial render $($m.InitialRenderMs)ms > $MaxInitialRenderMs" }
+  if ($m.RenderedNodeCount -gt $maxNodes)      { throw "${view}: realized nodes $($m.RenderedNodeCount) > $maxNodes (virtualization regressed)" }
+  if ($m.InitialRenderMs   -gt $MaxInitialRenderMs) { throw "${view}: initial render $($m.InitialRenderMs)ms > $MaxInitialRenderMs" }
 }
 
 # SectionDetail opens the biggest creator (creator 0, which has biggestSeries series per the spec).

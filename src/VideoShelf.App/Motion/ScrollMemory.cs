@@ -60,14 +60,17 @@ public static class ScrollMemory
         };
     }
 
-    private static ScrollViewer? FindScrollViewer(FrameworkElement root)
+    private static ScrollViewer? FindScrollViewer(DependencyObject root)
     {
         if (root is ScrollViewer sv) return sv;
-        // One level of visual-tree descent is enough for a top-level ScrollViewer child.
+        // Descend the visual tree to find the hosting ScrollViewer. This is depth-first so it
+        // also resolves a ScrollViewer buried inside a control template (e.g. a ListBox's own
+        // internal ScrollViewer), not just an immediate child. Direct-ScrollViewer callers
+        // return above without descending, so existing usages are unaffected.
         for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
         {
-            if (System.Windows.Media.VisualTreeHelper.GetChild(root, i) is ScrollViewer child)
-                return child;
+            var found = FindScrollViewer(System.Windows.Media.VisualTreeHelper.GetChild(root, i));
+            if (found is not null) return found;
         }
         return null;
     }

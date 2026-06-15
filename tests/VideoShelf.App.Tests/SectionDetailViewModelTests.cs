@@ -2,6 +2,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
+using VideoShelf.App.Scale;
 using VideoShelf.App.Services;
 using VideoShelf.App.Tests.TestSupport;
 using VideoShelf.App.ViewModels;
@@ -269,6 +270,43 @@ public sealed class SectionDetailViewModelTests
         vm.CollapseAllCommand.Execute(null);
         foreach (var s in vm.SeriesList.Where(s => !s.IsStandalone))
             s.Episodes.ShouldNotBeEmpty();
+    }
+
+    // ── B3: lazy episode load under stress ───────────────────────────────────
+    // Confirms that loading the creator page with 200 series does NOT eagerly
+    // realize each series' episode list — episodes are loaded only when a user
+    // expands a tile (ActivateCommand). This mirrors the WPF virtualization
+    // contract: the ListBox defers tile instantiation so EnsureEpisodesLoadedAsync
+    // must never be called just because a VM is in SeriesList.
+
+    [Fact]
+    public async Task Biggest_creator_page_loads_series_without_eager_episode_load()
+    {
+        // Seed: 5 creators, biggest has 200 series, 1000 total videos.
+        using var temp = new AppTempDb();
+        var lib  = new LibraryRepository(temp.Db);
+        var tags = new TagRepository(temp.Db);
+        var watch = new WatchRepository(temp.Db);
+        var art  = new CreatorArtRepository(temp.Db);
+        var settings = new SettingsRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+
+        var spec = StressLibrarySpec.Generate(creators: 5, biggestSeries: 200, totalVideos: 1000, seed: 9);
+        new StressLibrarySeeder(lib).Seed(spec, @"C:\stress");
+
+        // Pick the creator with the most series (should be the first one with 200).
+        var biggest = lib.GetSectionSummaries().OrderByDescending(s => s.SeriesCount).First();
+
+        var vm = new SectionDetailViewModel(lib, tags, watch, new NullThumbs(), art, new FakeImagePicker(null), playQueue);
+        await vm.LoadAsync(biggest.SectionId);
+
+        // All 200 series are in the list.
+        vm.SeriesList.Count.ShouldBe(200);
+
+        // None should have their episodes eagerly loaded (Episodes is empty until Activate).
+        foreach (var s in vm.SeriesList)
+            s.Episodes.Count.ShouldBe(0,
+                $"Series '{s.BaseTitle}' has {s.Episodes.Count} episodes before activation — eager load detected");
     }
 }
 
