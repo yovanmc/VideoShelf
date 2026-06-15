@@ -128,4 +128,83 @@ public sealed class SearchViewModelTests
 
         openedIds.ShouldContain(sectionId);
     }
+
+    [Fact]
+    public async Task Query_matching_series_title_populates_SeriesResults()
+    {
+        using var f = NewFx();
+        SeedNatGeo(f.Lib);
+
+        // "documentary" matches the series base_title
+        f.Vm.Query = "documentary";
+        await f.Vm.WaitForIdleAsync();
+
+        f.Vm.SeriesResults.Count.ShouldBeGreaterThanOrEqualTo(1);
+        f.Vm.HasSeriesResults.ShouldBeTrue();
+        f.Vm.SeriesResults.ShouldContain(s => s.Title.Contains("Documentary"));
+    }
+
+    [Fact]
+    public async Task Series_card_Open_raises_OpenCreatorRequested_with_section_id()
+    {
+        using var f = NewFx();
+        var (sectionId, _, _) = SeedNatGeo(f.Lib);
+
+        f.Vm.Query = "documentary";
+        await f.Vm.WaitForIdleAsync();
+        f.Vm.SeriesResults.Count.ShouldBeGreaterThanOrEqualTo(1);
+
+        var openedIds = new List<long>();
+        f.Vm.OpenCreatorRequested += id => openedIds.Add(id);
+
+        f.Vm.SeriesResults[0].OpenCommand.Execute(null);
+
+        openedIds.ShouldContain(sectionId);
+    }
+
+    [Fact]
+    public async Task ResultSummary_reflects_all_group_counts()
+    {
+        using var f = NewFx();
+        SeedNatGeo(f.Lib);
+
+        // "nat" matches both the creator ("NatGeo") and series ("NatGeo Documentary")
+        f.Vm.Query = "nat";
+        await f.Vm.WaitForIdleAsync();
+
+        f.Vm.ResultSummary.ShouldContain("creator");
+        f.Vm.ResultSummary.ShouldContain("series");
+        f.Vm.ResultSummary.ShouldContain("video");
+        f.Vm.HasResults.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Clearing_query_empties_series_results_too()
+    {
+        using var f = NewFx();
+        SeedNatGeo(f.Lib);
+
+        f.Vm.Query = "documentary";
+        await f.Vm.WaitForIdleAsync();
+        f.Vm.SeriesResults.Count.ShouldBeGreaterThanOrEqualTo(1);
+
+        f.Vm.Query = "";
+        await f.Vm.WaitForIdleAsync();
+
+        f.Vm.SeriesResults.Count.ShouldBe(0);
+        f.Vm.HasSeriesResults.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task NoResults_is_true_when_no_creators_series_or_videos_match()
+    {
+        using var f = NewFx();
+        SeedNatGeo(f.Lib);
+
+        f.Vm.Query = "xyzzy_no_match_expected";
+        await f.Vm.WaitForIdleAsync();
+
+        f.Vm.NoResults.ShouldBeTrue();
+        f.Vm.HasResults.ShouldBeFalse();
+    }
 }

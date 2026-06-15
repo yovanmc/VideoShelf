@@ -7,6 +7,11 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="16">
 
+            <!-- Result summary line: "2 creators · 1 series · 4 videos" -->
+            <TextBlock Text="{Binding ResultSummary}" Opacity="0.6" Margin="0,0,0,12"
+                       Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}"
+                       Style="{StaticResource Caption}"/>
+
             <!-- Creator results (non-selectable; selection on video group only) -->
             <TextBlock Text="Creators" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,8"
                        Visibility="{Binding HasCreatorResults, Converter={StaticResource BoolToVisibility}}"/>
@@ -17,6 +22,44 @@
                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate><views:CreatorCard Margin="0,0,12,12"/></DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Series results: non-selectable wrap panel, same visual style as creator cards -->
+            <TextBlock Text="Series" Style="{StaticResource TypeRailHeader}" Margin="0,16,0,8"
+                       Visibility="{Binding HasSeriesResults, Converter={StaticResource BoolToVisibility}}"/>
+            <ItemsControl ItemsSource="{Binding SeriesResults}"
+                          Visibility="{Binding HasSeriesResults, Converter={StaticResource BoolToVisibility}}"
+                          KeyboardNavigation.TabNavigation="Once"
+                          KeyboardNavigation.DirectionalNavigation="Contained">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding OpenCommand}"
+                                Width="{StaticResource CardWidth}"
+                                Padding="0" Margin="0,0,12,12"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                HorizontalContentAlignment="Stretch"
+                                IsTabStop="True"
+                                FocusVisualStyle="{StaticResource AppFocusVisual}">
+                            <StackPanel>
+                                <Border CornerRadius="{StaticResource CardImageRadius}"
+                                        Background="{StaticResource ThumbPlaceholderBrush}"
+                                        Height="{StaticResource CardThumbHeight}" ClipToBounds="True">
+                                    <Grid>
+                                        <ui:SymbolIcon Symbol="MoviesAndTv24"
+                                                       FontSize="24" Opacity="0.35"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Image Source="{Binding Cover}"
+                                               Style="{StaticResource ThumbnailImage}" Stretch="UniformToFill" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="2,8,2,0"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding EpisodeCountLabel}" Opacity="0.7" FontSize="12" Margin="2,1,2,0" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
@@ -83,8 +126,13 @@
                 </ListBox>
             </StackPanel>
 
-            <TextBlock Text="No matches." Opacity="0.7" Margin="0,8"
-                       Visibility="{Binding NoResults, Converter={StaticResource BoolToVisibility}}"/>
+            <!-- No-results state: shown when query is non-empty and all result groups are empty -->
+            <TextBlock Opacity="0.7" Margin="0,8"
+                       Visibility="{Binding NoResults, Converter={StaticResource BoolToVisibility}}">
+                <Run Text="No creators, series, or videos match &#x201C;"/>
+                <Run Text="{Binding Query}"/>
+                <Run Text="&#x201D;."/>
+            </TextBlock>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
