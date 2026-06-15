@@ -59,6 +59,10 @@ public sealed partial class PlaylistsViewModel(
             Playlists.Clear();
             foreach (var p in all)
                 Playlists.Add(new PlaylistListItemViewModel(p.Id, p.Name, p.ItemCount));
+
+            // Auto-select the first playlist when none is currently selected.
+            if (Selected is null && Playlists.Count > 0)
+                OpenPlaylist(Playlists[0]);
         }
         finally
         {

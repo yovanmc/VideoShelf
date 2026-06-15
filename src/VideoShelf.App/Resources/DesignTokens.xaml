@@ -73,6 +73,9 @@
          Direct brushes resolve reliably via {StaticResource} everywhere (cf. DividerBrush). -->
     <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="#C5FFFFFF" />
+    <!-- Muted text: ~66% white. Replaces ad-hoc Opacity="0.6"/"0.7" on text labels.
+         Passes WCAG AA on the dark canvas (~4.5:1 on #1C1C1C background). -->
+    <SolidColorBrush x:Key="TextMutedBrush"     Color="#A8FFFFFF" />
 
     <!-- Divider: deliberate visibility fix — was #22000000 (near-black, invisible on
          dark canvas); now #22FFFFFF (low-opacity white, visible on dark). -->
@@ -164,10 +167,10 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
-    <!-- Caption — small muted label (unchanged) -->
+    <!-- Caption — small muted label. Uses TextMutedBrush directly (replaces Opacity="0.6"). -->
     <Style x:Key="Caption" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Opacity"  Value="0.6" />
+        <Setter Property="FontSize"    Value="12" />
+        <Setter Property="Foreground"  Value="{StaticResource TextMutedBrush}" />
     </Style>
 
     <!-- ============================================================

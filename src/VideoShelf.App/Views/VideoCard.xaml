@@ -109,10 +109,10 @@
                        Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock" BasedOn="{StaticResource Caption}">
-                        <Setter Property="Opacity" Value="0.6"/>
+                        <!-- Hover brightens the progress label: fade from muted to primary on mouseover -->
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
-                                <Setter Property="Opacity" Value="1.0"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -120,7 +120,7 @@
             </TextBlock>
             <TextBlock Text="{Binding SeriesTitle}" FontWeight="SemiBold"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="{Binding EpisodeLabel}" Opacity="0.7" FontSize="12" />
+            <TextBlock Text="{Binding EpisodeLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" />
         </StackPanel>
     </Button>
 </UserControl>

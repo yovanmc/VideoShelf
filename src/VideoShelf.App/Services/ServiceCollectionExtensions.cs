@@ -162,7 +162,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<WatchlistViewModel>();
         services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<HistoryRepository>();
-        services.AddSingleton<HistoryViewModel>();
+        services.AddSingleton<HistoryViewModel>(sp => new HistoryViewModel(
+            sp.GetRequiredService<HistoryRepository>(),
+            sp.GetRequiredService<LibraryRepository>(),
+            sp.GetRequiredService<IThumbnailService>(),
+            sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<BulkActionBarViewModel>(sp => new BulkActionBarViewModel(
             sp.GetRequiredService<WatchRepository>(),
             sp.GetRequiredService<TagRepository>(),

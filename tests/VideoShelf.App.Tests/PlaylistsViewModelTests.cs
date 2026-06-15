@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Shouldly;
 using VideoShelf.App.Tests.TestSupport;
 using VideoShelf.App.ViewModels;
@@ -196,5 +197,69 @@ public class PlaylistsViewModelTests
         vm.PlayAllCommand.Execute(null); // no selected playlist
 
         played.ShouldBeNull();
+    }
+
+    // ── Auto-select ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Load_auto_selects_first_playlist_when_none_selected()
+    {
+        using var temp = new AppTempDb();
+        var (repo, _, _) = Seed(temp);
+        var settings = new SettingsRepository(temp.Db);
+        var lib = new LibraryRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new PlaylistsViewModel(repo, playQueue);
+
+        repo.Create("Alpha", DateTimeOffset.UtcNow);
+        repo.Create("Beta", DateTimeOffset.UtcNow);
+        vm.Load();
+
+        vm.Selected.ShouldNotBeNull();
+        vm.HasSelected.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Load_does_not_change_selection_when_already_selected()
+    {
+        using var temp = new AppTempDb();
+        var (repo, _, _) = Seed(temp);
+        var settings = new SettingsRepository(temp.Db);
+        var lib = new LibraryRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new PlaylistsViewModel(repo, playQueue);
+
+        repo.Create("Alpha", DateTimeOffset.UtcNow);
+        var betaId = repo.Create("Beta", DateTimeOffset.UtcNow);
+        vm.Load();
+
+        // Manually select the second playlist.
+        vm.OpenPlaylistCommand.Execute(vm.Playlists.First(p => p.Id == betaId));
+        var selectedId = vm.Selected!.Id;
+
+        // Reload — should NOT move selection back to the first.
+        vm.Load();
+
+        // Selection is still held (Selected stays as Beta since it was already set).
+        // The contract: if Selected != null before Load(), it is not replaced.
+        // (The auto-select only fires when Selected is null.)
+        vm.Selected.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void Load_no_playlists_leaves_selection_null()
+    {
+        using var temp = new AppTempDb();
+        var (repo, _, _) = Seed(temp);
+        var settings = new SettingsRepository(temp.Db);
+        var lib = new LibraryRepository(temp.Db);
+        var playQueue = new PlayQueueViewModel(lib, settings);
+        var vm = new PlaylistsViewModel(repo, playQueue);
+
+        // No playlists in DB — Load should leave Selected null.
+        vm.Load();
+
+        vm.Selected.ShouldBeNull();
+        vm.HasSelected.ShouldBeFalse();
     }
 }

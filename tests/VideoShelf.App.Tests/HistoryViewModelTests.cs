@@ -114,4 +114,52 @@ public sealed class HistoryViewModelTests
 
         vm.Entries.Count.ShouldBeGreaterThanOrEqualTo(1);
     }
+
+    [Fact]
+    public async Task LoadAsync_groups_rows_into_at_least_one_group()
+    {
+        using var temp = new AppTempDb();
+        var (history, lib, watch, videoId) = Seed(temp);
+        watch.SetWatched(videoId, true);
+        var vm = new HistoryViewModel(history, lib);
+
+        await vm.LoadAsync();
+
+        // A single recent watch event lands in "Today" or "This week" or "Older" — at least one group.
+        vm.Groups.Count.ShouldBeGreaterThan(0);
+        var total = 0;
+        foreach (var g in vm.Groups) total += g.Rows.Count;
+        total.ShouldBe(vm.Entries.Count);
+    }
+
+    [Fact]
+    public async Task HistoryRowViewModel_ProgressFraction_zero_when_no_duration()
+    {
+        using var temp = new AppTempDb();
+        var (history, lib, watch, videoId) = Seed(temp);
+        watch.SetWatched(videoId, true);
+        var vm = new HistoryViewModel(history, lib);
+
+        await vm.LoadAsync();
+
+        // DB has no duration set → fraction is 0, HasProgress is false.
+        vm.Entries[0].ProgressFraction.ShouldBe(0);
+        vm.Entries[0].HasProgress.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void HistoryRowViewModel_DateGroup_recent_entry_is_today()
+    {
+        // Construct a row with WatchedAt = now — should be "Today".
+        var entry = new VideoShelf.Core.Storage.HistoryEntry(
+            VideoId: 1, SeriesId: 1,
+            SeriesTitle: "T", EpisodeNo: 1,
+            IsStandalone: false,
+            WatchedAt: System.DateTimeOffset.Now.ToString("o"),
+            ThumbnailSeedPath: null);
+
+        var row = new HistoryRowViewModel(entry);
+
+        row.DateGroup.ShouldBe("Today");
+    }
 }

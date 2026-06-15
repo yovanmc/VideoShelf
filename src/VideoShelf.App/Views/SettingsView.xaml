@@ -41,12 +41,12 @@
                 <TextBlock Text="{Binding ScanStatusText}"
                            VerticalAlignment="Center"
                            Margin="8,0,0,0"
-                           Opacity="0.75"
+                           Foreground="{StaticResource TextMutedBrush}"
                            Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}" />
                 <TextBlock Text="{Binding Settings.LastScanText}"
                            VerticalAlignment="Center"
                            Margin="12,0,0,0"
-                           Opacity="0.75" />
+                           Foreground="{StaticResource TextMutedBrush}" />
             </StackPanel>
 
             <!-- Scan-diff summary (shown only when a scan summary is available) -->
@@ -74,7 +74,7 @@
                                        MinWidth="44" MinHeight="44" />
                             <TextBlock Text="{Binding DisplayName}"
                                        VerticalAlignment="Center"
-                                       Opacity="0.85" />
+                                       Foreground="{StaticResource TextMutedBrush}" />
                         </DockPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

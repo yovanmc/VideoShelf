@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:controls="clr-namespace:VideoShelf.App.Views.Controls"
+             xmlns:vm="clr-namespace:VideoShelf.App.ViewModels"
              xmlns:conv="clr-namespace:VideoShelf.App.Converters">
     <UserControl.Resources>
         <ResourceDictionary>
@@ -10,6 +11,7 @@
                 <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <conv:BoolToVisibility x:Key="BoolToVisibility" />
+            <conv:FractionToWidth x:Key="FractionToWidth" />
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
@@ -26,7 +28,7 @@
 
             <!-- Empty state: visible when HasHistory is false -->
             <TextBlock Text="No watch history yet — episodes you finish will appear here."
-                       Opacity="0.7" Margin="0,40">
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,40">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -39,30 +41,79 @@
                 </TextBlock.Style>
             </TextBlock>
 
-            <!-- History list -->
-            <ItemsControl ItemsSource="{Binding Entries}"
+            <!-- Date-grouped history: one section per group (Today / This week / Older) -->
+            <ItemsControl ItemsSource="{Binding Groups}"
                           Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="{StaticResource SubtleFillBrush}"
-                                CornerRadius="{StaticResource ControlRadius}"
-                                Margin="0,0,0,4"
-                                Padding="12,8">
-                            <DockPanel>
-                                <ui:Button DockPanel.Dock="Right"
-                                           Command="{Binding PlayCommand}"
-                                           Style="{StaticResource TertiaryButton}"
-                                           ToolTip="Play">
-                                    <ui:SymbolIcon Symbol="Play24" />
-                                </ui:Button>
-                                <TextBlock DockPanel.Dock="Right" Text="{Binding WatchedAt}"
-                                           Opacity="0.6" FontSize="12"
-                                           VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                <TextBlock Text="{Binding Title}"
-                                           VerticalAlignment="Center"
-                                           TextTrimming="CharacterEllipsis"/>
-                            </DockPanel>
-                        </Border>
+                    <DataTemplate DataType="{x:Type vm:HistoryGroupViewModel}">
+                        <StackPanel Margin="0,0,0,16">
+                            <!-- Group header label -->
+                            <TextBlock Text="{Binding Label}"
+                                       Style="{StaticResource TypeEyebrow}"
+                                       Margin="0,0,0,8" />
+
+                            <!-- Rows in this group -->
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:HistoryRowViewModel}">
+                                        <Border Background="{StaticResource SubtleFillBrush}"
+                                                CornerRadius="{StaticResource ControlRadius}"
+                                                Margin="0,0,0,4"
+                                                Padding="8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <!-- Thumbnail -->
+                                                    <ColumnDefinition Width="80" />
+                                                    <!-- Title + progress + date -->
+                                                    <ColumnDefinition Width="*" />
+                                                    <!-- Play button -->
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Thumbnail -->
+                                                <Border Grid.Column="0"
+                                                        CornerRadius="{StaticResource ControlRadius}"
+                                                        Background="{StaticResource ThumbPlaceholderBrush}"
+                                                        Height="45"
+                                                        ClipToBounds="True"
+                                                        Margin="0,0,8,0">
+                                                    <Image Source="{Binding Cover}"
+                                                           Style="{StaticResource ThumbnailImage}"
+                                                           Stretch="UniformToFill" />
+                                                </Border>
+
+                                                <!-- Title + progress bar + date -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Style="{StaticResource TypeBody}" />
+                                                    <!-- Resume progress track (visible only when HasProgress) -->
+                                                    <Border Height="3" CornerRadius="1" Margin="0,4,0,2"
+                                                            Background="{StaticResource ThumbPlaceholderBrush}"
+                                                            Visibility="{Binding HasProgress, Converter={StaticResource BoolToVisibility}}">
+                                                        <Border HorizontalAlignment="Left" CornerRadius="1"
+                                                                Background="{StaticResource AccentBrush}"
+                                                                Width="{Binding ProgressFraction, Converter={StaticResource FractionToWidth}, ConverterParameter=160}" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding WatchedAt}"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="11" />
+                                                </StackPanel>
+
+                                                <!-- Play button -->
+                                                <ui:Button Grid.Column="2"
+                                                           Command="{Binding PlayCommand}"
+                                                           Style="{StaticResource TertiaryButton}"
+                                                           ToolTip="Play"
+                                                           VerticalAlignment="Center">
+                                                    <ui:SymbolIcon Symbol="Play24" />
+                                                </ui:Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

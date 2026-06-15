@@ -37,7 +37,7 @@
                     <TextBlock Text="{Binding DataContext.ScanStatusText, RelativeSource={RelativeSource AncestorType=Window}}"
                                VerticalAlignment="Center"
                                Margin="8,0,0,0"
-                               Opacity="0.75"
+                               Foreground="{StaticResource TextMutedBrush}"
                                Visibility="{Binding DataContext.IsScanning,
                                    RelativeSource={RelativeSource AncestorType=Window},
                                    Converter={StaticResource BoolToVisibility}}" />
@@ -70,7 +70,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Missing files" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Missing files" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding MissingCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -81,7 +81,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Orphan series" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Orphan series" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding OrphanSeriesCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -92,7 +92,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Empty creators" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Empty creators" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding EmptyCreatorCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -103,7 +103,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Single-file series" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Single-file series" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding SingleFileSeriesCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -114,7 +114,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Duplicate groups" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Duplicate groups" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding DuplicateGroupCount}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -125,7 +125,7 @@
                         CornerRadius="{StaticResource ControlRadius}"
                         Background="{DynamicResource SurfaceBrush}">
                     <StackPanel>
-                        <TextBlock Text="Database size" Style="{StaticResource Caption}" Opacity="0.7" />
+                        <TextBlock Text="Database size" Style="{StaticResource Caption}" />
                         <TextBlock Text="{Binding DbSizeText}" FontSize="28" FontWeight="Bold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" />
                     </StackPanel>
@@ -233,8 +233,7 @@
                                         </TextBlock>
                                         <TextBlock Text="{Binding FilePath}"
                                                    FontSize="10"
-                                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                                   Opacity="0.6"
+                                                   Foreground="{StaticResource TextMutedBrush}"
                                                    Margin="0,2,0,0"
                                                    TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
