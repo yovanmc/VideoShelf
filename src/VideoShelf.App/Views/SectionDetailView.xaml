@@ -90,7 +90,7 @@
                     </ui:Button>
                     <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,16">
                         <TextBlock Text="{Binding DisplayName}" FontSize="28" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Foreground="White" Opacity="0.85" Margin="0,2,0,10">
+                        <TextBlock Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,10">
                             <Run Text="{Binding VideoCount, Mode=OneWay}"/><Run Text=" videos"/>
                         </TextBlock>
                         <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
@@ -358,7 +358,7 @@
                                         </Border>
                                         <StackPanel>
                                             <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding EpisodeCountLabel}" Opacity="0.7" FontSize="12"/>
+                                            <TextBlock Text="{Binding EpisodeCountLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12"/>
                                         </StackPanel>
                                     </DockPanel>
                                 </StackPanel>
@@ -464,7 +464,7 @@
                                                             <TextBlock DockPanel.Dock="Right"
                                                                        Text="{Binding RuntimeLabel}"
                                                                        FontSize="10"
-                                                                       Opacity="0.55"
+                                                                       Foreground="{StaticResource TextMutedBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="0,0,4,0"
                                                                        Visibility="{Binding RuntimeLabel, Converter={StaticResource NotNullToVis}}" />
@@ -678,8 +678,8 @@
                                     <StackPanel Visibility="{Binding DataContext.IsEditing,
                                                     RelativeSource={RelativeSource AncestorType=UserControl},
                                                     Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="MERGE / REGROUP" FontSize="10" Opacity="0.6" Margin="0,0,0,4"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        <TextBlock Text="MERGE / REGROUP" FontSize="10" Margin="0,0,0,4"
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
                                         <StackPanel Orientation="Horizontal">
                                             <ui:TextBox
                                                 Text="{Binding DataContext.MergeTargetTitle,
@@ -733,7 +733,7 @@
                                 <!-- Series tag editor: only in edit mode, only when wired with tags -->
                                 <StackPanel Margin="0,8,0,0"
                                             Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Text="Tags" FontSize="11" Opacity="0.7" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Tags" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
                                     <views:TagEditorView DataContext="{Binding SeriesTagEditor}"/>
                                 </StackPanel>
                             </StackPanel>

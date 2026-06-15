@@ -102,8 +102,8 @@
                                     </StackPanel>
                                     <TextBlock Text="{Binding FilePath}"
                                                FontSize="10"
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               Opacity="0.6" Margin="0,4,0,0"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               Margin="0,4,0,0"
                                                TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
 

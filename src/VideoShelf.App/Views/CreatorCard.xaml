@@ -88,7 +88,7 @@
             </Border>
             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Margin="2,8,2,0"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="{Binding VideoCountLabel}" Opacity="0.7" FontSize="12" Margin="2,1,2,0" />
+            <TextBlock Text="{Binding VideoCountLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,1,2,0" />
         </StackPanel>
     </Button>
 </UserControl>

@@ -26,7 +26,7 @@
 
             <!-- Empty state: visible when HasHistory is false -->
             <TextBlock Text="No watch history yet — episodes you finish will appear here."
-                       Opacity="0.7" Margin="0,40">
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,40">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -56,7 +56,7 @@
                                     <ui:SymbolIcon Symbol="Play24" />
                                 </ui:Button>
                                 <TextBlock DockPanel.Dock="Right" Text="{Binding WatchedAt}"
-                                           Opacity="0.6" FontSize="12"
+                                           Foreground="{StaticResource TextMutedBrush}" FontSize="12"
                                            VerticalAlignment="Center" Margin="0,0,12,0"/>
                                 <TextBlock Text="{Binding Title}"
                                            VerticalAlignment="Center"

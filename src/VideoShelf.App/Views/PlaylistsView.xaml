@@ -42,7 +42,7 @@
             <!-- Empty state -->
             <TextBlock DockPanel.Dock="Top"
                        Text="No playlists yet. Click New to create one."
-                       Opacity="0.7" TextWrapping="Wrap" Margin="0,16,0,0">
+                       Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,16,0,0">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -74,7 +74,7 @@
                                                Style="{StaticResource TertiaryButton}">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                            <TextBlock Opacity="0.6" FontSize="12">
+                                            <TextBlock Foreground="{StaticResource TextMutedBrush}" FontSize="12">
                                                 <Run Text="{Binding ItemCount, Mode=OneWay}" /><Run Text=" items" />
                                             </TextBlock>
                                         </StackPanel>
@@ -124,7 +124,7 @@
             <!-- No-selection empty state -->
             <TextBlock DockPanel.Dock="Top"
                        Text="Select a playlist to view its items."
-                       Opacity="0.7" Margin="0,40,0,0">
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,40,0,0">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Visible" />
@@ -143,7 +143,7 @@
                 <StackPanel>
                     <!-- Empty-items state -->
                     <TextBlock Text="This playlist is empty."
-                               Opacity="0.7" Margin="0,16,0,0">
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,16,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed" />

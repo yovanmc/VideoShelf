@@ -8,7 +8,7 @@
         <StackPanel Margin="16">
 
             <!-- Result summary line: "2 creators · 1 series · 4 videos" -->
-            <TextBlock Text="{Binding ResultSummary}" Opacity="0.6" Margin="0,0,0,12"
+            <TextBlock Text="{Binding ResultSummary}" Margin="0,0,0,12"
                        Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}"
                        Style="{StaticResource Caption}"/>
 
@@ -56,7 +56,7 @@
                                 </Border>
                                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="2,8,2,0"
                                            TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{Binding EpisodeCountLabel}" Opacity="0.7" FontSize="12" Margin="2,1,2,0" />
+                                <TextBlock Text="{Binding EpisodeCountLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="2,1,2,0" />
                             </StackPanel>
                         </Button>
                     </DataTemplate>
@@ -127,7 +127,7 @@
             </StackPanel>
 
             <!-- No-results state: shown when query is non-empty and all result groups are empty -->
-            <TextBlock Opacity="0.7" Margin="0,8"
+            <TextBlock Foreground="{StaticResource TextMutedBrush}" Margin="0,8"
                        Visibility="{Binding NoResults, Converter={StaticResource BoolToVisibility}}">
                 <Run Text="No creators, series, or videos match &#x201C;"/>
                 <Run Text="{Binding Query}"/>

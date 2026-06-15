@@ -18,7 +18,7 @@
             <TextBlock FontSize="22" FontWeight="SemiBold">
                 <Run Text="Rename: " /><Run Text="{Binding SeriesTitle}" />
             </TextBlock>
-            <TextBlock Opacity="0.75" TextWrapping="Wrap" Margin="0,4,0,0"
+            <TextBlock Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"
                        Text="Preview the new file names, edit any you like, then Apply. This renames files on disk and is reversible with Undo." />
         </StackPanel>
 
@@ -30,7 +30,7 @@
                        Style="{StaticResource SecondaryButton}" />
             <ui:Button Content="Back" Margin="8,0,0,0" Command="{Binding CloseCommand}"
                        Style="{StaticResource SecondaryButton}" />
-            <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Opacity="0.85" />
+            <TextBlock Text="{Binding StatusSummary}" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="{StaticResource TextMutedBrush}" />
             <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="12,0,0,0"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
@@ -53,11 +53,11 @@
                                     <ColumnDefinition Width="140" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding OldName}" VerticalAlignment="Center"
-                                           Opacity="0.8" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Grid.Column="1" Text="→" Margin="10,0" VerticalAlignment="Center" Opacity="0.6" />
+                                           Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="1" Text="→" Margin="10,0" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" />
                                 <ui:TextBox Grid.Column="2" Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Grid.Column="3" Text="{Binding StatusText}" VerticalAlignment="Center"
-                                           Margin="10,0,0,0" Opacity="0.85" />
+                                           Margin="10,0,0,0" Foreground="{StaticResource TextMutedBrush}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

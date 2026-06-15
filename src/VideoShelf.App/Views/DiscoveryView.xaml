@@ -9,7 +9,7 @@
             <!-- Stats header -->
             <StackPanel Margin="0,0,0,16" Visibility="{Binding HasStats, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock Text="{Binding WatchedSummary}" FontSize="16" FontWeight="SemiBold" />
-                <TextBlock Text="{Binding InProgressSummary}" Opacity="0.7" Margin="0,2,0,0"
+                <TextBlock Text="{Binding InProgressSummary}" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"
                            Visibility="{Binding HasInProgress, Converter={StaticResource BoolToVisibility}}" />
                 <ItemsControl ItemsSource="{Binding TopCreators}" Margin="0,8,0,0">
                     <ItemsControl.ItemsPanel>
@@ -33,7 +33,7 @@
 
             <!-- Empty state -->
             <TextBlock Text="Nothing here yet — add a source and start watching."
-                       Opacity="0.7" Margin="0,40"
+                       Foreground="{StaticResource TextMutedBrush}" Margin="0,40"
                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}"/>
 
             <!-- Continue watching rail -->

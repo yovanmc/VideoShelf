@@ -59,7 +59,7 @@
 
                 <!-- Empty state -->
                 <TextBlock Text="No favorites yet — mark videos with the heart icon to save them here."
-                           Opacity="0.7" Margin="0,40">
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,40">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Collapsed" />
