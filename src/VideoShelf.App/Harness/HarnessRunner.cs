@@ -419,6 +419,28 @@ public sealed class HarnessRunner
         if (_options.DoneSignal is null) return;
         try { File.WriteAllText(_options.DoneSignal, message + Environment.NewLine); }
         catch { }
+
+        // Exit the process after writing the done-signal on the metrics/bench path so that
+        // Run-ScaleBench.ps1 (which waits via `| Out-Null`) returns on its own without
+        // needing an external kill. Guarded to MetricsOut-present runs only:
+        //   - Scale bench: --metrics-out <path> --done-signal <path>  → exit
+        //   - Visual sweep: --done-signal <path> only                 → do NOT exit (sweep
+        //     captures the window after the done-signal, THEN kills the process; early exit
+        //     would close the window before capture).
+        // InvokeShutdown posts a WM_QUIT to the Dispatcher message loop and is safe to call
+        // from any thread. Environment.Exit(0) is the last resort if libVLC or another
+        // non-background native thread prevents the WPF dispatcher from shutting down cleanly.
+        if (_options.MetricsOut is not null)
+        {
+            try
+            {
+                Application.Current.Dispatcher.InvokeShutdown();
+            }
+            catch
+            {
+                Environment.Exit(0);
+            }
+        }
     }
 
     // ── M19 player-state helpers ──────────────────────────────────────────────
