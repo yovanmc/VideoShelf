@@ -13,6 +13,8 @@ namespace VideoShelf.App.Services;
 /// (default 3, clamped 1–8; degree=1 gives safe sequential fallback).</summary>
 public sealed class ResolutionBackfillService(LibraryRepository library, IMediaProbe probe, SettingsRepository? settings = null)
 {
+    private readonly object _writeGate = new();
+
     public async Task BackfillAsync(CancellationToken cancellationToken)
     {
         var pending = library.GetVideosNeedingResolution();
@@ -22,10 +24,15 @@ public sealed class ResolutionBackfillService(LibraryRepository library, IMediaP
         {
             try
             {
+                // Probe runs outside the lock — this is the slow part and must stay parallel.
                 var r = await probe.ProbeAsync(v.FilePath, ct).ConfigureAwait(false);
+                // Serialize only the DB writes to eliminate any SQLite lock-contention.
                 // Each write opens its own connection (VideoShelfDb.Open()) — independent commit.
-                if (r.Width is { } w && r.Height is { } h)
-                    library.SetResolution(v.Id, w, h);
+                lock (_writeGate)
+                {
+                    if (r.Width is { } w && r.Height is { } h)
+                        library.SetResolution(v.Id, w, h);
+                }
             }
             catch (OperationCanceledException) { throw; }
             catch { /* skip this file; a later scan retries it */ }
