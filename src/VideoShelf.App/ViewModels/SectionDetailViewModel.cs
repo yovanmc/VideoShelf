@@ -38,6 +38,9 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     // ── M21-B: toast service (nullable trailing param) ────────────────────────
     private readonly IToastService? _toasts;
 
+    // ── C2: pooled bitmap loader (nullable trailing param) ────────────────────
+    private readonly IImageLoader? _imageLoader;
+
     // ── D5: bulk-watched suppression flag ────────────────────────────────────
     // Set to true around bulk Refresh() loops so per-series SeriesCompleted toasts
     // are not raised for every series that transitions to 0 during a bulk admin action.
@@ -70,7 +73,8 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         IConfirmService? confirm = null,
         IFileSystem? fs = null,
         GroupingEditViewModel? groupingEdit = null,
-        IToastService? toasts = null)
+        IToastService? toasts = null,
+        IImageLoader? imageLoader = null)
     {
         this.library      = library;
         this.tags         = tags;
@@ -88,6 +92,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         _fs               = fs;
         GroupingEdit      = groupingEdit;
         _toasts           = toasts;
+        _imageLoader      = imageLoader;
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
         // In unit tests there is no Application/Dispatcher, and SeriesList is
@@ -384,7 +389,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         SeriesList.Clear();
         foreach (var s in summaries)
         {
-            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker, _toasts);
+            var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker, _toasts, _imageLoader);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));

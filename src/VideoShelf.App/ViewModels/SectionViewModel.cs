@@ -12,7 +12,8 @@ public sealed partial class SectionViewModel(
     SectionSummary summary,
     LibraryRepository library,
     WatchRepository watch,
-    IThumbnailService thumbnails) : ObservableObject
+    IThumbnailService thumbnails,
+    IImageLoader? imageLoader = null) : ObservableObject
 {
     public long SectionId => summary.SectionId;
     public string DisplayName => summary.DisplayName;
@@ -37,7 +38,7 @@ public sealed partial class SectionViewModel(
         foreach (var s in summaries)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var seriesVm = new SeriesViewModel(s, library, watch, thumbnails);
+            var seriesVm = new SeriesViewModel(s, library, watch, thumbnails, imageLoader: imageLoader);
             seriesVm.UnwatchedChanged += (_, _) => RecomputeUnwatched();
             seriesVm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             SeriesList.Add(seriesVm);

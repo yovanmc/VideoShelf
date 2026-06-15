@@ -345,7 +345,7 @@
                                 <StackPanel>
                                     <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
                                             CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
-                                        <Image Source="{Binding ThumbnailPath, IsAsync=True}" Stretch="UniformToFill"/>
+                                        <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
                                     </Border>
                                     <DockPanel Margin="8,6,8,6">
                                         <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"

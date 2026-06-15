@@ -21,6 +21,7 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
     private readonly CreatorArtRepository _art;
     private readonly IThumbnailService _thumbnails;
     private readonly SettingsRepository? _settings;
+    private readonly IImageLoader? _imageLoader;
 
     // ── ICollectionView for live filtering ───────────────────────────────────
     // Null in test environments (no WPF Dispatcher); non-null in the real app.
@@ -30,12 +31,13 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
     private readonly ICollectionView? _creatorsView;
 
     public CreatorsViewModel(LibraryRepository library, CreatorArtRepository art, IThumbnailService thumbnails,
-        SettingsRepository? settings = null)
+        SettingsRepository? settings = null, IImageLoader? imageLoader = null)
     {
         _library = library;
         _art = art;
         _thumbnails = thumbnails;
         _settings = settings;
+        _imageLoader = imageLoader;
         Selection.SelectedItems.CollectionChanged += (_, _) => SelectionChanged?.Invoke(this, EventArgs.Empty);
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
@@ -250,7 +252,7 @@ public partial class CreatorsViewModel : ObservableObject, IBulkSelectionSource
             Creators.Clear();
             foreach (var (summary, overridePath) in cards)
             {
-                var card = new CreatorCardViewModel(summary, overridePath, _thumbnails);
+                var card = new CreatorCardViewModel(summary, overridePath, _thumbnails, _imageLoader);
                 card.OpenRequested += id => OpenCreatorRequested?.Invoke(id);
                 // Subscribe to route IsSelected changes into the Selection VM (no back-ref in card).
                 card.PropertyChanged += OnCardPropertyChanged;

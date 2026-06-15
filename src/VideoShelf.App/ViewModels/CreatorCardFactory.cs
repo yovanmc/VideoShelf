@@ -10,12 +10,13 @@ namespace VideoShelf.App.ViewModels;
 /// the user's art override (if any) and starting the background thumbnail load.
 /// Used by Home and Search rails so both produce identical creator cards.
 /// </summary>
-public sealed class CreatorCardFactory(CreatorArtRepository art, IThumbnailService thumbnails)
+public sealed class CreatorCardFactory(CreatorArtRepository art, IThumbnailService thumbnails,
+    IImageLoader? imageLoader = null)
 {
     public CreatorCardViewModel Create(SectionSummary summary)
     {
         var overridePath = art.GetArtPath(summary.SectionId);
-        var card = new CreatorCardViewModel(summary, overridePath, thumbnails);
+        var card = new CreatorCardViewModel(summary, overridePath, thumbnails, imageLoader);
         _ = card.LoadImageAsync(CancellationToken.None);
         return card;
     }

@@ -1,3 +1,4 @@
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VideoShelf.App.ViewModels;
@@ -23,6 +24,10 @@ public sealed partial class RecencyCardViewModel(RecencyItem item) : ObservableO
 
     public string? ThumbnailSeedPath => item.ThumbnailSeedPath;
     [ObservableProperty] private string? thumbnailPath;
+
+    /// <summary>Frozen ImageSource for the card cover; always null for recency cards
+    /// (thumbnail loading is not currently wired for this card type — placeholder shown).</summary>
+    public ImageSource? Cover => null;
 
     /// <summary>True when this card is selected in the multi-select grid.
     /// The hosting VM subscribes to PropertyChanged and routes changes to
