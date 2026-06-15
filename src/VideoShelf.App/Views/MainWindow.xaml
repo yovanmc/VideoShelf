@@ -558,7 +558,7 @@
                 <!-- Empty-state overlay: shown when no sources added yet.
                      Sits before PlayerHost in z-order; IsLibraryEmpty implies no playback so
                      ordering is safe — overlay is last content-host child, before PlayerHost. -->
-                <Border Background="{StaticResource ApplicationBackgroundBrush}"
+                <Border Background="{StaticResource SurfaceBrush}"
                         Visibility="{Binding DataContext.IsLibraryEmpty, RelativeSource={RelativeSource AncestorType=Window},
                                      Converter={StaticResource BoolToVisibility}}">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
@@ -635,7 +635,7 @@
                     MaxHeight="480"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Background="#FF1E1E2E"
+                    Background="#FF101014"
                     CornerRadius="10"
                     BorderBrush="#40FFFFFF"
                     BorderThickness="1">
