@@ -585,7 +585,7 @@ public sealed class HarnessRunner
     /// Seeds demo data for the visual sweep:
     /// <list type="bullet">
     ///   <item>Marks the richest real episode watched + sets resume position (M12 rails).</item>
-    ///   <item>Seeds Favorites/Watchlist/SmartViews/Playlists/History so those pages render non-empty.</item>
+    ///   <item>Seeds Favorites/Watchlist/Playlists/History so those pages render non-empty.</item>
     ///   <item><b>M17 additions (I2):</b> seeds ≥30 synthetic creators spanning letters A–Z and
     ///         one "Alphabet Cinema" creator with exactly 42 series so virtualization, the A–Z
     ///         jump-list, and collapse/expand-all are all exercisable from a single harness run.
@@ -637,7 +637,7 @@ public sealed class HarnessRunner
             // on its own; this keeps the visual check deterministic.)
             _library.SetDuration(resumedId, 60.0);
 
-            // ── M16 organize pages: seed so SmartViews/Playlists/Watchlist/Favorites/History
+            // ── M16 organize pages: seed so Playlists/Watchlist/Favorites/History
             // all render non-empty in the screenshot sweep. Guard on having ≥1 video.
 
             // Favorite + watchlist
