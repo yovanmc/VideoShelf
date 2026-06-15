@@ -203,27 +203,53 @@ public sealed class LibraryRepository(VideoShelfDb db)
         cmd.ExecuteNonQuery();
     }
 
+    private const string SectionSummariesSql = """
+        SELECT sc.id, sc.source_id, sc.display_name,
+               COUNT(DISTINCT se.id) AS series_count,
+               COALESCE(SUM(CASE WHEN v.id IS NOT NULL AND v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched,
+               COUNT(v.id) AS video_count,
+               seed.file_path AS seed_path
+        FROM sections sc
+        LEFT JOIN series se ON se.section_id = sc.id
+        LEFT JOIN videos v ON v.series_id = se.id
+        LEFT JOIN (
+            SELECT se2.section_id, v2.file_path,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY se2.section_id
+                       ORDER BY se2.id, v2.episode_no
+                   ) AS rn
+            FROM videos v2
+            JOIN series se2 ON se2.id = v2.series_id
+            WHERE v2.missing = 0
+        ) seed ON seed.section_id = sc.id AND seed.rn = 1
+        GROUP BY sc.id, sc.source_id, sc.display_name
+        ORDER BY sc.display_name
+        """;
+
+    /// <summary>
+    /// Test-only helper (exposed via InternalsVisibleTo): runs EXPLAIN QUERY PLAN on the
+    /// section-summaries SQL and returns the concatenated detail rows as a single string.
+    /// </summary>
+    internal string ExplainSectionSummaries()
+    {
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "EXPLAIN QUERY PLAN " + SectionSummariesSql;
+        var sb = new System.Text.StringBuilder();
+        using var r = cmd.ExecuteReader();
+        while (r.Read())
+        {
+            // EXPLAIN QUERY PLAN returns columns: id, parent, notused, detail
+            sb.AppendLine(r.GetString(3));
+        }
+        return sb.ToString();
+    }
+
     public IReadOnlyList<SectionSummary> GetSectionSummaries()
     {
         using var conn = db.Open();
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-            SELECT sc.id, sc.source_id, sc.display_name,
-                   COUNT(DISTINCT se.id) AS series_count,
-                   COALESCE(SUM(CASE WHEN v.id IS NOT NULL AND v.watched = 0 THEN 1 ELSE 0 END), 0) AS unwatched,
-                   COUNT(v.id) AS video_count,
-                   (SELECT v2.file_path
-                      FROM videos v2
-                      JOIN series se2 ON se2.id = v2.series_id
-                     WHERE se2.section_id = sc.id AND v2.missing = 0
-                     ORDER BY se2.id, v2.episode_no
-                     LIMIT 1) AS seed_path
-            FROM sections sc
-            LEFT JOIN series se ON se.section_id = sc.id
-            LEFT JOIN videos v ON v.series_id = se.id
-            GROUP BY sc.id, sc.source_id, sc.display_name
-            ORDER BY sc.display_name
-            """;
+        cmd.CommandText = SectionSummariesSql;
         var list = new List<SectionSummary>();
         using var r = cmd.ExecuteReader();
         while (r.Read())
