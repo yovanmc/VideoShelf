@@ -301,7 +301,6 @@ public partial class PlayerView : UserControl
             case PlayerCommand.SkipForward:       main.Player.SkipForward30Command.Execute(null); e.Handled = true; break;
             case PlayerCommand.ToggleFullscreen:  main.Player.ToggleFullscreenCommand.Execute(null); e.Handled = true; break;
             case PlayerCommand.ExitFullscreen:    HandleEscapeKey(main); e.Handled = true; break;
-            case PlayerCommand.Screenshot:        main.Player.ScreenshotCommand.Execute(null); e.Handled = true; break;
         }
     }
 

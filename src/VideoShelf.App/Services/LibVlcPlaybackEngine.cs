@@ -63,18 +63,6 @@ public sealed class LibVlcPlaybackEngine : IPlaybackEngine
         try
         {
             var media = new Media(_libVlc, new Uri(filePath));
-
-            // Volume normalization: apply the normvol audio filter at Load time.
-            // This must be a media option (not a runtime MediaPlayer property); applying it here
-            // before assigning media to _player ensures the filter is active for this media.
-            if (_volumeNormalizeEnabled)
-            {
-                media.AddOption(":audio-filter=normvol");
-                // norm-max-level: amplification ceiling for the normvol filter
-                // (2.0 = permissive; the filter's default of 0 disables limiting).
-                media.AddOption(":norm-max-level=2.0");
-            }
-
             _player.Media = media;
             try
             {

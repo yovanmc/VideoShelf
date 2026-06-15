@@ -132,7 +132,6 @@ $views = [ordered]@{
     'player-tracks'       = @('--view','PlayerTracks','--seed-demo')      # Tracks flyout open: audio list, subtitle list, + Sub, normalize toggle
     'player-volume'       = @('--view','PlayerVolume','--seed-demo')      # Volume flyout open: slider + mute button
     'player-speed'        = @('--view','PlayerSpeed','--seed-demo')       # Speed set to 1.5× — RateLabel shows "1.5×" in More flyout
-    'player-aspect'       = @('--view','PlayerAspect','--seed-demo')      # Aspect cycled to 16:9 — SelectedAspect.Label shows "16:9"
     'player-ab-repeat'    = @('--view','PlayerAbRepeat','--seed-demo')    # A-B repeat active — on-bar chip lit, A+B positions set
     'player-skip-feedback'= @('--view','PlayerSkipFeedback','--seed-demo')# Skip-feedback badge visible — shows "−10s" badge
     'player-up-next'      = @('--view','PlayerUpNext','--seed-demo')      # Up-Next countdown card visible — title + 10-second countdown

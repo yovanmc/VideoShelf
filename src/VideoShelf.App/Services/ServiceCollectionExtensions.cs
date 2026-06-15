@@ -89,7 +89,6 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<ISubtitleFilePicker>(),
                 sp.GetRequiredService<ItemArtRepository>())
             {
-                CaptureDirectory = paths.CaptureDirectory,
                 SeekPreviewDirectory = paths.SeekPreviewDirectory,
                 CoversDirectory = paths.CoversDirectory,
             };
