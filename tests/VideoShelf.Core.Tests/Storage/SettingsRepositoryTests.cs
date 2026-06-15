@@ -81,4 +81,57 @@ public class SettingsRepositoryTests
         (actual!.Value - expected).Duration().ShouldBeLessThan(TimeSpan.FromSeconds(1));
         actual.Value.Kind.ShouldBe(DateTimeKind.Utc);
     }
+
+    [Fact]
+    public void GetProbeConcurrency_returns_default_when_unset()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.GetProbeConcurrency().ShouldBe(3);
+    }
+
+    [Fact]
+    public void GetProbeConcurrency_returns_stored_value_when_set()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.SetString(SettingsRepository.ProbeConcurrencyKey, "5");
+
+        settings.GetProbeConcurrency().ShouldBe(5);
+    }
+
+    [Fact]
+    public void GetProbeConcurrency_clamps_below_1_to_1()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.SetString(SettingsRepository.ProbeConcurrencyKey, "0");
+
+        settings.GetProbeConcurrency().ShouldBe(1);
+    }
+
+    [Fact]
+    public void GetProbeConcurrency_clamps_above_8_to_8()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.SetString(SettingsRepository.ProbeConcurrencyKey, "100");
+
+        settings.GetProbeConcurrency().ShouldBe(8);
+    }
+
+    [Fact]
+    public void GetProbeConcurrency_returns_default_when_value_is_not_an_integer()
+    {
+        using var temp = new TempDb();
+        var settings = new SettingsRepository(temp.Db);
+
+        settings.SetString(SettingsRepository.ProbeConcurrencyKey, "notanint");
+
+        settings.GetProbeConcurrency().ShouldBe(3);
+    }
 }
