@@ -139,6 +139,30 @@ public sealed class SmartViewRepository(VideoShelfDb db)
         return result;
     }
 
+    public int CountMatchingVideos(SmartViewDefinition def, DateTimeOffset now)
+    {
+        var (where, builderParams) = SmartViewSqlBuilder.Build(def, now);
+
+        var whereClause = string.IsNullOrEmpty(where)
+            ? "v.missing = 0"
+            : $"v.missing = 0 AND {where}";
+
+        // Wrap the builder WHERE in a COUNT query (same FROM/JOIN as GetMatchingVideos).
+        var sql = $"""
+            SELECT COUNT(*)
+            FROM videos v JOIN series s ON s.id = v.series_id
+            WHERE {whereClause};
+            """;
+
+        using var conn = db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = sql;
+        foreach (var p in builderParams)
+            cmd.Parameters.AddWithValue(p.Name, p.Value);
+
+        return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static IReadOnlyList<SmartView> ReadRows(Microsoft.Data.Sqlite.SqliteCommand cmd)
