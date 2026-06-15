@@ -235,7 +235,7 @@
                                                   Converter={StaticResource EnumToVis},
                                                   ConverterParameter=Compact, Mode=OneWay}"
                                               Command="{Binding Creators.SetDensityCompactCommand}">
-                                    <ui:SymbolIcon Symbol="TextGrammarArrowLeft24" />
+                                    <ui:SymbolIcon Symbol="List24" />
                                 </ToggleButton>
                                 <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,4,0"
                                               ToolTip="Normal"
@@ -251,7 +251,7 @@
                                                   Converter={StaticResource EnumToVis},
                                                   ConverterParameter=Spacious, Mode=OneWay}"
                                               Command="{Binding Creators.SetDensitySpaciousCommand}">
-                                    <ui:SymbolIcon Symbol="TextGrammarArrowRight24" />
+                                    <ui:SymbolIcon Symbol="Apps24" />
                                 </ToggleButton>
                             </StackPanel>
                             <!-- View-mode: Grid / List -->
