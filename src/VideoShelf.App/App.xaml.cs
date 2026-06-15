@@ -8,6 +8,7 @@ using VideoShelf.App.Services;
 using VideoShelf.App.ViewModels;
 using VideoShelf.App.Views;
 using VideoShelf.Core.Storage;
+using Wpf.Ui.Appearance;
 
 namespace VideoShelf.App;
 
@@ -30,6 +31,12 @@ public partial class App : Application
             _host.StartAsync().GetAwaiter().GetResult();
             var window = _host.Services.GetRequiredService<MainWindow>();
             window.Show();
+
+            // M24-A: apply Ice Cyan accent to WPF-UI native controls (primary buttons,
+            // slider thumb, checkbox ticks, etc.) so they follow our token, not the OS accent.
+            ApplicationAccentColorManager.Apply(
+                System.Windows.Media.Color.FromRgb(0x4F, 0xC3, 0xF7),
+                ApplicationTheme.Dark);
 
             if (options.IsHarness)
             {

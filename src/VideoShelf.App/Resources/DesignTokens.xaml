@@ -23,7 +23,7 @@
     <!-- ============================================================
          COLORS — one named color per semantic meaning
          ============================================================ -->
-    <Color x:Key="AccentColor">#5CC8FF</Color>
+    <Color x:Key="AccentColor">#4FC3F7</Color>
     <Color x:Key="SuccessColor">#36C98F</Color>
     <Color x:Key="WarningColor">#F5A524</Color>
     <Color x:Key="DangerColor">#F05252</Color>
