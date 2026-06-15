@@ -137,6 +137,9 @@ $views = [ordered]@{
     'player-ab-repeat'    = @('--view','PlayerAbRepeat','--seed-demo')    # A-B repeat active — on-bar chip lit, A+B positions set
     'player-skip-feedback'= @('--view','PlayerSkipFeedback','--seed-demo')# Skip-feedback badge visible — shows "−10s" badge
     'player-up-next'      = @('--view','PlayerUpNext','--seed-demo')      # Up-Next countdown card visible — title + 10-second countdown
+    # M21 (Delight & motion) surfaces:
+    'toast'               = @('--view','Toast','--seed-demo')              # toast overlay in bottom-right corner — confirms toast renders over Home
+    'favorites-loading'   = @('--view','FavoritesLoading','--seed-demo')  # Favorites page with IsLoading=true — skeleton placeholder visible
 }
 
 $results = @()
