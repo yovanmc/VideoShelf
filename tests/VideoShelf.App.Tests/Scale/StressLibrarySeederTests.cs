@@ -19,9 +19,12 @@ public class StressLibrarySeederTests
         Assert.Equal(20, repo.GetSectionSummaries().Count);
         var biggest = repo.GetSectionSummaries().OrderByDescending(s => s.VideoCount).First();
         Assert.True(biggest.VideoCount > 0);
+        var biggestVideoCountBefore = biggest.VideoCount;
 
         // Idempotent: re-seeding the same spec does not duplicate rows.
         seeder.Seed(spec, sourceRoot: @"C:\stress");
         Assert.Equal(20, repo.GetSectionSummaries().Count);
+        var biggestAfter = repo.GetSectionSummaries().OrderByDescending(s => s.VideoCount).First();
+        Assert.Equal(biggestVideoCountBefore, biggestAfter.VideoCount);
     }
 }

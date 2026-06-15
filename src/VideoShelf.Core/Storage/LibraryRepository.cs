@@ -982,26 +982,4 @@ public sealed class LibraryRepository(VideoShelfDb db)
         tx.Commit();
     }
 
-    // ── Scale harness helpers ─────────────────────────────────────────────────
-
-    /// <summary>
-    /// Executes <paramref name="action"/> inside a single SQLite transaction.
-    /// All individual upserts within the action share one BEGIN/COMMIT boundary
-    /// so bulk seeding is fast (one fsync instead of N).
-    /// </summary>
-    public void RunInTransaction(Action action)
-    {
-        using var conn = db.Open();
-        using var tx = conn.BeginTransaction();
-        try
-        {
-            action();
-            tx.Commit();
-        }
-        catch
-        {
-            try { tx.Rollback(); } catch { }
-            throw;
-        }
-    }
 }
