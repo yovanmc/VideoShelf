@@ -108,7 +108,7 @@ $views = [ordered]@{
     'browse'        = @('--view','Browse')
     'section-detail'= @('--view','SectionDetail','--seed-demo')
     'playlists'     = @('--view','Playlists','--seed-demo')
-    'watchlist'     = @('--view','Watchlist','--seed-demo')
+    'watch-later'   = @('--view','WatchLater','--seed-demo')
     'favorites'     = @('--view','Favorites','--seed-demo')
     'history'       = @('--view','History','--seed-demo')
     'rename-tool'   = @('--view','RenameTool')
@@ -122,11 +122,10 @@ $views = [ordered]@{
     'browse-scale'    = @('--view','Browse','--seed-demo')          # 30+ creators -> A-Z jump-list + virtualized grid + density/list toggles
     'browse-selection'= @('--view','BrowseSelection','--seed-demo') # selection mode + bulk-action bar ("N selected")
     'browse-filter'   = @('--view','BrowseFilter','--seed-demo')    # in-page filter bar open + Compact density + List mode
-    'multi-rename'    = @('--view','MultiRename','--seed-demo')     # cross-series template rename preview
     # M18 (Library health) surfaces:
     'maintenance'         = @('--view','Maintenance','--seed-demo')       # dashboard tiles + per-source cards + scan-diff banner
     'duplicate-resolve'   = @('--view','DuplicateResolve','--seed-demo')  # compare screen with 2 candidates (size/duration/resolution + Keep)
-    'section-edit-mode'   = @('--view','SectionEditMode','--seed-demo')    # creator page in Edit mode — shows split/merge/reorder affordances (M18-H)
+    'section-edit-mode'   = @('--view','SectionEditMode','--seed-demo')    # creator page in Edit mode — shows move/reorder affordances (M18-H)
     # M19 (Player depth) surfaces — each launches the player into a specific sub-state:
     'player-more'         = @('--view','PlayerMore','--seed-demo')        # ⋯ More flyout open: screenshot/set-cover, speed row, aspect row, A-B row
     'player-tracks'       = @('--view','PlayerTracks','--seed-demo')      # Tracks flyout open: audio list, subtitle list, + Sub, normalize toggle

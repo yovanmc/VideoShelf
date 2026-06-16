@@ -103,7 +103,7 @@ public sealed partial class EpisodeViewModel(
         InWatchlist = !InWatchlist;
         curation.SetWatchlist(model.VideoId, InWatchlist, System.DateTimeOffset.UtcNow);
         var wasAdded = InWatchlist; // capture resulting state for undo closure
-        toasts?.Show(wasAdded ? "Added to watchlist" : "Removed from watchlist",
+        toasts?.Show(wasAdded ? "Added to watch later" : "Removed from watch later",
                      undo: () => SetWatchlistDirectly(!wasAdded), ToastKind.Success);
     }
 
@@ -153,4 +153,12 @@ public sealed partial class EpisodeViewModel(
 
     [RelayCommand]
     private void Play() => PlayRequested?.Invoke(this, model);
+
+    /// <summary>Raised when the user requests a single-file rename for this episode.
+    /// The event argument is the video id of this episode so the shell can open the
+    /// rename tool pre-targeted to the chosen file.</summary>
+    public event System.EventHandler<long>? RenameRequested;
+
+    [RelayCommand]
+    private void RequestRename() => RenameRequested?.Invoke(this, VideoId);
 }

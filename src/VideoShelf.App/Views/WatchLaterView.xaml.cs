@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace VideoShelf.App.Views;
 
-public partial class WatchlistView : UserControl
+public partial class WatchLaterView : UserControl
 {
-    public WatchlistView()
+    public WatchLaterView()
     {
         InitializeComponent();
     }

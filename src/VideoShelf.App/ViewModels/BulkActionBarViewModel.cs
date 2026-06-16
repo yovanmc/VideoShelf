@@ -226,7 +226,7 @@ public sealed partial class BulkActionBarViewModel : ObservableObject
         foreach (var id in ids)
             _curation.SetWatchlist(id, true, now);
         RaiseCompleted();
-        _toasts?.Show($"Added {ids.Count} to watchlist",
+        _toasts?.Show($"Added {ids.Count} to watch later",
                       undo: () => RemoveFromWatchlistIds(ids), ToastKind.Success);
     }
 
@@ -238,7 +238,7 @@ public sealed partial class BulkActionBarViewModel : ObservableObject
         foreach (var id in ids)
             _curation.SetWatchlist(id, false, now);
         RaiseCompleted();
-        _toasts?.Show($"Removed {ids.Count} from watchlist",
+        _toasts?.Show($"Removed {ids.Count} from watch later",
                       undo: () => AddToWatchlistIds(ids), ToastKind.Success);
     }
 

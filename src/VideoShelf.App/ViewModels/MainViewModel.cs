@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, MultiRename, Search, Settings, Queue, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, WatchLater, Playlists, History, Maintenance, DuplicateResolve }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -41,12 +40,11 @@ public sealed partial class MainViewModel : ObservableObject
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
         FavoritesViewModel favorites,
-        WatchlistViewModel watchlist,
+        WatchLaterViewModel watchlist,
         PlaylistsViewModel playlists,
         HistoryViewModel history,
         VideoShelf.Core.Storage.LibraryRepository libraryRepo,
         BulkActionBarViewModel? bulkBar = null,
-        MultiRenameViewModel? multiRename = null,
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
         IToastService? toasts = null,
@@ -69,9 +67,6 @@ public sealed partial class MainViewModel : ObservableObject
         Playlists = playlists;
         History = history;
         BulkBar = bulkBar;
-        MultiRename = multiRename;
-        if (MultiRename is not null)
-            MultiRename.CloseRequested += (_, _) => GoBack();
 
         _library.PlayRequested += (_, ep) => PlayEpisode(ep);
 
@@ -96,6 +91,7 @@ public sealed partial class MainViewModel : ObservableObject
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
+        SectionDetail.EpisodeRenameRequested += async (_, t) => await OpenRenameToolAsync(t.Series, t.VideoId);
         SectionDetail.ResolveRequested += (_, resolveVm) => OpenDuplicateResolve(resolveVm);
         RenameTool.CloseRequested += (_, _) => GoBack();
         Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
@@ -151,11 +147,8 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Bulk-action bar; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public BulkActionBarViewModel? BulkBar { get; }
 
-    /// <summary>Multi-series template rename VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
-    public MultiRenameViewModel? MultiRename { get; }
-
     public FavoritesViewModel Favorites { get; }
-    public WatchlistViewModel Watchlist { get; }
+    public WatchLaterViewModel Watchlist { get; }
     public PlaylistsViewModel Playlists { get; }
     public HistoryViewModel History { get; }
     public SourcesViewModel Sources => _sources;
@@ -196,7 +189,7 @@ public sealed partial class MainViewModel : ObservableObject
             AppView.Browse       => Creators,
             AppView.SectionDetail => SectionDetail,
             AppView.Favorites    => Favorites,
-            AppView.Watchlist    => Watchlist,
+            AppView.WatchLater   => Watchlist,
             AppView.Search       => Search,
             _                    => null
         };
@@ -313,11 +306,11 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowWatchlist()
+    private void ShowWatchLater()
     {
         Watchlist.Load();
         PushNav(CurrentView);
-        CurrentView = AppView.Watchlist;
+        CurrentView = AppView.WatchLater;
     }
 
     [RelayCommand]
@@ -374,23 +367,11 @@ public sealed partial class MainViewModel : ObservableObject
         CurrentView = AppView.SectionDetail;
     }
 
-    public async Task OpenRenameToolAsync(SeriesViewModel series)
+    public async Task OpenRenameToolAsync(SeriesViewModel series, long? videoId = null)
     {
-        await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
+        await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone, videoId);
         PushNav(CurrentView);
         CurrentView = AppView.RenameTool;
-    }
-
-    /// <summary>
-    /// Opens the multi-series template rename tool seeded with the supplied series ids.
-    /// No-op when <see cref="MultiRename"/> is null (e.g. in slim test contexts).
-    /// </summary>
-    public async Task OpenMultiRenameAsync(IReadOnlyList<long> seriesIds)
-    {
-        if (MultiRename is null || seriesIds.Count == 0) return;
-        await MultiRename.LoadAsync(seriesIds, MultiRenameViewModel.DefaultTemplate);
-        PushNav(CurrentView);
-        CurrentView = AppView.MultiRename;
     }
 
     [RelayCommand]

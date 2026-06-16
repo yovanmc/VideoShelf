@@ -65,7 +65,7 @@ public static class MainViewModelTestFactory
 
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
-        var watchlistVm = new WatchlistViewModel(curation, lib);
+        var watchlistVm = new WatchLaterViewModel(curation, lib);
         var playlistRepo = new PlaylistRepository(temp.Db);
         var playlistsVm = new PlaylistsViewModel(playlistRepo, playQueue);
         var historyRepo = new HistoryRepository(temp.Db);

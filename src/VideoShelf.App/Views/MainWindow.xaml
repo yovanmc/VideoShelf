@@ -100,7 +100,7 @@
                                     </StackPanel>
                                 </MenuItem.Header>
                                 <MenuItem Header="Playlists"   Command="{Binding ShowPlaylistsCommand}" />
-                                <MenuItem Header="Watch later" Command="{Binding ShowWatchlistCommand}" />
+                                <MenuItem Header="Watch later" Command="{Binding ShowWatchLaterCommand}" />
                                 <MenuItem Header="Favorites"   Command="{Binding ShowFavoritesCommand}" />
                                 <MenuItem Header="History"     Command="{Binding ShowHistoryCommand}" />
                                 <Separator />
@@ -114,7 +114,7 @@
                             </MenuItem>
                         </Menu>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
-                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Playlists,Watchlist,Favorites,History,Maintenance'}" />
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Playlists,WatchLater,Favorites,History,Maintenance'}" />
                     </Grid>
                     <ui:TextBox Grid.Column="4" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
@@ -472,13 +472,6 @@
                                           Converter={StaticResource EnumToVis},
                                           ConverterParameter=RenameTool}" />
 
-                <!-- Multi-series template rename view -->
-                <views:MultiRenameView DataContext="{Binding MultiRename}"
-                                       Visibility="{Binding DataContext.CurrentView,
-                                           RelativeSource={RelativeSource AncestorType=Window},
-                                           Converter={StaticResource EnumToVis},
-                                           ConverterParameter=MultiRename}" />
-
                 <!-- Search view -->
                 <views:SearchView DataContext="{Binding Search}"
                                   Visibility="{Binding DataContext.CurrentView,
@@ -502,10 +495,10 @@
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Favorites}" />
 
-                <!-- Watchlist (Watch later) page -->
-                <views:WatchlistView DataContext="{Binding Watchlist}"
+                <!-- Watch Later page -->
+                <views:WatchLaterView DataContext="{Binding Watchlist}"
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
-                                 Converter={StaticResource EnumToVis}, ConverterParameter=Watchlist}" />
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=WatchLater}" />
 
                 <!-- Playlists page -->
                 <views:PlaylistsView DataContext="{Binding Playlists}"

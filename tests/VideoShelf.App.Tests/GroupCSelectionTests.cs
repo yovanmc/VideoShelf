@@ -17,7 +17,7 @@ namespace VideoShelf.App.Tests;
 /// C3 — Multi-select tests for Group C:
 ///   • EpisodeViewModel.IsSelected round-trips and notifies.
 ///   • RecencyCardViewModel.IsSelected round-trips and notifies.
-///   • Per-page selection wiring (FavoritesViewModel, WatchlistViewModel,
+///   • Per-page selection wiring (FavoritesViewModel, WatchLaterViewModel,
 ///     SearchViewModel, SectionDetailViewModel).
 ///   • Active-source switching (MainViewModel.BulkBarVisible) with regression
 ///     that navigating away from a selected page makes BulkBarVisible false.
@@ -201,10 +201,10 @@ public class GroupCSelectionTests
         vm.Selection.HasSelection.ShouldBeFalse();
     }
 
-    // ── C3d: WatchlistViewModel selection wiring ──────────────────────────────
+    // ── C3d: WatchLaterViewModel selection wiring ──────────────────────────────
 
     [Fact]
-    public async Task WatchlistViewModel_selecting_card_adds_videoId_to_GetSelectedVideoIds()
+    public async Task WatchLaterViewModel_selecting_card_adds_videoId_to_GetSelectedVideoIds()
     {
         using var temp = new AppTempDb();
         var lib = new LibraryRepository(temp.Db);
@@ -213,7 +213,7 @@ public class GroupCSelectionTests
         var curation = new CurationRepository(temp.Db);
         curation.SetWatchlist(vid, true, DateTimeOffset.UtcNow);
 
-        var vm = new WatchlistViewModel(curation, lib);
+        var vm = new WatchLaterViewModel(curation, lib);
         await vm.LoadAsync();
         vm.Watchlist.Count.ShouldBe(1);
 
@@ -343,12 +343,12 @@ public class GroupCSelectionTests
     }
 
     [Fact]
-    public void MainViewModel_ActiveSelectionSource_is_Watchlist_when_on_Watchlist()
+    public void MainViewModel_ActiveSelectionSource_is_WatchLater_when_on_WatchLater()
     {
         var vm = MainViewModelTestFactory.Create(out var ctx);
         using var _ = ctx.Db;
 
-        vm.ShowWatchlistCommand.Execute(null);
+        vm.ShowWatchLaterCommand.Execute(null);
 
         vm.ActiveSelectionSource.ShouldBeSameAs(vm.Watchlist);
     }

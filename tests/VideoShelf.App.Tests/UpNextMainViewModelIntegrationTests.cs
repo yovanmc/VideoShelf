@@ -78,7 +78,7 @@ public class UpNextMainViewModelIntegrationTests
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
-        var watchlistVm = new WatchlistViewModel(curation, lib);
+        var watchlistVm = new WatchLaterViewModel(curation, lib);
         var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
 

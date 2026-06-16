@@ -59,6 +59,11 @@ public sealed partial class SeriesViewModel(
     public event System.EventHandler? UnwatchedChanged;
     public event System.EventHandler<EpisodeView>? PlayRequested;
     public event System.EventHandler<SeriesViewModel>? RenameRequested;
+
+    /// <summary>Raised when the user requests a single-file rename for a specific episode in this series.
+    /// The event argument is the video id of the chosen episode.</summary>
+    public event System.EventHandler<long>? EpisodeRenameRequested;
+
     public event System.EventHandler? PlayAllRequested;
     public event System.EventHandler? EnqueueRequested;
     public event System.EventHandler? PlayNextRequested;
@@ -146,6 +151,7 @@ public sealed partial class SeriesViewModel(
             var ep = new EpisodeViewModel(row, watch, tags, curation, playlists, availablePlaylists, toasts);
             ep.WatchedChanged += (_, _) => Refresh();
             ep.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
+            ep.RenameRequested += (_, vid) => EpisodeRenameRequested?.Invoke(this, vid);
             Episodes.Add(ep);
         }
     }

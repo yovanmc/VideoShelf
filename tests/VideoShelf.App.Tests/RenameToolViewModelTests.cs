@@ -47,25 +47,51 @@ public class RenameToolViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task Load_BuildsCanonicalEditableProposals()
+    public async Task Load_BuildsCanonicalEditableProposal_SingleFile()
     {
         var vm = Build();
         await vm.LoadAsync(_seriesId, "My Show", isStandalone: false);
 
-        vm.Rows.Count.ShouldBe(2);
-        vm.Rows.Select(r => r.NewName).ShouldBe(new[] { "My Show 01.mkv", "My Show 02.mkv" });
-        vm.Rows.All(r => r.WillRename).ShouldBeTrue();
+        // Single-file rename: only the first episode is shown, episode number preserved.
+        vm.Rows.Count.ShouldBe(1);
+        vm.Rows[0].NewName.ShouldBe("My Show 01.mkv");
+        vm.Rows[0].WillRename.ShouldBeTrue();
     }
 
     [Fact]
-    public async Task EditingName_ReplansAndFlagsDuplicate()
+    public async Task Load_WithVideoId_TargetsThatEpisode_AndPreservesEpisodeNumber()
     {
-        var vm = Build();
-        await vm.LoadAsync(_seriesId, "My Show", false);
-        vm.Rows[1].NewName = "My Show 01.mkv"; // collide with row 0
+        // Seed: two-episode series — UpsertVideo returns the video id for ep2.
+        var ep2Id = _library.GetVideosForSeries(_seriesId)
+                             .First(v => v.EpisodeNo == 2).Id;
 
-        vm.Rows[0].Status.ShouldBe(RenameItemStatus.DuplicateTarget);
-        vm.Rows[1].Status.ShouldBe(RenameItemStatus.DuplicateTarget);
+        var vm = Build();
+        await vm.LoadAsync(_seriesId, "My Show", isStandalone: false, videoId: ep2Id);
+
+        // Must target episode 2, not episode 1.
+        vm.Rows.Count.ShouldBe(1);
+        vm.Rows[0].VideoId.ShouldBe(ep2Id);
+        // Episode number 2 must be preserved, pad-width = 2 (max ep = 2).
+        vm.Rows[0].NewName.ShouldBe("My Show 02.mkv");
+        vm.Rows[0].WillRename.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Load_Standalone_ProposesNoEpisodeNumber()
+    {
+        // Create a standalone series with a single video.
+        var src = _library.UpsertSource(@"C:\standalone", "Standalone");
+        var sec = _library.UpsertSection(src, "Sec");
+        var standaloneSeries = _library.UpsertSeries(sec, "Big Buck Bunny", isStandalone: true);
+        _library.UpsertVideo(standaloneSeries, @"C:\standalone\bbb_junk.mkv", 1, "mkv");
+        _fs.AddFile(@"C:\standalone\bbb_junk.mkv");
+
+        var vm = Build();
+        await vm.LoadAsync(standaloneSeries, "Big Buck Bunny", isStandalone: true);
+
+        vm.Rows.Count.ShouldBe(1);
+        // Standalone → no episode number suffix.
+        vm.Rows[0].NewName.ShouldBe("Big Buck Bunny.mkv");
     }
 
     [Fact]
@@ -75,9 +101,10 @@ public class RenameToolViewModelTests : IDisposable
         await vm.LoadAsync(_seriesId, "My Show", false);
         await vm.ApplyCommand.ExecuteAsync(null);
 
+        // Episode 1 of 2 → padded "My Show 01.mkv"; ep2 is untouched.
         _fs.FileExists(@"C:\m\My Show 01.mkv").ShouldBeTrue();
-        _library.GetVideosForSeries(_seriesId).Select(v => Path.GetFileName(v.FilePath))
-            .OrderBy(n => n).ShouldBe(new[] { "My Show 01.mkv", "My Show 02.mkv" });
+        var paths = _library.GetVideosForSeries(_seriesId).Select(v => Path.GetFileName(v.FilePath)).ToList();
+        paths.ShouldContain("My Show 01.mkv");
         vm.CanUndo.ShouldBeTrue();
     }
 

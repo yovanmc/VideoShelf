@@ -83,7 +83,7 @@ public class MainViewModelTests
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
-        var watchlistVm = new WatchlistViewModel(curation, lib);
+        var watchlistVm = new WatchLaterViewModel(curation, lib);
         var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         var vm = new MainViewModel(sources, libraryVm, coordinator, player, settingsVm,

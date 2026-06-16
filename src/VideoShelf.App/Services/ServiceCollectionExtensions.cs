@@ -140,21 +140,13 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<SettingsRepository>(),
             sp.GetRequiredService<AppPaths>(),
             sp.GetRequiredService<IToastService>()));
-        services.AddSingleton<MultiRenameViewModel>(sp => new MultiRenameViewModel(
-            sp.GetRequiredService<LibraryRepository>(),
-            sp.GetRequiredService<RenamePlanner>(),
-            sp.GetRequiredService<RenameExecutor>(),
-            sp.GetRequiredService<SettingsRepository>(),
-            sp.GetRequiredService<AppPaths>(),
-            sp.GetRequiredService<IToastService>()));
-
         services.AddSingleton<CreatorCardFactory>(sp => new CreatorCardFactory(
             sp.GetRequiredService<CreatorArtRepository>(),
             sp.GetRequiredService<IThumbnailService>(),
             sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<SearchViewModel>();
         services.AddSingleton<FavoritesViewModel>();
-        services.AddSingleton<WatchlistViewModel>();
+        services.AddSingleton<WatchLaterViewModel>();
         services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>(sp => new HistoryViewModel(
@@ -190,12 +182,11 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<MediaBackfillService>(),
                 sp.GetRequiredService<PlayQueueViewModel>(),
                 sp.GetRequiredService<FavoritesViewModel>(),
-                sp.GetRequiredService<WatchlistViewModel>(),
+                sp.GetRequiredService<WatchLaterViewModel>(),
                 sp.GetRequiredService<PlaylistsViewModel>(),
                 sp.GetRequiredService<HistoryViewModel>(),
                 lib,
                 sp.GetRequiredService<BulkActionBarViewModel>(),
-                sp.GetRequiredService<MultiRenameViewModel>(),
                 sp.GetRequiredService<ResolutionBackfillService>(),
                 sp.GetRequiredService<MaintenanceViewModel>(),
                 sp.GetRequiredService<IToastService>(),
