@@ -340,6 +340,9 @@ public sealed partial class MainViewModel : ObservableObject
         Maintenance?.Load();
         PushNav(CurrentView);
         CurrentView = AppView.Maintenance;
+        // G4: Refresh the badge after Maintenance loads (counts are now up-to-date).
+        if (Maintenance is not null)
+            LibraryIssueCount = Maintenance.MissingCount + Maintenance.DuplicateGroupCount;
     }
 
     [RelayCommand]
@@ -400,6 +403,38 @@ public sealed partial class MainViewModel : ObservableObject
         IsPictureInPicture = false;
     }
 
+    // ── G4: Library-Health issue badge ────────────────────────────────────────
+
+    /// <summary>
+    /// Count of outstanding library health issues (missing files + duplicate groups).
+    /// Populated cheaply from the DB at startup via a lightweight summary query — no scan.
+    /// Updated each time the Maintenance page is opened (<see cref="ShowMaintenance"/>).
+    /// 0 means no issues (or not yet queried).
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasLibraryIssues))]
+    private int _libraryIssueCount;
+
+    /// <summary>True when there are outstanding library health issues — drives the badge visibility.</summary>
+    public bool HasLibraryIssues => LibraryIssueCount > 0;
+
+    /// <summary>Refreshes the library issue badge count from the DB (cheap query, no scan).</summary>
+    private void RefreshLibraryIssueBadge()
+    {
+        if (Maintenance is null) return;
+        // Re-use the summary data if Maintenance has already loaded; otherwise do a lightweight query.
+        if (Maintenance.MissingCount > 0 || Maintenance.DuplicateGroupCount > 0)
+        {
+            LibraryIssueCount = Maintenance.MissingCount + Maintenance.DuplicateGroupCount;
+        }
+        else
+        {
+            // Lightweight DB-only summary (cheap — no filesystem scan).
+            Maintenance.Load();
+            LibraryIssueCount = Maintenance.MissingCount + Maintenance.DuplicateGroupCount;
+        }
+    }
+
     /// <summary>Loads sources + library once at startup.</summary>
     public async Task InitializeAsync()
     {
@@ -409,6 +444,8 @@ public sealed partial class MainViewModel : ObservableObject
         await Discovery.LoadAsync();
         await Creators.LoadAsync(CancellationToken.None);
         CurrentView = AppView.Home;
+        // G4: Populate the Library-Health badge from a cheap DB query (no scan triggered).
+        RefreshLibraryIssueBadge();
     }
 
     [RelayCommand]
