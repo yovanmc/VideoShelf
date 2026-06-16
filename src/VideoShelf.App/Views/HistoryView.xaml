@@ -26,8 +26,8 @@
         <StackPanel Margin="24">
             <TextBlock Text="Watch history" Style="{StaticResource TypeRailHeader}" Margin="0,0,0,16" FontSize="22"/>
 
-            <!-- Empty state: visible when HasHistory is false -->
-            <TextBlock Text="No watch history yet — episodes you finish will appear here."
+            <!-- G8: Empty state copy -->
+            <TextBlock Text="Videos you watch will appear here."
                        Foreground="{StaticResource TextMutedBrush}" Margin="0,40">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
