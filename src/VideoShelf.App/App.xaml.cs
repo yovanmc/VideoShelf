@@ -29,6 +29,24 @@ public partial class App : Application
 
         var options = HarnessOptions.Parse(e.Args);
 
+        // M25-A4: global exception net. Catch unhandled exceptions on the UI thread
+        // (recoverable — keep the app alive) and from the AppDomain (terminal — log + show).
+        DispatcherUnhandledException += (s, args) =>
+        {
+            var report = Diagnostics.CrashReporter.FormatReport("UI thread", args.Exception);
+            Diagnostics.CrashReporter.WriteToDisk(ResolveDataDir(options), report);
+            System.Windows.MessageBox.Show(report, "VideoShelf — unexpected error",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            args.Handled = true; // keep the app alive after a non-fatal UI-thread exception
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            var report = Diagnostics.CrashReporter.FormatReport("AppDomain", args.ExceptionObject as Exception);
+            Diagnostics.CrashReporter.WriteToDisk(ResolveDataDir(options), report);
+            // AppDomain exceptions are terminal; we can only log + show, not recover.
+        };
+
         try
         {
             _host = Host.CreateDefaultBuilder()
@@ -73,6 +91,22 @@ public partial class App : Application
             _host = null;
             Shutdown(1);
         }
+    }
+
+    /// <summary>
+    /// Resolves the data directory used for crash logs: the harness override if set,
+    /// else the default LocalApplicationData\VideoShelf path (mirrors AppPaths).
+    /// </summary>
+    private static string ResolveDataDir(HarnessOptions options)
+    {
+        if (!string.IsNullOrEmpty(options.DataDir))
+        {
+            return options.DataDir;
+        }
+
+        return System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "VideoShelf");
     }
 
     protected override void OnExit(ExitEventArgs e)

@@ -829,7 +829,12 @@ public sealed class HarnessRunner
         // Silence play requests by pre-wiring and opening the player ourselves so MainViewModel
         // does not navigate away from the Queue page after we set it.
         _main.PlayQueue.PlayAll(episodes);
-        // Navigate to Queue page (PlayAll set CurrentView via PlayRequested → OpenPlayer; reset it).
+        // PlayAll → PlayRequested → OpenPlayer set IsPlayerVisible=true (realizing the full-window
+        // libVLC VideoView host, which spans the whole window and would otherwise cover the Queue
+        // page with a black pre-first-frame surface). Tear the player overlay down so the Queue PAGE
+        // itself is what gets captured — this mirrors how a user reaches the Queue page (player not
+        // inline-visible); the populated PlayQueue (HasQueue=true) persists so the list still renders.
+        _main.IsPlayerVisible = false;
         _main.CurrentView = AppView.Queue;
     }
 
