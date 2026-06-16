@@ -165,6 +165,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MaintenanceRepository>();
         services.AddSingleton<MissingTriageViewModel>();
         services.AddSingleton<MaintenanceViewModel>();
+        services.AddSingleton<InsightsViewModel>();
         services.AddSingleton<MainViewModel>(sp =>
         {
             var lib = sp.GetRequiredService<LibraryRepository>();
@@ -190,7 +191,8 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<ResolutionBackfillService>(),
                 sp.GetRequiredService<MaintenanceViewModel>(),
                 sp.GetRequiredService<IToastService>(),
-                sp.GetRequiredService<IMotionPolicy>());
+                sp.GetRequiredService<IMotionPolicy>(),
+                sp.GetRequiredService<InsightsViewModel>());
         });
         services.AddSingleton<MainWindow>();
         return services;

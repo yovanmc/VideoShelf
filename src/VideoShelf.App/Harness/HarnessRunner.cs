@@ -219,6 +219,11 @@ public sealed class HarnessRunner
                 _postSettleAction = () => _main.Favorites.IsLoading = true;
                 break;
 
+            // ── M24-E Insights dashboard ──────────────────────────────────────────
+            case "Insights":
+                _main.ShowInsightsCommand.Execute(null);
+                break;
+
             // ── M18 surfaces ──────────────────────────────────────────────────────
 
             // Maintenance / Library Health dashboard.

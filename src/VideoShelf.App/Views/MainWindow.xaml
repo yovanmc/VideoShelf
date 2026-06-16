@@ -104,6 +104,7 @@
                                 <MenuItem Header="Favorites"   Command="{Binding ShowFavoritesCommand}" />
                                 <MenuItem Header="History"     Command="{Binding ShowHistoryCommand}" />
                                 <Separator />
+                                <MenuItem Header="Insights"    Command="{Binding ShowInsightsCommand}" />
                                 <MenuItem Header="Library Health" Command="{Binding ShowMaintenanceCommand}" />
                                 <Separator />
                                 <MenuItem Header="Add folder…" Command="{Binding Sources.AddSourceCommand}">
@@ -114,7 +115,7 @@
                             </MenuItem>
                         </Menu>
                         <Border Height="2" VerticalAlignment="Bottom" Margin="8,0" Background="{StaticResource AccentBrush}"
-                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Playlists,WatchLater,Favorites,History,Maintenance'}" />
+                                Visibility="{Binding CurrentView, Converter={StaticResource EnumSetToVis}, ConverterParameter='Playlists,WatchLater,Favorites,History,Maintenance,Insights'}" />
                     </Grid>
                     <ui:TextBox Grid.Column="4" PlaceholderText="Search creators and videos…" Margin="24,0"
                                 Text="{Binding Search.Query, UpdateSourceTrigger=PropertyChanged}" />
@@ -514,6 +515,11 @@
                 <views:MaintenanceView DataContext="{Binding DataContext.Maintenance, RelativeSource={RelativeSource AncestorType=Window}}"
                     Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
                                  Converter={StaticResource EnumToVis}, ConverterParameter=Maintenance}" />
+
+                <!-- Insights page — M24-E -->
+                <views:InsightsView DataContext="{Binding DataContext.Insights, RelativeSource={RelativeSource AncestorType=Window}}"
+                    Visibility="{Binding DataContext.CurrentView, RelativeSource={RelativeSource AncestorType=Window},
+                                 Converter={StaticResource EnumToVis}, ConverterParameter=Insights}" />
 
                 <!-- Duplicate compare/resolve page — M18-G -->
                 <views:DuplicateResolveView DataContext="{Binding DuplicateResolve}"
