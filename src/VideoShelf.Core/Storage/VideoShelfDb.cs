@@ -67,6 +67,43 @@ public sealed class VideoShelfDb : IDisposable
             cmd.CommandText = "DROP TABLE IF EXISTS video_chapters;";
             cmd.ExecuteNonQuery();
         }
+
+        RunVersionedMigrations(conn);
+    }
+
+    private const int LatestSchemaVersion = 1;
+
+    private static void RunVersionedMigrations(SqliteConnection conn)
+    {
+        long current;
+        using (var read = conn.CreateCommand())
+        {
+            read.CommandText = "PRAGMA user_version";
+            current = (long)(read.ExecuteScalar() ?? 0L);
+        }
+        if (current >= LatestSchemaVersion) return;
+
+        using var tx = conn.BeginTransaction();
+        if (current < 1)
+        {
+            // v1: drop tables for features cut in M24 (verified zero readers, M25 Group D).
+            Exec(conn, tx, "DROP TABLE IF EXISTS smart_views");
+        }
+        using (var setv = conn.CreateCommand())
+        {
+            setv.Transaction = tx;
+            setv.CommandText = $"PRAGMA user_version = {LatestSchemaVersion}";
+            setv.ExecuteNonQuery();
+        }
+        tx.Commit();
+    }
+
+    private static void Exec(SqliteConnection conn, SqliteTransaction tx, string sql)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = sql;
+        cmd.ExecuteNonQuery();
     }
 
     private static void EnsureColumn(SqliteConnection conn, string table, string column, string definition)
@@ -177,14 +214,6 @@ public sealed class VideoShelfDb : IDisposable
         );
         CREATE INDEX IF NOT EXISTS ix_series_tags_tag ON series_tags(tag);
         CREATE INDEX IF NOT EXISTS ix_video_tags_tag ON video_tags(tag);
-        CREATE TABLE IF NOT EXISTS smart_views (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            definition TEXT NOT NULL,
-            sort_order INTEGER NOT NULL DEFAULT 0,
-            show_on_home INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL
-        );
         CREATE TABLE IF NOT EXISTS playlists (
             id INTEGER PRIMARY KEY, name TEXT NOT NULL,
             created_at TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0
