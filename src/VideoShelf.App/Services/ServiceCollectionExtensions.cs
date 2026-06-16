@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using VideoShelf.App.Motion;
 using VideoShelf.App.ViewModels;
@@ -100,24 +102,48 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<PlayQueueViewModel>();
         services.AddSingleton<DiscoveryViewModel>();
         services.AddSingleton<GroupingEditViewModel>();
-        services.AddSingleton<SectionDetailViewModel>(sp => new SectionDetailViewModel(
-            sp.GetRequiredService<LibraryRepository>(),
-            sp.GetRequiredService<TagRepository>(),
-            sp.GetRequiredService<WatchRepository>(),
-            sp.GetRequiredService<IThumbnailService>(),
-            sp.GetRequiredService<CreatorArtRepository>(),
-            sp.GetRequiredService<IImagePicker>(),
-            sp.GetRequiredService<PlayQueueViewModel>(),
-            sp.GetRequiredService<CurationRepository>(),
-            sp.GetRequiredService<PlaylistRepository>(),
-            sp.GetRequiredService<ItemArtRepository>(),
-            sp.GetRequiredService<MaintenanceRepository>(),
-            sp.GetRequiredService<IRecycleBinService>(),
-            sp.GetRequiredService<IConfirmService>(),
-            sp.GetRequiredService<IFileSystem>(),
-            sp.GetRequiredService<GroupingEditViewModel>(),
-            sp.GetRequiredService<IToastService>(),
-            sp.GetRequiredService<IImageLoader>()));
+        services.AddSingleton<SectionDetailViewModel>(sp =>
+        {
+            // M24-F: factory that opens the hybrid frame-picker dialog synchronously
+            // (ShowDialog blocks the UI thread until confirmed/cancelled, matching
+            // the OpenFileDialog pattern used by SetCreatorArtCommand).
+            Func<long, bool> framePickerFactory = sectionId =>
+            {
+                var paths       = sp.GetRequiredService<AppPaths>();
+                var snapshotter = sp.GetRequiredService<IThumbnailSnapshotter>();
+                var artRepo     = sp.GetRequiredService<CreatorArtRepository>();
+                var library     = sp.GetRequiredService<LibraryRepository>();
+                var pickerVm    = new CreatorFramePickerViewModel(
+                    sectionId, paths.CoversDirectory, snapshotter, artRepo, library);
+                // Ensure the covers directory exists before the picker tries to write there.
+                Directory.CreateDirectory(paths.CoversDirectory);
+                var window = new CreatorFramePickerWindow(pickerVm)
+                {
+                    Owner = Application.Current?.MainWindow,
+                };
+                return window.ShowDialog() == true;
+            };
+
+            return new SectionDetailViewModel(
+                sp.GetRequiredService<LibraryRepository>(),
+                sp.GetRequiredService<TagRepository>(),
+                sp.GetRequiredService<WatchRepository>(),
+                sp.GetRequiredService<IThumbnailService>(),
+                sp.GetRequiredService<CreatorArtRepository>(),
+                sp.GetRequiredService<IImagePicker>(),
+                sp.GetRequiredService<PlayQueueViewModel>(),
+                sp.GetRequiredService<CurationRepository>(),
+                sp.GetRequiredService<PlaylistRepository>(),
+                sp.GetRequiredService<ItemArtRepository>(),
+                sp.GetRequiredService<MaintenanceRepository>(),
+                sp.GetRequiredService<IRecycleBinService>(),
+                sp.GetRequiredService<IConfirmService>(),
+                sp.GetRequiredService<IFileSystem>(),
+                sp.GetRequiredService<GroupingEditViewModel>(),
+                sp.GetRequiredService<IToastService>(),
+                sp.GetRequiredService<IImageLoader>(),
+                framePickerFactory);
+        });
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<SourcesViewModel>(sp => new SourcesViewModel(
             sp.GetRequiredService<LibraryRepository>(),
