@@ -10,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, WatchLater, Playlists, History, Maintenance, DuplicateResolve }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, WatchLater, Playlists, History, Maintenance, DuplicateResolve, Insights }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -48,7 +48,8 @@ public sealed partial class MainViewModel : ObservableObject
         ResolutionBackfillService? resolutionBackfill = null,
         MaintenanceViewModel? maintenance = null,
         IToastService? toasts = null,
-        IMotionPolicy? motion = null)
+        IMotionPolicy? motion = null,
+        InsightsViewModel? insights = null)
     {
         _sources = sources;
         _library = library;
@@ -62,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
         _toasts = toasts ?? new ToastService((_, _) => { }); // no-op timer in test contexts
         _motion = motion;
         Maintenance = maintenance;
+        Insights = insights;
         Favorites = favorites;
         Watchlist = watchlist;
         Playlists = playlists;
@@ -164,6 +166,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Maintenance dashboard VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
     public MaintenanceViewModel? Maintenance { get; }
+
+    /// <summary>Insights dashboard VM; null in test contexts that don't supply it (nullable-trailing-param pattern).</summary>
+    public InsightsViewModel? Insights { get; }
 
     /// <summary>
     /// Current duplicate-resolve VM; set when navigating to the <see cref="AppView.DuplicateResolve"/> view.
@@ -335,6 +340,14 @@ public sealed partial class MainViewModel : ObservableObject
         Maintenance?.Load();
         PushNav(CurrentView);
         CurrentView = AppView.Maintenance;
+    }
+
+    [RelayCommand]
+    private void ShowInsights()
+    {
+        Insights?.Load();
+        PushNav(CurrentView);
+        CurrentView = AppView.Insights;
     }
 
     /// <summary>

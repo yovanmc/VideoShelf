@@ -137,6 +137,8 @@ $views = [ordered]@{
     # M21 (Delight & motion) surfaces:
     'toast'               = @('--view','Toast','--seed-demo')              # toast overlay in bottom-right corner — confirms toast renders over Home
     'favorites-loading'   = @('--view','FavoritesLoading','--seed-demo')  # Favorites page with IsLoading=true — skeleton placeholder visible
+    # M24-E (Insights dashboard):
+    'insights'            = @('--view','Insights','--seed-demo')           # Insights page with seeded data — stat cards + bar charts
 }
 
 $results = @()
