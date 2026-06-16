@@ -21,7 +21,10 @@ public sealed class VideoShelfDb : IDisposable
         var conn = new SqliteConnection(_connectionString);
         conn.Open();
         using var pragma = conn.CreateCommand();
-        pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;";
+        // busy_timeout: under WAL a concurrent writer/locker (e.g. a background scan probe holding a
+        // write) would otherwise raise SQLITE_BUSY immediately and throw out of a read repo. A short
+        // timeout makes contended opens retry-then-succeed instead of surfacing an unhandled error.
+        pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;";
         pragma.ExecuteNonQuery();
         return conn;
     }
