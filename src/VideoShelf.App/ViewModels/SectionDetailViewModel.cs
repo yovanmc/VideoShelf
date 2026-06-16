@@ -29,6 +29,14 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     private readonly PlaylistRepository? playlists;
     private readonly ItemArtRepository? itemArt;
 
+    // ── M24-F: frame-picker factory (nullable trailing param) ────────────────
+    /// <summary>
+    /// Factory that opens the hybrid frame-picker dialog for a given section id
+    /// and returns true when the user confirmed a new portrait, false on cancel.
+    /// Null in lightweight test contexts that don't supply it.
+    /// </summary>
+    private readonly Func<long, bool>? _framePickerFactory;
+
     // ── M18-G: duplicate-resolve deps (nullable trailing params) ─────────────
     private readonly MaintenanceRepository? _maintenance;
     private readonly IRecycleBinService? _recycleBin;
@@ -69,7 +77,8 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         IFileSystem? fs = null,
         GroupingEditViewModel? groupingEdit = null,
         IToastService? toasts = null,
-        IImageLoader? imageLoader = null)
+        IImageLoader? imageLoader = null,
+        Func<long, bool>? framePickerFactory = null)
     {
         this.library      = library;
         this.tags         = tags;
@@ -88,6 +97,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         GroupingEdit      = groupingEdit;
         _toasts           = toasts;
         _imageLoader      = imageLoader;
+        _framePickerFactory = framePickerFactory;
 
         // Only attach the ICollectionView when a WPF Dispatcher is available.
         // In unit tests there is no Application/Dispatcher, and SeriesList is
@@ -398,6 +408,23 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
         if (string.IsNullOrWhiteSpace(picked)) return;
         art.SetArtPath(SectionId, picked);
         CreatorArtPath = picked;
+        await ResolveBackgroundAsync();
+    }
+
+    /// <summary>
+    /// Opens the hybrid frame-picker dialog (candidate grid + scrub panel).
+    /// Only available when the <see cref="_framePickerFactory"/> delegate is wired in DI
+    /// (production) — in test contexts this command is a no-op.
+    /// After the dialog confirms, refreshes the creator art display.
+    /// </summary>
+    [RelayCommand]
+    private async Task SetCreatorArtFromFrame()
+    {
+        if (SectionId <= 0 || _framePickerFactory is null) return;
+        var confirmed = _framePickerFactory(SectionId);
+        if (!confirmed) return;
+        // Re-read the saved path from the DB (the picker VM wrote it via CreatorArtRepository).
+        RefreshCreatorArt();
         await ResolveBackgroundAsync();
     }
 

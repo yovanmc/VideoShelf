@@ -1,0 +1,278 @@
+<Window x:Class="VideoShelf.App.Views.CreatorFramePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:conv="clr-namespace:VideoShelf.App.Converters"
+        Title="Set creator portrait from video frame"
+        Width="820" Height="600"
+        MinWidth="640" MinHeight="420"
+        Background="#FF070707"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/VideoShelf.App;component/Resources/DesignTokens.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToVisibility     x:Key="BoolToVisibility" />
+            <conv:NotNullToVisibility  x:Key="NotNullToVis" />
+            <conv:InvertBool           x:Key="InverseBoolToBool" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <!-- header -->
+            <RowDefinition Height="Auto" />
+            <!-- content: candidate grid or scrub panel -->
+            <RowDefinition Height="*" />
+            <!-- bottom bar -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ROW 0 — HEADER
+             ═══════════════════════════════════════════════════════════ -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Choose a creator portrait" FontSize="18" FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}" />
+            <TextBlock Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                       Text="Click any frame to use it, or scrub to an exact frame using the scrub panel." />
+        </StackPanel>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ROW 1 — CANDIDATE GRID / SCRUB PANEL
+             ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1">
+
+            <!-- ── CANDIDATE GRID (shown when no scrub target is active) ── -->
+            <!-- Visible when HasScrubTarget is FALSE: invert the bool first, then BoolToVisibility -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasScrubTarget}" Value="True">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Loading indicator -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8"
+                            Visibility="{Binding IsLoadingCandidates, Converter={StaticResource BoolToVisibility}}">
+                    <ui:ProgressRing IsIndeterminate="True" Width="18" Height="18" Margin="0,0,8,0" />
+                    <TextBlock Text="Loading candidate frames…" FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Empty state when no candidates loaded -->
+                <TextBlock Grid.Row="0" Text="No video files found for this creator."
+                           FontSize="12" Foreground="{StaticResource TextMutedBrush}"
+                           Visibility="{Binding IsLoadingCandidates, Converter={StaticResource BoolToVisibility},
+                                                ConverterParameter=Inverse}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Candidates.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Candidate grid -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Candidates}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Each candidate card: thumbnail + label + two action buttons -->
+                                <Border Width="170" Margin="0,0,10,10"
+                                        Background="{StaticResource CardSurfaceBrush}"
+                                        CornerRadius="{StaticResource CardRadius}">
+                                    <StackPanel>
+                                        <!-- Thumbnail area: 150×100 -->
+                                        <Border Height="100" CornerRadius="6,6,0,0"
+                                                Background="{StaticResource ThumbPlaceholderBrush}"
+                                                ClipToBounds="True">
+                                            <Grid>
+                                                <!-- Loading spinner -->
+                                                <ui:ProgressRing IsIndeterminate="True" Width="24" Height="24"
+                                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                 Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+                                                <!-- Actual thumbnail (visible once loaded) -->
+                                                <Image Source="{Binding ThumbnailPath, IsAsync=True}"
+                                                       Stretch="UniformToFill"
+                                                       Visibility="{Binding ThumbnailPath, Converter={StaticResource NotNullToVis}}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Series label -->
+                                        <TextBlock Text="{Binding SeriesLabel}"
+                                                   FontSize="11" Margin="6,4,6,2"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <!-- Action row: Use this | Scrub -->
+                                        <StackPanel Orientation="Horizontal" Margin="6,0,6,6">
+                                            <ui:Button Content="Use this"
+                                                       Style="{StaticResource PrimaryButton}"
+                                                       Command="{Binding DataContext.UseCandidateCommand,
+                                                           RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       IsEnabled="{Binding IsLoading,
+                                                           Converter={StaticResource InverseBoolToBool}}"
+                                                       FontSize="11" Padding="6,2" />
+                                            <ui:Button Content="Scrub…"
+                                                       Style="{StaticResource SecondaryButton}"
+                                                       Margin="4,0,0,0"
+                                                       Command="{Binding DataContext.OpenScrubPanelCommand,
+                                                           RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                       CommandParameter="{Binding}"
+                                                       FontSize="11" Padding="6,2" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+
+            <!-- ── SCRUB PANEL (shown when a video is chosen for scrubbing) ── -->
+            <Grid Visibility="{Binding HasScrubTarget, Converter={StaticResource BoolToVisibility}}"
+                  DataContext="{Binding ScrubTarget}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />  <!-- back button + label -->
+                    <RowDefinition Height="*" />      <!-- preview -->
+                    <RowDefinition Height="Auto" />   <!-- slider + capture button -->
+                    <RowDefinition Height="Auto" />   <!-- use-preview button -->
+                </Grid.RowDefinitions>
+
+                <!-- Back to grid -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                    <ui:Button Command="{Binding DataContext.CloseScrubPanelCommand,
+                                        RelativeSource={RelativeSource AncestorType=Window}}"
+                               Style="{StaticResource SecondaryButton}" Padding="6,3">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowLeft24" Margin="0,0,4,0" />
+                            <TextBlock Text="Back to grid" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
+                    </ui:Button>
+                    <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Text="{Binding SeriesLabel}" />
+                </StackPanel>
+
+                <!-- Preview area -->
+                <Border Grid.Row="1" Background="{StaticResource ThumbPlaceholderBrush}"
+                        CornerRadius="{StaticResource CardRadius}" ClipToBounds="True"
+                        HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                        MaxWidth="640" Margin="0,0,0,8">
+                    <Grid>
+                        <!-- Capture spinner -->
+                        <ui:ProgressRing IsIndeterminate="True" Width="32" Height="32"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         Visibility="{Binding IsCapturing, Converter={StaticResource BoolToVisibility}}" />
+                        <!-- Preview image — shown once capture succeeds -->
+                        <Image Source="{Binding PreviewPath, IsAsync=True}"
+                               Stretch="Uniform"
+                               Visibility="{Binding PreviewPath, Converter={StaticResource NotNullToVis}}" />
+                    </Grid>
+                </Border>
+
+                <!-- Scrub slider + Capture button -->
+                <Grid Grid.Row="2" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Position slider — scrubs PositionSeconds across [0, DurationSeconds] -->
+                    <Slider Grid.Column="0"
+                            Minimum="0" Maximum="{Binding DurationSeconds}"
+                            Value="{Binding PositionSeconds, Mode=TwoWay}"
+                            VerticalAlignment="Center"
+                            TickFrequency="1" IsSnapToTickEnabled="False"
+                            SmallChange="1" LargeChange="10" />
+
+                    <!-- Capture frame button -->
+                    <ui:Button Grid.Column="1" Margin="8,0,0,0"
+                               Style="{StaticResource SecondaryButton}"
+                               Command="{Binding DataContext.CapturePreviewCommand,
+                                   RelativeSource={RelativeSource AncestorType=Window}}"
+                               IsEnabled="{Binding IsCapturing,
+                                   Converter={StaticResource InverseBoolToBool}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Camera24" Margin="0,0,4,0" />
+                            <TextBlock Text="Capture frame" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
+                    </ui:Button>
+                </Grid>
+
+                <!-- Position readout + Use preview -->
+                <Grid Grid.Row="3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               FontSize="12" Foreground="{StaticResource TextMutedBrush}">
+                        <Run Text="Position: " />
+                        <Run Text="{Binding PositionSeconds, StringFormat='{}{0:F0}s', Mode=OneWay}" />
+                        <Run Text=" / " />
+                        <Run Text="{Binding DurationSeconds, StringFormat='{}{0:F0}s', Mode=OneWay}" />
+                    </TextBlock>
+
+                    <ui:Button Grid.Column="1"
+                               Style="{StaticResource PrimaryButton}"
+                               Command="{Binding DataContext.UsePreviewCommand,
+                                   RelativeSource={RelativeSource AncestorType=Window}}"
+                               IsEnabled="{Binding PreviewPath, Converter={StaticResource NotNullToVis}}">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
+                            <TextBlock Text="Use this frame" VerticalAlignment="Center" FontSize="12" />
+                        </StackPanel>
+                    </ui:Button>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ROW 2 — BOTTOM BAR (busy indicator + Cancel)
+             ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" BorderThickness="0,1,0,0"
+                BorderBrush="{StaticResource DividerBrush}"
+                Padding="0,10,0,0" Margin="0,8,0,0">
+            <DockPanel>
+                <!-- Busy spinner (shown while saving or capturing) -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+                    <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,6,0" />
+                    <TextBlock Text="Saving…" FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+                <ui:Button DockPanel.Dock="Right"
+                           Style="{StaticResource SecondaryButton}"
+                           Command="{Binding CancelCommand}">
+                    <TextBlock Text="Cancel" />
+                </ui:Button>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

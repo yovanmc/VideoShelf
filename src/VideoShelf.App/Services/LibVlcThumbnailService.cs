@@ -21,7 +21,25 @@ public sealed class LibVlcThumbnailService : IThumbnailSnapshotter, IDisposable
         _libVlc = new LibVLC("--no-audio", "--no-video-title-show", "--quiet");
     }
 
-    public async Task<bool> TrySnapshotAsync(string videoPath, string outputPngPath, CancellationToken cancellationToken)
+    /// <inheritdoc/>
+    public Task<bool> TrySnapshotAsync(string videoPath, string outputPngPath, CancellationToken cancellationToken)
+        // Default position: 10% of duration, capped at 3 s (computed from player.Length after play starts).
+        => TrySnapshotCoreAsync(videoPath, outputPngPath, requestedPositionMs: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public Task<bool> TrySnapshotAtAsync(string videoPath, string outputPngPath, TimeSpan position, CancellationToken ct)
+        => TrySnapshotCoreAsync(videoPath, outputPngPath, requestedPositionMs: (long)position.TotalMilliseconds, ct);
+
+    /// <summary>
+    /// Core headless snapshot logic.
+    /// <paramref name="requestedPositionMs"/> = null → use the default fraction heuristic;
+    /// a non-null value is clamped to [0, duration] before seeking.
+    /// </summary>
+    private async Task<bool> TrySnapshotCoreAsync(
+        string videoPath,
+        string outputPngPath,
+        long? requestedPositionMs,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -49,9 +67,15 @@ public sealed class LibVlcThumbnailService : IThumbnailSnapshotter, IDisposable
                 }
             }
 
-            // Seek a little in so we don't capture a black leader frame, then snapshot.
-            if (player.Length > 0)
-                player.Time = Math.Min(player.Length / 10, 3000);
+            // Compute the seek position: explicit (clamped) or default heuristic.
+            long durationMs = player.Length;
+            long seekMs = requestedPositionMs.HasValue
+                ? ClampMs(requestedPositionMs.Value, durationMs)
+                : SnapshotPositionHelper.DefaultSeekMs(durationMs);
+
+            if (seekMs > 0)
+                player.Time = seekMs;
+
             await Task.Delay(300, cancellationToken).ConfigureAwait(false);
 
             var taken = player.TakeSnapshot(0, outputPngPath, 0, 0);
@@ -67,6 +91,15 @@ public sealed class LibVlcThumbnailService : IThumbnailSnapshotter, IDisposable
         {
             return false; // fail-safe
         }
+    }
+
+    /// <summary>Clamps a requested seek position (ms) to [0, durationMs]. Returns 0 when duration unknown.</summary>
+    private static long ClampMs(long requestedMs, long durationMs)
+    {
+        if (durationMs <= 0) return 0;
+        if (requestedMs < 0) return 0;
+        if (requestedMs > durationMs) return durationMs;
+        return requestedMs;
     }
 
     public void Dispose() => _libVlc.Dispose();

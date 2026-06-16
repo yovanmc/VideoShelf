@@ -210,7 +210,15 @@
                                            Style="{StaticResource SecondaryButton}">
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon Symbol="Image24" Margin="0,0,4,0" />
-                                        <TextBlock Text="Set image…" VerticalAlignment="Center" />
+                                        <TextBlock Text="From a file…" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ui:Button>
+                                <!-- M24-F: frame picker (candidate grid + scrub) -->
+                                <ui:Button Command="{Binding SetCreatorArtFromFrameCommand}" Margin="8,0,0,0"
+                                           Style="{StaticResource SecondaryButton}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:SymbolIcon Symbol="Video24" Margin="0,0,4,0" />
+                                        <TextBlock Text="From a video frame…" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </ui:Button>
                                 <ui:Button Command="{Binding ClearCreatorArtCommand}" Margin="8,0,0,0"

@@ -22,6 +22,9 @@ public class ThumbnailCacheTests
                 File.WriteAllBytes(outputPngPath, new byte[] { 1, 2, 3 });
             return Task.FromResult(_succeed);
         }
+
+        public Task<bool> TrySnapshotAtAsync(string videoPath, string outputPngPath, TimeSpan position, CancellationToken ct)
+            => TrySnapshotAsync(videoPath, outputPngPath, ct);
     }
 
     private static string TempThumbDir()
