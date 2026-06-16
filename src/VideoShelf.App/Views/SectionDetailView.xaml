@@ -334,7 +334,7 @@
                                 <MenuItem Header="Mark watched" Command="{Binding MarkSeriesWatchedCommand}"/>
                                 <MenuItem Header="Mark unwatched" Command="{Binding MarkSeriesUnwatchedCommand}"/>
                                 <Separator/>
-                                <MenuItem Header="Rename files…" Command="{Binding RequestRenameCommand}"/>
+                                <MenuItem Header="Rename file…" Command="{Binding RequestRenameCommand}"/>
                             </ContextMenu>
                         </Border.ContextMenu>
                         <StackPanel>
@@ -427,6 +427,8 @@
                                                                         </Style>
                                                                     </MenuItem.ItemContainerStyle>
                                                                 </MenuItem>
+                                                                <Separator/>
+                                                                <MenuItem Header="Rename file…" Command="{Binding RequestRenameCommand}"/>
                                                             </ContextMenu>
                                                         </StackPanel.ContextMenu>
 
@@ -665,7 +667,7 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </ScrollViewer>
-                                <ui:Button Content="Rename files…" Command="{Binding RequestRenameCommand}"
+                                <ui:Button Content="Rename file…" Command="{Binding RequestRenameCommand}"
                                            Margin="0,6,0,0" HorizontalAlignment="Left"
                                            Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
                                            Style="{StaticResource SecondaryButton}"/>

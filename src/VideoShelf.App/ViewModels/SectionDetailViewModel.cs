@@ -223,6 +223,11 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     public event EventHandler<EpisodeView>? PlayRequested;
     public event EventHandler<SeriesViewModel>? RenameRequested;
 
+    /// <summary>Raised when the user requests a per-episode rename.
+    /// Carries both the series context (for SeriesId/BaseTitle/IsStandalone) and
+    /// the specific video id the user chose.</summary>
+    public event EventHandler<(SeriesViewModel Series, long VideoId)>? EpisodeRenameRequested;
+
     // ── M18-G: possible duplicates banner ─────────────────────────────────────
 
     /// <summary>Raised when the owner wants to open the resolve screen for a group.</summary>
@@ -356,6 +361,7 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
             var svm = new SeriesViewModel(s, library, watch, thumbnails, tags, curation, playlists, AvailablePlaylists, itemArt, imagePicker, _toasts, _imageLoader);
             svm.PlayRequested += (_, e) => PlayRequested?.Invoke(this, e);
             svm.RenameRequested += (_, sv) => RenameRequested?.Invoke(this, sv);
+            svm.EpisodeRenameRequested += (_, vid) => EpisodeRenameRequested?.Invoke(this, (svm, vid));
             svm.PlayAllRequested += (_, _) => playQueue.PlayAll(library.GetEpisodes(svm.SeriesId));
             svm.EnqueueRequested += (_, _) => playQueue.EnqueueRange(library.GetEpisodes(svm.SeriesId));
             svm.PlayNextRequested += (_, _) => playQueue.PlayNextRange(library.GetEpisodes(svm.SeriesId));

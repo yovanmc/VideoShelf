@@ -91,6 +91,7 @@ public sealed partial class MainViewModel : ObservableObject
         Discovery.SectionOpenRequested += async (_, id) => await OpenSectionAsync(id);
         SectionDetail.PlayRequested += (_, e) => PlayEpisode(e);
         SectionDetail.RenameRequested += async (_, s) => await OpenRenameToolAsync(s);
+        SectionDetail.EpisodeRenameRequested += async (_, t) => await OpenRenameToolAsync(t.Series, t.VideoId);
         SectionDetail.ResolveRequested += (_, resolveVm) => OpenDuplicateResolve(resolveVm);
         RenameTool.CloseRequested += (_, _) => GoBack();
         Creators.OpenCreatorRequested += async id => await OpenSectionAsync(id);
@@ -366,9 +367,9 @@ public sealed partial class MainViewModel : ObservableObject
         CurrentView = AppView.SectionDetail;
     }
 
-    public async Task OpenRenameToolAsync(SeriesViewModel series)
+    public async Task OpenRenameToolAsync(SeriesViewModel series, long? videoId = null)
     {
-        await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone);
+        await RenameTool.LoadAsync(series.SeriesId, series.BaseTitle, series.IsStandalone, videoId);
         PushNav(CurrentView);
         CurrentView = AppView.RenameTool;
     }

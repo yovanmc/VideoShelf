@@ -31,6 +31,7 @@ public sealed partial class RenameToolViewModel : ObservableObject
     private long _seriesId;
     private bool _isStandalone;
     private string _baseTitle = "";
+    private long? _targetVideoId;
     private IReadOnlyList<Video> _videos = Array.Empty<Video>();
     private bool _suppressReplan;
 
@@ -59,26 +60,39 @@ public sealed partial class RenameToolViewModel : ObservableObject
 
     public event EventHandler? CloseRequested;
 
-    public async Task LoadAsync(long seriesId, string baseTitle, bool isStandalone)
+    /// <summary>
+    /// Loads the rename tool targeting a single file within <paramref name="seriesId"/>.
+    /// When <paramref name="videoId"/> is supplied the named video is targeted (the per-episode
+    /// "Rename file…" action); otherwise the first video in the series is used (standalone or
+    /// series-level "Rename file…" action). The full video list is still loaded to compute the
+    /// correct zero-pad width for series episode numbers.
+    /// </summary>
+    public async Task LoadAsync(long seriesId, string baseTitle, bool isStandalone, long? videoId = null)
     {
         _seriesId = seriesId;
         _baseTitle = baseTitle;
         _isStandalone = isStandalone;
         SeriesTitle = baseTitle;
 
-        // Single-file rename: load only the first video in the series.
-        // For standalones this is the one file; for multi-episode series the user
-        // renames one file at a time via the episode-level "Rename…" action.
+        // Load the full series for pad-width context; then pick the target video.
         var allVideos = await Task.Run(() => _library.GetVideosForSeries(seriesId));
-        _videos = allVideos.Count > 0 ? new[] { allVideos[0] } : Array.Empty<Video>();
+        Video? target = videoId is long id
+            ? allVideos.FirstOrDefault(v => v.Id == id) ?? allVideos.FirstOrDefault()
+            : allVideos.FirstOrDefault();
+
+        _targetVideoId = target?.Id;
+        _videos = target is null ? Array.Empty<Video>() : new[] { target };
+
+        // Compute pad width from the full episode set so series numbering is consistent.
+        var padWidth = CanonicalNamer.PadWidth(allVideos.Select(v => v.EpisodeNo));
 
         _suppressReplan = true;
         Rows.Clear();
         foreach (var v in _videos)
         {
             var ext = Path.GetExtension(v.FilePath);
-            // Single-file: always use the standalone form (no episode number suffix).
-            var proposed = CanonicalNamer.Build(_baseTitle, null, ext, padWidth: 0);
+            // Preserve episode number for series episodes; standalones use the no-number form.
+            var proposed = CanonicalNamer.Build(_baseTitle, isStandalone ? (int?)null : v.EpisodeNo, ext, padWidth);
             var row = new RenameRowViewModel(v.Id, v.EpisodeNo, Path.GetFileName(v.FilePath), proposed, RenameItemStatus.Ready);
             row.NewNameEdited += (_, _) => Replan();
             Rows.Add(row);
@@ -128,7 +142,7 @@ public sealed partial class RenameToolViewModel : ObservableObject
             if (result.ManifestPath is not null)
                 _toasts?.Show($"Renamed {result.Renamed} file(s)", undo: () => UndoCommand.Execute(null));
 
-            await LoadAsync(_seriesId, _baseTitle, _isStandalone); // reflect disk truth
+            await LoadAsync(_seriesId, _baseTitle, _isStandalone, _targetVideoId); // reflect disk truth
         }
         finally { IsBusy = false; }
     }
@@ -147,7 +161,7 @@ public sealed partial class RenameToolViewModel : ObservableObject
             var result = await Task.Run(() => _executor.Undo(manifestPath));
             _settings.SetString(LastManifestKey, ""); // consumed
             StatusSummary = $"Reverted {result.Renamed} file(s)";
-            await LoadAsync(_seriesId, _baseTitle, _isStandalone);
+            await LoadAsync(_seriesId, _baseTitle, _isStandalone, _targetVideoId);
         }
         finally { IsBusy = false; }
     }
