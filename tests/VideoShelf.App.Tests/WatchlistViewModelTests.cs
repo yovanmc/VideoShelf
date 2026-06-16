@@ -9,7 +9,7 @@ using Xunit;
 
 namespace VideoShelf.App.Tests;
 
-public class WatchlistViewModelTests
+public class WatchLaterViewModelTests
 {
     private static (CurationRepository curation, LibraryRepository lib, long videoId) Seed(AppTempDb temp)
     {
@@ -26,7 +26,7 @@ public class WatchlistViewModelTests
         using var temp = new AppTempDb();
         var (curation, lib, videoId) = Seed(temp);
         curation.SetWatchlist(videoId, true, DateTimeOffset.UtcNow);
-        var vm = new WatchlistViewModel(curation, lib);
+        var vm = new WatchLaterViewModel(curation, lib);
 
         await vm.LoadAsync();
 
@@ -40,7 +40,7 @@ public class WatchlistViewModelTests
     {
         using var temp = new AppTempDb();
         var (curation, lib, _) = Seed(temp);
-        var vm = new WatchlistViewModel(curation, lib);
+        var vm = new WatchLaterViewModel(curation, lib);
 
         await vm.LoadAsync();
 
@@ -54,7 +54,7 @@ public class WatchlistViewModelTests
         using var temp = new AppTempDb();
         var (curation, lib, videoId) = Seed(temp);
         curation.SetWatchlist(videoId, true, DateTimeOffset.UtcNow);
-        var vm = new WatchlistViewModel(curation, lib);
+        var vm = new WatchLaterViewModel(curation, lib);
         await vm.LoadAsync();
 
         EpisodeView? played = null;

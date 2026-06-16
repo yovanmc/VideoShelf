@@ -13,7 +13,7 @@ using VideoShelf.Core.Storage;
 
 namespace VideoShelf.App.ViewModels;
 
-public sealed partial class WatchlistViewModel(CurationRepository curation, LibraryRepository library,
+public sealed partial class WatchLaterViewModel(CurationRepository curation, LibraryRepository library,
     IThumbnailService? thumbnails = null, IImageLoader? imageLoader = null) : ObservableObject, IBulkSelectionSource
 {
     public ObservableCollection<RecencyCardViewModel> Watchlist { get; } = [];
@@ -26,7 +26,7 @@ public sealed partial class WatchlistViewModel(CurationRepository curation, Libr
 
     private readonly SelectionViewModel<RecencyCardViewModel> _selection = new();
 
-    /// <summary>Per-page selection state for multi-select over the watchlist grid.</summary>
+    /// <summary>Per-page selection state for multi-select over the watch later grid.</summary>
     public SelectionViewModel<RecencyCardViewModel> Selection => _selection;
 
     // ── IBulkSelectionSource ─────────────────────────────────────────────────

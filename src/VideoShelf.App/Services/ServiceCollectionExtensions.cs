@@ -146,7 +146,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<IImageLoader>()));
         services.AddSingleton<SearchViewModel>();
         services.AddSingleton<FavoritesViewModel>();
-        services.AddSingleton<WatchlistViewModel>();
+        services.AddSingleton<WatchLaterViewModel>();
         services.AddSingleton<PlaylistsViewModel>();
         services.AddSingleton<HistoryRepository>();
         services.AddSingleton<HistoryViewModel>(sp => new HistoryViewModel(
@@ -182,7 +182,7 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<MediaBackfillService>(),
                 sp.GetRequiredService<PlayQueueViewModel>(),
                 sp.GetRequiredService<FavoritesViewModel>(),
-                sp.GetRequiredService<WatchlistViewModel>(),
+                sp.GetRequiredService<WatchLaterViewModel>(),
                 sp.GetRequiredService<PlaylistsViewModel>(),
                 sp.GetRequiredService<HistoryViewModel>(),
                 lib,

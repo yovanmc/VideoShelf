@@ -10,7 +10,7 @@ using VideoShelf.Core.Models;
 
 namespace VideoShelf.App.ViewModels;
 
-public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, Watchlist, Playlists, History, Maintenance, DuplicateResolve }
+public enum AppView { Home, Browse, SectionDetail, RenameTool, Search, Settings, Queue, Favorites, WatchLater, Playlists, History, Maintenance, DuplicateResolve }
 
 public sealed partial class MainViewModel : ObservableObject
 {
@@ -40,7 +40,7 @@ public sealed partial class MainViewModel : ObservableObject
         MediaBackfillService backfill,
         PlayQueueViewModel playQueue,
         FavoritesViewModel favorites,
-        WatchlistViewModel watchlist,
+        WatchLaterViewModel watchlist,
         PlaylistsViewModel playlists,
         HistoryViewModel history,
         VideoShelf.Core.Storage.LibraryRepository libraryRepo,
@@ -147,7 +147,7 @@ public sealed partial class MainViewModel : ObservableObject
     public BulkActionBarViewModel? BulkBar { get; }
 
     public FavoritesViewModel Favorites { get; }
-    public WatchlistViewModel Watchlist { get; }
+    public WatchLaterViewModel Watchlist { get; }
     public PlaylistsViewModel Playlists { get; }
     public HistoryViewModel History { get; }
     public SourcesViewModel Sources => _sources;
@@ -188,7 +188,7 @@ public sealed partial class MainViewModel : ObservableObject
             AppView.Browse       => Creators,
             AppView.SectionDetail => SectionDetail,
             AppView.Favorites    => Favorites,
-            AppView.Watchlist    => Watchlist,
+            AppView.WatchLater   => Watchlist,
             AppView.Search       => Search,
             _                    => null
         };
@@ -305,11 +305,11 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ShowWatchlist()
+    private void ShowWatchLater()
     {
         Watchlist.Load();
         PushNav(CurrentView);
-        CurrentView = AppView.Watchlist;
+        CurrentView = AppView.WatchLater;
     }
 
     [RelayCommand]

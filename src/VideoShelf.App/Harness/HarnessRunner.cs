@@ -206,7 +206,7 @@ public sealed class HarnessRunner
                 await NavigatePlayerUpNextAsync();
                 break;
             case "Playlists":  _main.ShowPlaylistsCommand.Execute(null); break;
-            case "Watchlist":  _main.ShowWatchlistCommand.Execute(null); break;
+            case "WatchLater": _main.ShowWatchLaterCommand.Execute(null); break;
             case "Favorites":  _main.ShowFavoritesCommand.Execute(null); break;
             case "History":    _main.ShowHistoryCommand.Execute(null); break;
 

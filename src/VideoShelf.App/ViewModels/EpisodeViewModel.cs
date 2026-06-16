@@ -103,7 +103,7 @@ public sealed partial class EpisodeViewModel(
         InWatchlist = !InWatchlist;
         curation.SetWatchlist(model.VideoId, InWatchlist, System.DateTimeOffset.UtcNow);
         var wasAdded = InWatchlist; // capture resulting state for undo closure
-        toasts?.Show(wasAdded ? "Added to watchlist" : "Removed from watchlist",
+        toasts?.Show(wasAdded ? "Added to watch later" : "Removed from watch later",
                      undo: () => SetWatchlistDirectly(!wasAdded), ToastKind.Success);
     }
 

@@ -55,7 +55,7 @@ public class MainViewModelPlaybackTests
         var searchVm = new SearchViewModel(lib, searchCardFactory);
         var curation = new CurationRepository(temp.Db);
         var favoritesVm = new FavoritesViewModel(curation, lib);
-        var watchlistVm = new WatchlistViewModel(curation, lib);
+        var watchlistVm = new WatchLaterViewModel(curation, lib);
         var playlistsVm = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var historyVm = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         return new MainViewModel(sources, library, new NullScan(), player, settingsVm,
@@ -126,7 +126,7 @@ public class MainViewModelPlaybackTests
         var searchVm = new SearchViewModel(lib, new CreatorCardFactory(art, thumbs));
         var curation2 = new CurationRepository(temp.Db);
         var favoritesVm2 = new FavoritesViewModel(curation2, lib);
-        var watchlistVm2 = new WatchlistViewModel(curation2, lib);
+        var watchlistVm2 = new WatchLaterViewModel(curation2, lib);
         var playlistsVm2 = new PlaylistsViewModel(new PlaylistRepository(temp.Db), playQueue);
         var historyVm2 = new HistoryViewModel(new HistoryRepository(temp.Db), lib);
         var vm = new MainViewModel(sources, libraryVm, new NullScan(), player, settingsVm,
