@@ -669,48 +669,6 @@
                                            Margin="0,6,0,0" HorizontalAlignment="Left"
                                            Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
                                            Style="{StaticResource SecondaryButton}"/>
-                                <!-- M18-H: series-level grouping affordances (Edit mode) -->
-                                <StackPanel Margin="0,6,0,0"
-                                            Visibility="{Binding DataContext.GroupingEdit,
-                                                RelativeSource={RelativeSource AncestorType=UserControl},
-                                                Converter={StaticResource NotNullToVis}}">
-                                    <StackPanel Visibility="{Binding DataContext.IsEditing,
-                                                    RelativeSource={RelativeSource AncestorType=UserControl},
-                                                    Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="MERGE / REGROUP" FontSize="10" Margin="0,0,0,4"
-                                                   Foreground="{StaticResource TextMutedBrush}"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:TextBox
-                                                Text="{Binding DataContext.MergeTargetTitle,
-                                                    RelativeSource={RelativeSource AncestorType=UserControl},
-                                                    UpdateSourceTrigger=PropertyChanged}"
-                                                PlaceholderText="Merge into series…"
-                                                Width="180" FontSize="11" />
-                                            <ui:Button Margin="4,0,0,0"
-                                                       Style="{StaticResource SecondaryButton}"
-                                                       Command="{Binding DataContext.MergeSeriesIntoCommand,
-                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                       CommandParameter="{Binding}"
-                                                       ToolTip="Merge all episodes of this series into the named series">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <ui:SymbolIcon Symbol="ArrowRight24" Margin="0,0,4,0" />
-                                                    <TextBlock Text="Merge" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </ui:Button>
-                                            <ui:Button Margin="8,0,0,0"
-                                                       Style="{StaticResource TertiaryButton}"
-                                                       Command="{Binding DataContext.ResetSeriesGroupingCommand,
-                                                           RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                       CommandParameter="{Binding}"
-                                                       ToolTip="Clear all grouping overrides for this series">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <ui:SymbolIcon Symbol="ArrowReset24" Margin="0,0,4,0" />
-                                                    <TextBlock Text="Reset grouping" VerticalAlignment="Center" />
-                                                </StackPanel>
-                                            </ui:Button>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </StackPanel>
                                 <!-- Series cover art actions: only visible in edit mode -->
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
                                             Visibility="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">

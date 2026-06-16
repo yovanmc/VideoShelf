@@ -67,34 +67,6 @@ public sealed class GroupingEditViewModelTests
         series.ShouldContain(s => s.BaseTitle == "Spin-off");
     }
 
-    // ── MergeIntoSeriesCommand ────────────────────────────────────────────────
-
-    [Fact]
-    public void MergeIntoSeries_WritesOverrideForAllFilesAndRegroups()
-    {
-        var f = NewFx(); using var _ = f.Db;
-
-        var s1 = f.Lib.UpsertSeries(f.SectionId, "Alpha", false);
-        f.Lib.UpsertVideo(s1, @"C:\V\Creator\Alpha 1.mkv", 1, ".mkv");
-        var s2 = f.Lib.UpsertSeries(f.SectionId, "Beta", true);
-        f.Lib.UpsertVideo(s2, @"C:\V\Creator\Beta.mkv", 1, ".mkv");
-
-        bool regroupFired = false;
-        f.Vm.RegroupRequested += (_, _) => regroupFired = true;
-
-        var betaPaths = new List<string> { @"C:\V\Creator\Beta.mkv" };
-        f.Vm.MergeIntoSeriesCommand.Execute(new MergeSeriesArgs(betaPaths, "Alpha"));
-
-        regroupFired.ShouldBeTrue();
-        var overrides = f.Lib.GetGroupingOverrides(f.SectionId);
-        overrides["Beta.mkv"].OverrideBaseTitle.ShouldBe("Alpha");
-
-        // After regroup, Beta should be folded into Alpha.
-        var series = f.Lib.GetSeriesSummaries(f.SectionId);
-        series.Where(s => s.EpisodeCount > 0).Count().ShouldBe(1);
-        series.Single(s => s.EpisodeCount > 0).BaseTitle.ShouldBe("Alpha");
-    }
-
     // ── SetEpisodeOrderCommand ────────────────────────────────────────────────
 
     [Fact]
@@ -188,7 +160,6 @@ public sealed class GroupingEditViewModelTests
         vm.RegroupRequested += (_, _) => fired = true;
 
         vm.MoveEpisodeToSeriesCommand.Execute(new MoveEpisodeArgs(@"C:\x.mkv", "Title"));
-        vm.MergeIntoSeriesCommand.Execute(new MergeSeriesArgs(new[] { @"C:\x.mkv" }, "Title"));
         vm.SetEpisodeOrderCommand.Execute(new SetEpisodeOrderArgs(@"C:\x.mkv", 5));
         vm.ResetEpisodeGroupingCommand.Execute(@"C:\x.mkv");
         vm.ResetSeriesGroupingCommand.Execute(new[] { @"C:\x.mkv" });
@@ -199,7 +170,7 @@ public sealed class GroupingEditViewModelTests
 
 /// <summary>
 /// M18-H: Integration tests for <see cref="SectionDetailViewModel"/> grouping-edit
-/// pass-through commands (MoveEpisodeToSeries, MergeSeriesInto, ResetEpisodeGrouping,
+/// pass-through commands (MoveEpisodeToSeries, ResetEpisodeGrouping,
 /// ResetSeriesGrouping) and the automatic LoadAsync reload on regroup.
 /// </summary>
 public sealed class SectionDetailGroupingEditTests

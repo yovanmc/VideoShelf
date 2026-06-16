@@ -308,28 +308,6 @@ public sealed partial class SectionDetailViewModel : ObservableObject, IBulkSele
     [ObservableProperty]
     private string _moveEpisodeTargetTitle = "";
 
-    /// <summary>
-    /// Merges all episodes of a series into another series whose title is given by
-    /// <see cref="MergeTargetTitle"/>.
-    /// CommandParameter is the <see cref="SeriesViewModel"/> being merged away.
-    /// </summary>
-    [RelayCommand]
-    private void MergeSeriesInto(SeriesViewModel? series)
-    {
-        if (GroupingEdit is null || series is null) return;
-        var target = MergeTargetTitle.Trim();
-        if (target.Length == 0) return;
-        var filePaths = library.GetEpisodes(series.SeriesId)
-                               .Select(e => e.FilePath)
-                               .ToList();
-        GroupingEdit.MergeIntoSeriesCommand.Execute(new MergeSeriesArgs(filePaths, target));
-        MergeTargetTitle = "";
-    }
-
-    /// <summary>Transient input field for the "Merge into…" target series title.</summary>
-    [ObservableProperty]
-    private string _mergeTargetTitle = "";
-
     public async Task LoadAsync(long sectionId)
     {
         SectionId = sectionId;
