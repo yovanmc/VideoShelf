@@ -146,7 +146,7 @@ public sealed partial class DuplicateResolveViewModel : ObservableObject
     {
         // ── Safety gate: verify keeper present + non-zero ─────────────────────
         var keeperLength = _fs.GetFileLength(keeper.FilePath);
-        if (keeperLength <= 0)
+        if (!CanRecycleLosers(keeperLength))
         {
             var reason = keeperLength == -1
                 ? $"Keeper file not found on disk:\n{keeper.FilePath}"
@@ -212,6 +212,16 @@ public sealed partial class DuplicateResolveViewModel : ObservableObject
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Pure safety predicate for the keeper-gate: the losers may only be recycled when the
+    /// keeper file is present on disk AND has a non-zero byte length.
+    /// <paramref name="keeperLength"/> is the value returned by <see cref="IFileSystem.GetFileLength"/>:
+    /// <c>-1</c> when the file is missing, <c>0</c> when it is empty, otherwise the byte length.
+    /// Returns <c>true</c> only when <paramref name="keeperLength"/> is strictly positive.
+    /// Extracted so the destroy-only-when-keeper-is-safe decision is unit-testable in isolation.
+    /// </summary>
+    public static bool CanRecycleLosers(long keeperLength) => keeperLength > 0;
 
     private void SetError(string message)
     {
