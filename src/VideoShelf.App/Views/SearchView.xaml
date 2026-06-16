@@ -62,9 +62,11 @@
             <StackPanel Visibility="{Binding HasVideoResults, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Orientation="Horizontal" Margin="0,16,0,4">
                     <TextBlock Text="Videos" Style="{StaticResource TypeRailHeader}" VerticalAlignment="Center"/>
+                    <!-- G7: ToolTip on Select toggle -->
                     <ToggleButton Content="Select"
                                   IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
                                   Style="{StaticResource ChipToggle}"
+                                  ToolTip="Select multiple"
                                   Margin="12,0,0,0" />
                     <Button Content="Select all"
                             Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"

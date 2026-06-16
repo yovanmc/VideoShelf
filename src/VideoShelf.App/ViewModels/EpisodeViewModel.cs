@@ -148,6 +148,25 @@ public sealed partial class EpisodeViewModel(
         playlists.AddItem(playlistId, model.VideoId);
     }
 
+    /// <summary>
+    /// G3: Creates a new playlist named "New playlist", adds this episode to it,
+    /// and appends the new <see cref="PlaylistRef"/> to the shared <see cref="AvailablePlaylists"/>
+    /// observable collection so the "Add to playlist" submenu updates immediately.
+    /// No-op when no <see cref="PlaylistRepository"/> is injected.
+    /// </summary>
+    [RelayCommand]
+    private void CreatePlaylistAndAdd()
+    {
+        if (playlists is null) return;
+        var id = playlists.Create("New playlist", System.DateTimeOffset.UtcNow);
+        playlists.AddItem(id, model.VideoId);
+        // If the shared list is the concrete ObservableCollection, append immediately
+        // so the "Add to playlist" submenu reflects the new playlist on the next open.
+        if (availablePlaylists is System.Collections.ObjectModel.ObservableCollection<PlaylistRef> oc)
+            oc.Add(new PlaylistRef(id, "New playlist"));
+        toasts?.Show("Created playlist and added video", kind: ToastKind.Success);
+    }
+
     /// <summary>Raised when the user asks to play this episode; the shell routes it to the player.</summary>
     public event System.EventHandler<EpisodeView>? PlayRequested;
 

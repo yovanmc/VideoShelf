@@ -120,10 +120,12 @@
                                 </StackPanel>
                             </ui:Button>
                             <!-- Episode multi-select toggle: appears alongside the action bar -->
+                            <!-- G7: ToolTip="Select multiple" for discoverability -->
                             <ToggleButton IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
                                           Margin="8,0,0,0"
                                           Foreground="White"
-                                          Style="{StaticResource ChipToggle}">
+                                          Style="{StaticResource ChipToggle}"
+                                          ToolTip="Select multiple">
                                 <StackPanel Orientation="Horizontal">
                                     <ui:SymbolIcon Symbol="Checkmark24" Margin="0,0,4,0" />
                                     <TextBlock Text="Select" VerticalAlignment="Center" />
@@ -346,30 +348,43 @@
                             </ContextMenu>
                         </Border.ContextMenu>
                         <StackPanel>
-                            <!-- clickable tile header = Activate (play standalone / toggle expand) -->
-                            <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
-                                    Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
-                                    FocusVisualStyle="{StaticResource AppFocusVisual}">
-                                <StackPanel>
-                                    <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
-                                            CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
-                                        <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
-                                    </Border>
-                                    <DockPanel Margin="8,6,8,6">
-                                        <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
-                                                CornerRadius="{StaticResource ControlRadius}" Padding="6,1" VerticalAlignment="Center"
-                                                Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}">
-                                            <TextBlock FontSize="11" Foreground="#101010">
-                                                <Run Text="{Binding UnwatchedCount, Mode=OneWay}"/><Run Text=" new"/>
-                                            </TextBlock>
+                            <!-- Tile header: thumbnail + title row.
+                                 Main Button covers the thumbnail area for Activate (expand / play standalone).
+                                 G2: ⋯ overlay button at bottom-right opens the series context menu. -->
+                            <Grid>
+                                <Button Command="{Binding ActivateCommand}" Background="Transparent" BorderThickness="0"
+                                        Padding="0" Cursor="Hand" HorizontalContentAlignment="Stretch"
+                                        FocusVisualStyle="{StaticResource AppFocusVisual}">
+                                    <StackPanel>
+                                        <Border Height="135" Background="{StaticResource ThumbPlaceholderBrush}"
+                                                CornerRadius="{StaticResource CardImageRadius}" ClipToBounds="True">
+                                            <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
                                         </Border>
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="{Binding EpisodeCountLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </DockPanel>
-                                </StackPanel>
-                            </Button>
+                                        <DockPanel Margin="8,6,8,6">
+                                            <Border DockPanel.Dock="Right" Background="{StaticResource AccentBrush}"
+                                                    CornerRadius="{StaticResource ControlRadius}" Padding="6,1" VerticalAlignment="Center"
+                                                    Visibility="{Binding HasUnwatched, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock FontSize="11" Foreground="#101010">
+                                                    <Run Text="{Binding UnwatchedCount, Mode=OneWay}"/><Run Text=" new"/>
+                                                </TextBlock>
+                                            </Border>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding BaseTitle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding EpisodeCountLabel}" Foreground="{StaticResource TextMutedBrush}" FontSize="12"/>
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Button>
+                                <!-- G2: ⋯ overflow — opens the series ContextMenu (discoverable alternative to right-click) -->
+                                <ui:Button HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                           Margin="0,0,4,36"
+                                           Padding="4,2"
+                                           ToolTip="More options"
+                                           Style="{StaticResource TertiaryButton}"
+                                           Click="SeriesOverflow_Click">
+                                    <ui:SymbolIcon Symbol="MoreHorizontal24" />
+                                </ui:Button>
+                            </Grid>
                             <!-- expanded episode list (accordion) — D3: opacity fade-in on expand.
                                  Height animation into Auto is not possible in WPF — height is instant;
                                  opacity animates when the panel becomes visible (IsVisibleChanged). -->
@@ -435,6 +450,9 @@
                                                                         </Style>
                                                                     </MenuItem.ItemContainerStyle>
                                                                 </MenuItem>
+                                                                <!-- G3: "New playlist…" — creates a playlist and adds this episode;
+                                                                     always visible so playlists can be created from any episode row. -->
+                                                                <MenuItem Header="New playlist…" Command="{Binding CreatePlaylistAndAddCommand}"/>
                                                                 <Separator/>
                                                                 <MenuItem Header="Rename file…" Command="{Binding RequestRenameCommand}"/>
                                                             </ContextMenu>
@@ -456,7 +474,7 @@
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </DockPanel>
 
-                                                        <!-- Line 2: compact controls — Play | rating | runtime | watched -->
+                                                        <!-- Line 2: compact controls — Play | rating | runtime | ⋯ | watched -->
                                                         <DockPanel Margin="0,2,0,0" LastChildFill="False">
                                                             <!-- Play button (left) -->
                                                             <ui:Button DockPanel.Dock="Left" Padding="4,1" Margin="0,0,4,0"
@@ -469,6 +487,13 @@
                                                                       IsChecked="{Binding Watched, Mode=OneWay}"
                                                                       Command="{Binding ToggleWatchedCommand}"
                                                                       VerticalAlignment="Center"/>
+                                                            <!-- G1: ⋯ overflow button — opens the episode row's context menu (discoverable shortcut) -->
+                                                            <ui:Button DockPanel.Dock="Right" Padding="4,1" Margin="0,0,2,0"
+                                                                       ToolTip="More options"
+                                                                       Style="{StaticResource TertiaryButton}"
+                                                                       Click="EpisodeOverflow_Click">
+                                                                <ui:SymbolIcon Symbol="MoreHorizontal24" />
+                                                            </ui:Button>
                                                             <!-- Runtime label (right of rating, muted) -->
                                                             <TextBlock DockPanel.Dock="Right"
                                                                        Text="{Binding RuntimeLabel}"

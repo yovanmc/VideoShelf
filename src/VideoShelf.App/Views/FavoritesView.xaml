@@ -27,9 +27,11 @@
 
         <!-- Selection header: Select toggle + Select all / Clear (selection mode only) -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="24,8,24,4">
+            <!-- G7: ToolTip on Select toggle -->
             <ToggleButton Content="Select"
                           IsChecked="{Binding Selection.IsSelectionMode, Mode=TwoWay}"
                           Style="{StaticResource ChipToggle}"
+                          ToolTip="Select multiple"
                           Visibility="{Binding HasFavorites, Converter={StaticResource BoolToVisibility}}" />
             <Button Content="Select all"
                     Visibility="{Binding Selection.IsSelectionMode, Converter={StaticResource BoolToVisibility}}"
